@@ -1,0 +1,21 @@
+# These are some examples of commonly ignored file patterns.
+# You should customize this list as applicable to your project.
+# Learn more about .gitignore:
+#     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+
+# Compiled Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Log files
+*.log
+
+# Distribution / packaging
+.Python
+build/
+dist/
+
+# junk files
+test.py
+change_details.sh
