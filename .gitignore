@@ -15,6 +15,7 @@ __pycache__/
 .Python
 build/
 dist/
+pyLaserPulse.egg-info/
 
 # junk files
 test.py
