@@ -60,13 +60,11 @@ pyLaserPulse isn't on PyPI (yet), but it is easy to set up using the following s
 
 ``git clone https://github.com/jsfeehan/pyLaserPulse.git``
 
-**2)** Then, run the following command in the same directory into which pyLaserPulse has been downloaded/cloned:
+**2)** Run the following command in the same directory into which pyLaserPulse has been downloaded/cloned:
 
 ``python setup.py install``
 
 (Include the ``--user`` flag if you do not have admin or root privileges).
-
-**3)** Finally, add the pyLaserPulse directory to your pythonpath.
 
 
 =============
