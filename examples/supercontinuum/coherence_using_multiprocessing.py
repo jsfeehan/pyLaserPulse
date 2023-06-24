@@ -3,7 +3,7 @@
 """
 This example shows how the python multiprocessing library can be used to
 run  pyLaserPulse supercontinuum simulations in parallel (on multiple cores of
-a CPU) with different quantum noise seeds to that that complex first-order
+a CPU) with different quantum noise seeds so that that complex first-order
 degree of coherence can be calculated.
 
 The supercontinuum simulation is wrapped in a function which can then be
