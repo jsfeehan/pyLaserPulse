@@ -594,10 +594,12 @@ class sm_fibre_laser(assembly):
         self.high_res_sample_interval = high_res_sample_interval
 
         # Set active_fibre.oscillator = True -- Replenish pump each round trip
+        # Set verbosity of active fibre to verbosity of optical assembly.
         for c in self.components:
             if (isinstance(c, bc.step_index_active_fibre)
                     or isinstance(c, bc.photonic_crystal_active_fibre)):
                 c.oscillator = True
+                c.verbose = self.verbose
 
     @assembly._simulate
     def simulate(self, pulse):
@@ -714,9 +716,12 @@ class sm_fibre_amplifier(assembly):
             plot=plot, name=name, data_directory=data_directory,
             verbose=verbose)
 
+        # Copy gain fibre (some methods also useful here) and set verbosity of
+        # gain fibre to verbosity of optical assembly.
         for c in self.components:
             if (isinstance(c, bc.step_index_active_fibre)
                     or isinstance(c, bc.photonic_crystal_active_fibre)):
+                c.verbose = self.verbose
                 self.gain_fibre = c
         if not self.gain_fibre.boundary_value_solver:
             raise ValueError(

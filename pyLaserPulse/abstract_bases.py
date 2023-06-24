@@ -716,6 +716,9 @@ class active_fibre_base(ABC):
 
         self.get_pump_refractive_index()  # Defined in derived class.
 
+        # Print stuff by default. Turned off in optical_assemblies.
+        self.verbose = True
+
         # Determine signal overlaps
         self.signal_overlaps = self.get_overlaps_core_light(
             self.grid.points, self.grid.lambda_window, self.effective_MFD)
@@ -1664,8 +1667,9 @@ class active_fibre_base(ABC):
         #   static counter-propagating signals
         err = []
 
-        print('Active fibre propagation\nConvergence error '
-              '(spectral density only):')
+        if self.verbose:
+            print('Active fibre propagation\nConvergence error '
+                  '(spectral density only):')
         for i in range(self.num_iters):
             if (i % 2) == 0:  # co signals static, counter signals updated
                 static = split_idx[0]
@@ -1696,7 +1700,8 @@ class active_fibre_base(ABC):
                 samples[-1, :, static] = counter_light
                 co_at_output = samples[-1, :, update]
                 err.append(np.sum(np.abs(prev_N2 - N2) / N2))
-                print('\t', err[-1])
+                if self.verbose:
+                    print('\t', err[-1])
                 if len(err) > 10:  # Dodge RuntimeWarning: Mean of empty slice
                     diff_err = np.diff(err[-10::])
                     mean_diff_err = np.mean(diff_err)
@@ -1931,7 +1936,8 @@ class active_fibre_base(ABC):
         sample_interval = int(self.num_steps / num_samples)
         err = []
 
-        print('\nConvergence error (full field):')
+        if self.verbose:
+            print('\nConvergence error (full field):')
         # START BOUNDARY CONDITION SOLVER
         for j in range(self.num_iters):
             if (j % 2) == 0:  # co signals static, counter signals updated
@@ -2028,7 +2034,8 @@ class active_fibre_base(ABC):
                 samples[-1, :, static] = counter_light
                 co_at_output = samples[-1, :, update]
                 err.append(np.sum(np.abs(prev_N2 - N2) / N2))
-                print('\t', err[-1])
+                if self.verbose:
+                    print('\t', err[-1])
                 if len(err) > 5:  # Dodge RuntimeWarning: Mean of empty slice
                     diff_err = np.diff(err)
                     mean_diff_err = np.mean(diff_err)
