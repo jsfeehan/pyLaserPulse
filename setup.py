@@ -8,6 +8,9 @@ long_description = '''pyLaserPulse is a comprehensive simulation toolbox for
     nonlinear, dispersive, passive, and active optical fibre assemblies,
     stretchers, and compressors in python.'''
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 setup(
     name='pyLaserPulse',
     version=VERSION,
@@ -17,12 +20,7 @@ setup(
     description='Python module for pulsed fibre laser and amplifier simulations',
     long_description=long_description,
     license='GPLv3',
-    install_requires=[
-        'matplotlib',
-        'numpy',
-        'scipy',
-        'PyQt5'
-    ],
+    install_requires=required,
     packages=find_packages(),
     package_data={
         'pyLaserPulse.data': [
