@@ -13,8 +13,61 @@ import os
 from abc import ABC, abstractmethod
 import numpy as np
 import scipy.constants as const
+from itertools import combinations
 
 import pyLaserPulse.utils as utils
+
+
+def complex_first_order_degree_of_coherence(
+        grid, pulse_objects, decimate=True):
+    """
+    Calculate the complex first-order degree of coherence for all fields in an
+    iterable of pulse objects.
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    pulse_objects : iterable (list, tuple, etc) of pulse objects.
+    decimate : bool
+        The complex first-order degree of coherence calculation is memory
+        intensive, and it is rare that very high resolution data is required.
+        It is recommended that decimate == True, which will result in the
+        coherence data set having a lower wavelength-domain resolution (max of
+        2^12 points).
+
+    Returns
+    -------
+    CFODC : numpy array
+        complex first-order degree of coherence for both polarization axis
+        shape (2, n_points), where n_points is set by either grid.points, or
+        the decimation (max 2^12).
+    lw : numpy array
+        Wavelength grid for the complex first-order degree of coherence.
+        This is the decimated grid.lambda_window, or equal to
+        grid.lambda_window if no decimation is used.
+    """
+    spectra = [utils.fft(po.field) for po in pulse_objects]
+    if grid.points > 2**12 and decimate:
+        decimation = int(grid.points / 2**12)
+        spectra = [s[:, ::decimation] for s in spectra]
+        lw = grid.lambda_window[::decimation]
+    else:
+        lw = grid.lambda_window
+    spectra = np.asarray(spectra)
+
+    # num_spectra choose 2
+    num_spectra = len(pulse_objects)
+    index = np.linspace(0, num_spectra-1, num_spectra)
+    index = np.array(list(combinations(index, 2)), dtype=int)
+
+    ensemble = spectra[index, :, :]
+    numerator = np.mean(
+        np.conjugate(ensemble[:, 0, :, :]) * ensemble[:, 1, :, :], 0)
+    denominator = np.sqrt(
+        np.mean(np.abs(ensemble[:, 0, :, :])**2, 0)
+        * np.mean(np.abs(ensemble[:, 1, :, :])**2, 0))
+    CFODC = utils.fftshift(np.abs(numerator / denominator), axes=1)
+    return CFODC, lw
 
 
 class _pulse_base(ABC):

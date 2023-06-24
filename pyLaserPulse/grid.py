@@ -115,6 +115,7 @@ class grid:
         self.omega_window_shift = utils.fftshift(self.omega_window)
         self.f_window = self.omega_window / (2 * np.pi)
         self.lambda_window = const.c / self.f_window
+        self.lambda_min = self.lambda_window.min()
         self.d_wl = np.gradient(-1 * self.lambda_window)
         self.energy_window = const.h * self.f_window
         self.energy_window_shift = utils.fftshift(self.energy_window)

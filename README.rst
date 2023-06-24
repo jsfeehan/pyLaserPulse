@@ -46,6 +46,8 @@ pyLaserPulse includes:
 
     * A comprehensive plot library with full Matplotlib functionality.
 
+    * Easy integration with python's multiprocessing module for parallel CPU computing.
+
     * The freedom to customize all of the above.
 
 pyLaserPulse uses python loops sparingly, relying instead on the numpy and scipy modules for most calculations to benefit from the highly optimized libraries on which these modules are based. Simulation execution time is therefore reasonable, and a modern laptop CPU (AMD Ryzen 7 5800H) can complete a typical nonlinear amplifier simulation (full GNLSE with co- and counter-propagating pump and ASE) in less than 5 s. A full system model comprising multiple amplifier stages, compression, and supercontinuum generation completes in a few minutes on the same processor (although systems which have large stretching ratios, such as fibre CPAs, require more time).

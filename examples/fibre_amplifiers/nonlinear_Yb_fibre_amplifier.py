@@ -51,7 +51,7 @@ bounds = {'co_pump_power': 1,            # co-pump power, W
 g = grid.grid(points, central_wl, max_wl)
 
 # pulse defined using the pulse module
-p = pulse.pulse(tau, P_peak, shape, f_rep, g, high_res_sampling=True)
+p = pulse.pulse(tau, P_peak, shape, f_rep, g)
 
 # Opneti isolator/WDM hybrid component from the catalogue_components module.
 iso_wdm = fc.Opneti_PM_isolator_WDM_hybrid(g, L_in, L_out, g.lambda_c)
