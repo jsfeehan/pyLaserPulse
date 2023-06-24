@@ -29,7 +29,7 @@ class assembly(ABC):
 
     def __init__(
             self, grid, components, name, wrap=False, high_res_sampling=None,
-            plot=False, data_directory=None):
+            plot=False, data_directory=None, verbose=True):
         """
         Parameters
         ----------
@@ -49,6 +49,8 @@ class assembly(ABC):
             if saving data : string
                 Directory to which data will be saved
             if not saving data : None
+        verbose : bool
+            Print information about the simulation at runtime
         """
         self.grid = grid
         # Adds coupling loss between components, effectively 'building' the
@@ -77,6 +79,7 @@ class assembly(ABC):
             if not os.path.exists(self.directory):
                 os.makedirs(self.directory)
             self.save_data = True
+        self.verbose = verbose
 
     def make_full_components_list(self, comps, wrap):
         """
@@ -210,9 +213,10 @@ class assembly(ABC):
         """
 
         def wrapper(self, pulse):
-            infostring = '\nSimulating    %s' % self.name
-            infostring += '\n' + '-' * len(infostring)
-            print(infostring)
+            if self.verbose:
+                infostring = '\nSimulating    %s' % self.name
+                infostring += '\n' + '-' * len(infostring)
+                print(infostring)
             return func(self, pulse)
         return wrapper
 
@@ -458,11 +462,11 @@ class passive_assembly(assembly):
 
     def __init__(
             self, grid, components, name, wrap=False, high_res_sampling=None,
-            plot=False, data_directory=None):
+            plot=False, data_directory=None, verbose=True):
         super().__init__(
             grid, components, name, wrap=wrap,
             high_res_sampling=high_res_sampling,
-            plot=plot, data_directory=data_directory)
+            plot=plot, data_directory=data_directory, verbose=verbose)
 
     @assembly._simulate
     def simulate(self, pulse):
@@ -553,7 +557,8 @@ class sm_fibre_laser(assembly):
     def __init__(self, grid, components, round_trips, name,
                  round_trip_output_samples=10, high_res_sampling=False,
                  high_res_sampling_limits=[0, 1],
-                 high_res_sample_interval=10e-2, plot=False):
+                 high_res_sample_interval=10e-2, plot=False,
+                 data_directory=None, verbose=True):
         """
         components_list: list of component objects. Must appear in order.
             Recommended that components_list[0] is gain.
@@ -574,7 +579,8 @@ class sm_fibre_laser(assembly):
         high_res_sample_interval: float. Distance separating high-resolution
             field samples. Default is 10 cm.
         """
-        super().__init__(grid, components, name, wrap=True, plot=plot)
+        super().__init__(grid, components, name, wrap=True, plot=plot,
+                         data_directory=data_directory, verbose=verbose)
         self.round_trips = round_trips
         self.round_trip_output_samples = round_trip_output_samples
         if round_trip_output_samples > self.round_trips:
@@ -677,7 +683,7 @@ class sm_fibre_amplifier(assembly):
     """
 
     def __init__(self, grid, components, co_ASE=None, high_res_sampling=None,
-                 plot=False, name=None, data_directory=None):
+                 plot=False, name=None, data_directory=None, verbose=True):
         """
         grid: grid class.
         components: list of component objects. Must appear in order.
@@ -698,10 +704,15 @@ class sm_fibre_amplifier(assembly):
         name: str.
             String identifier for the amplifier object. Cannot be None if
             plot == True
+        data_directory : str or Nonetype
+            Save the data to data_directory if not None
+        verbose : bool
+            Print information about the simulation at runtime
         """
         super().__init__(
             grid, components, wrap=False, high_res_sampling=high_res_sampling,
-            plot=plot, name=name, data_directory=data_directory)
+            plot=plot, name=name, data_directory=data_directory,
+            verbose=verbose)
 
         for c in self.components:
             if (isinstance(c, bc.step_index_active_fibre)
