@@ -18,21 +18,20 @@ James Feehan <pylaserpulse.outlook.com>
 """
 
 
-import os
 # Limit the number of threads spawned by any process to 1.
+import os
 os.environ["OMP_NUM_THREADS"] = "1"  # for openBLAS or similar
 # os.environ["MKL_NUM_THREADS"] = "1"  # For Intel math kernel library
 
-from pyLaserPulse import grid
-from pyLaserPulse import pulse
-from pyLaserPulse import optical_assemblies
-import pyLaserPulse.catalogue_components.active_fibres as af
-import pyLaserPulse.catalogue_components.fibre_components as fc
-
-import numpy as np
-import multiprocessing as mp
-import matplotlib.pyplot as plt
 import psutil
+import matplotlib.pyplot as plt
+import multiprocessing as mp
+import numpy as np
+import pyLaserPulse.catalogue_components.fibre_components as fc
+import pyLaserPulse.catalogue_components.active_fibres as af
+from pyLaserPulse import optical_assemblies
+from pyLaserPulse import pulse
+from pyLaserPulse import grid
 
 
 def ydfa_sim(_g):
@@ -86,10 +85,10 @@ if __name__ == "__main__":
     g = grid.grid(points, central_wl, max_wl)
 
     num_processes = psutil.cpu_count(logical=False)  # only use physical cores
-    num_simulations = 4*num_processes  # no. of simulations in CFODC ensemble
+    num_simulations = 4 * num_processes  # no. of simulations in CFODC ensemble
     gridlist = [[g]] * num_simulations  # iterable of func arguments
     pool = mp.get_context("spawn").Pool(
-            processes=num_processes, maxtasksperchild=1)
+        processes=num_processes, maxtasksperchild=1)
     output_pulses = pool.starmap(ydfa_sim, gridlist)
     pool.close()
     pool.join()
@@ -110,21 +109,21 @@ if __name__ == "__main__":
     ax2 = fig.add_subplot(122)
     for p in range(2):  # iterate over polarization basis vectors
         l, = ax1.semilogy(
-            g.lambda_window*1e9, np.average(PSDs[:, p, :], axis=0),
+            g.lambda_window * 1e9, np.average(PSDs[:, p, :], axis=0),
             c=dark_colors[p])
         for i in range(num_simulations):
             ax1.semilogy(
-                g.lambda_window*1e9, PSDs[i, p, :], c=colors[p], alpha=0.1)
+                g.lambda_window * 1e9, PSDs[i, p, :], c=colors[p], alpha=0.1)
         ax2.plot(
-            lw*1e9, cfodc[p, :], c=['k', 'grey'][p], ls=['-', '--'][p])
+            lw * 1e9, cfodc[p, :], c=['k', 'grey'][p], ls=['-', '--'][p])
         legend1.append(l)
     ax1.set_ylabel('Power spectral density, mW/nm')
     ax1.set_xlabel('Wavelength, nm')
     ax2.set_ylabel('Complex first-order degree of coherence')
     ax2.set_xlabel('Wavelength, nm')
-    ax1.set_xlim([1e9*g.lambda_min, 1e9*g.lambda_max])
-    ax2.set_xlim([1e9*g.lambda_min, 1e9*g.lambda_max])
-    ax1.legend(legend1, ['$S_{x}(\lambda)$', '$S_{y}(\lambda)$'])
-    ax2.legend(['$g_{x}(\lambda)$', '$g_{y}(\lambda)$'])
+    ax1.set_xlim([1e9 * g.lambda_min, 1e9 * g.lambda_max])
+    ax2.set_xlim([1e9 * g.lambda_min, 1e9 * g.lambda_max])
+    ax1.legend(legend1, ['$S_{x}(\\lambda)$', '$S_{y}(\\lambda)$'])
+    ax2.legend(['$g_{x}(\\lambda)$', '$g_{y}(\\lambda)$'])
     fig.tight_layout()
     plt.show()
