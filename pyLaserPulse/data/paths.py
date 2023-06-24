@@ -19,7 +19,7 @@ main_dir = os.path.dirname(os.path.abspath(__file__))
 class _components:
     class _loss_spectra:
         def __init__(self):
-            local_dir = main_dir + '\\components\\loss_spectra\\'
+            local_dir = main_dir + '/components/loss_spectra/'
             self.Andover_155FS10_25_bandpass = local_dir + \
                 'Andover_155FS10_25_bandpass.dat'
             self.fused_WDM_976_1030 = local_dir + \
@@ -41,24 +41,24 @@ class _components:
 class _materials:
     class _loss_spectra:
         def __init__(self):
-            local_dir = main_dir + '\\materials\\loss_spectra\\'
+            local_dir = main_dir + '/materials/loss_spectra/'
             self.silica = local_dir + 'silica.dat'
 
     class _Raman_profiles:
         def __init__(self):
-            local_dir = main_dir + '\\materials\\Raman_profiles\\'
+            local_dir = main_dir + '/materials/Raman_profiles/'
             self.silica = local_dir + 'silica.dat'
 
     class _reflectivities:
         def __init__(self):
-            local_dir = main_dir + '\\materials\\reflectivity_spectra\\'
+            local_dir = main_dir + '/materials/reflectivity_spectra/'
             self.aluminium = local_dir + 'aluminium.dat'
             self.gold = local_dir + 'gold.dat'
             self.silver = local_dir + 'silver.dat'
 
     class _Sellmeier_coefficients:
         def __init__(self):
-            local_dir = main_dir + '\\materials\\Sellmeier_coefficients\\'
+            local_dir = main_dir + '/materials/Sellmeier_coefficients/'
             self.silica = local_dir + 'silica.dat'
 
     def __init__(self):
@@ -71,7 +71,7 @@ class _materials:
 class _fibres:
     class _cross_sections:
         def __init__(self):
-            local_dir = main_dir + '\\fibres\\cross_sections\\'
+            local_dir = main_dir + '/fibres/cross_sections/'
             self.Er_silica = local_dir + 'Er_silica.dat'
             self.Tm_silica = local_dir + 'Tm_silica.dat'
             self.Yb_Al_silica = local_dir + 'Yb_Al_silica.dat'
@@ -85,7 +85,7 @@ class _fibres:
 class _single_plot_window:
     def __init__(self):
         # need to remove 'data' from main_dir
-        local_dir = main_dir[0:-4] + '\\single_plot_window\\'
+        local_dir = main_dir[0:-4] + '/single_plot_window/'
         self.icon = local_dir + 'icon.png'
 
 
