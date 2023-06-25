@@ -205,7 +205,7 @@ All components have a ``verbose`` keyword argument, but this is overridden by th
 Example 2 - Optical wavebreaking in all-normal-dispersion PCF and grating-based pulse compression
 =================================================================================================
 
-The code below models supercontinuum generation in PCF and compression of the spectrally-broadened pulses using a grating-based compressor. 100 fs, 5 kW seed pulses with a central wavelength of 1050 nm first pass through a free-space isolator (modelled using the ``base_components.component`` class) before being coupling into the PCF (modelled using the ``catalogue_components.passive_fibre.NKT_NL_1050_NEG_1`` class). The spectrally broadened and chirped pulses then propagate through the compressor (modelled using the ``base_components.grating_compressor`` class). The ``optimize`` keyword argument is ``True`` when the compressor is instantiated, so the compressor will be optimized for maximum pulse peak power by adjusting the grating angle and separation (diffraction efficiency vs. angle of incidence is incorporated automatically). The ``verbose`` keyword argument, also ``True``, means that the results of this optimization will be printed to the terminal.
+The code below models supercontinuum generation in PCF and compression of the spectrally-broadened pulses using a grating-based compressor. 100 fs, 5 kW seed pulses with a central wavelength of 1050 nm first pass through a free-space isolator (modelled using the ``base_components.component`` class) before being coupling into the PCF (modelled using the ``catalogue_components.passive_fibre.NKT_NL_1050_NEG_1`` class). The spectrally broadened and chirped pulses then propagate through the compressor (modelled using the ``base_components.grating_compressor`` class). The ``optimize`` keyword argument is ``True`` when the compressor is instantiated, so the compressor will be optimized for maximum pulse peak power by adjusting the grating angle and separation (diffraction efficiency vs. angle of incidence is incorporated automatically). The ``verbose`` keyword argument of the ``compression`` optical assembly was also ``True``, so the results of this optimization will be printed to the terminal.
 
 .. code:: python
     :number-lines:
@@ -310,7 +310,7 @@ A few plots from this simulation are shown below. The development of the pulse a
 
 .. image:: docs/images/ANDi_SCG_grating_compression.png
 
-Keyword argument ``verbose`` was ``True`` when the ``compression`` optical assembly was instantiated, so information regarding the compressor optimization and the optimized compressor setup is printed to the terminal. This output is as follows:
+This information regarding the compressor optimization and the optimized compressor setup is as follows:
 
 .. code:: bash
     :number-lines:
