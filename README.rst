@@ -130,7 +130,7 @@ The example below shows how to model a simple Yb-doped fibre amplifier comprised
         g = grid.grid(points, central_wl, max_wl)
 
         # pulse defined using the pulse module
-        p = pulse.pulse(tau, P_peak, shape, f_rep, g, high_res_sampling=True)
+        p = pulse.pulse(tau, P_peak, shape, f_rep, g)
 
         # Opneti isolator/WDM hybrid component from the catalogue_components module.
         iso_wdm = fc.Opneti_PM_isolator_WDM_hybrid(g, L_in, L_out, g.lambda_c)
@@ -145,8 +145,8 @@ The example below shows how to model a simple Yb-doped fibre amplifier comprised
         ################################################################
         component_list = [iso_wdm, ydf]
         amp = optical_assemblies.sm_fibre_amplifier(
-                g, component_list, plot=True, name='amp 1', high_res_sampling=100,
-                data_directory=directory)
+            g, component_list, plot=True, name='amp 1', high_res_sampling=100,
+            data_directory=directory, verbose=True)
 
         ######################
         # Run the simulation #
@@ -168,6 +168,39 @@ The ``optical_assemblies`` module used in the example above not only provides a 
 
 .. image:: docs/videos/simulation_gallery.gif
     :align: center
+
+All components have a ``verbose`` keyword argument, but this is overridden by the same keyword argument passed to the ``__init__`` function of classes in the ``optical_assemblies`` module. When True, information about the progress of the simulation is printed to the terminal. The output for this example is given below. The amplifier name is printed, as well as the name of each component, the percentage propagation for the input and output fibres of each component, and the convergence of the boundary value solver for the active fibre.
+
+.. code:: bash
+    :number-lines:
+
+        Simulating    amp 1
+        --------------------
+
+        Opneti_PM_isolator_WDM_hybrid
+                100.0 %
+
+                100.0 %
+
+
+        fibreToFibreCoupling
+
+        Nufern_PM_YSF_HI_HP
+        Convergence error (spectral density only):
+                 55.38206546671114
+                 12.000573541512274
+                 3.46398001489616
+                 0.9014605622333454
+                 0.24244909411684906
+                 0.06411436939453781
+
+        Convergence error (full field):
+                 16.93329516050609
+                 0.9818041820463349
+                 0.19351727715062822
+                 0.07243049202738491
+
+
 
 Example 2 - Optical wavebreaking in all-normal-dispersion PCF and grating-based pulse compression
 =================================================================================================
@@ -243,8 +276,7 @@ The code below models supercontinuum generation in PCF and compression of the sp
         # grating compressor defined using the base_components module
         gc = base_components.grating_compressor(
             loss, transmission, coating, g.lambda_c, epsilon, theta, beamsplitting,
-            crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True,
-            verbose=True)
+            crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True)
 
         ################################################################
         # Use the optical_assemblies module for automatic inclusion of #
@@ -253,13 +285,13 @@ The code below models supercontinuum generation in PCF and compression of the sp
 
         scg_components = [iso, pcf]
         scg = optical_assemblies.passive_assembly(
-                g, scg_components, 'scg', high_res_sampling=100,
-                plot=True, data_directory=directory)
+            g, scg_components, 'scg', high_res_sampling=100,
+            plot=True, data_directory=directory, verbose=True)
 
         compressor_components = [gc]
         compression = optical_assemblies.passive_assembly(
-                g, compressor_components, 'compressor', plot=True,
-                data_directory=directory)
+            g, compressor_components, 'compressor', plot=True,
+            data_directory=directory, verbose=True)
 
         ######################
         # Run the simulation #
@@ -278,7 +310,7 @@ A few plots from this simulation are shown below. The development of the pulse a
 
 .. image:: docs/images/ANDi_SCG_grating_compression.png
 
-Keyword argument ``verbose`` was set to ``True`` when the compressor was instantiated, so information regarding the compressor optimization and the optimized compressor setup is printed to the terminal. This output is as follows:
+Keyword argument ``verbose`` was set to ``True`` when the ``compression`` optical assembly was instantiated, so information regarding the compressor optimization and the optimized compressor setup is printed to the terminal. This output is as follows:
 
 .. code:: bash
     :number-lines:
