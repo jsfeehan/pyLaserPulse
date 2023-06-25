@@ -15,8 +15,8 @@ Modules
 =======
 .. autosummary::
     :toctree: modules
+    pyLaserPulse.utils
 
-    pyLaserPulse    
 
 
 Indices and tables
