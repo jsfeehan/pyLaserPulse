@@ -169,7 +169,7 @@ The ``optical_assemblies`` module used in the example above not only provides a 
 .. image:: docs/videos/simulation_gallery.gif
     :align: center
 
-All components have a ``verbose`` keyword argument, but this is overridden by the same keyword argument passed to the ``__init__`` function of classes in the ``optical_assemblies`` module. When True, information about the progress of the simulation is printed to the terminal. The output for this example is given below. The amplifier name is printed, as well as the name of each component, the percentage propagation for the input and output fibres of each component, and the convergence of the boundary value solver for the active fibre.
+All components have a ``verbose`` keyword argument, but this is overridden by the same keyword argument passed to the ``__init__`` method of classes in the ``optical_assemblies`` module. When True, information about the progress of the simulation is printed to the terminal. The output for this example is given below. The amplifier name is printed, as well as the name of each component, the percentage propagation for the input and output fibres of each component, and the convergence of the boundary value solver for the active fibre.
 
 .. code:: bash
     :number-lines:
