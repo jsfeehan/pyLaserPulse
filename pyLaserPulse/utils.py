@@ -226,7 +226,8 @@ def load_Raman(filename, time_window, dt):
     numpy array
         Raman data from filename interpolated onto time_window.
     """
-    data = np.loadtxt(filename, delimiter='\t', skiprows=1)
+    data = np.loadtxt(filename, delimiter='\t', skiprows=4)
+    scaling = np.loadtxt(filename, skiprows=1, max_rows=1)
     time = data[:, 0] * 1e-15
     Raman = data[:, 1:3]
     time_1 = np.linspace(0, np.amax(time), len(time))
@@ -236,9 +237,8 @@ def load_Raman(filename, time_window, dt):
     Raman[0:len(interp_Raman), :] = interp_Raman
     Raman = fft(Raman / (np.sum(Raman, axis=0)), axis=0) * (2 * np.pi)**.5 / dt
 
-    # 1/8.333 gives proper peak value scaling of // to _|_ contributions
-    # for fused silica
-    Raman[:, 1] = (1 / 8.333) * Raman[:, 1]
+    # Scale // and _|_ components
+    Raman[:, 1] = (1 / scaling) * Raman[:, 1]
     return Raman
 
 
