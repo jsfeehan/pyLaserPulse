@@ -11,6 +11,10 @@ for high gain at the seed wavelength. The CFBG dispersion Taylor coefficients
 are calculated from the initial compressor dispersion and the net fibre
 dispersion.
 
+This example also shows how co-propagating ASE can be passed from one amplifier
+to the next using the optical_assemblies module and the co_ASE keyword
+argument.
+
 This simulation takes some time to run. This is because both a broad time and
 frequency grid are required for strongly-chirped femtosecond pulses, and this
 requires a lot of grid points. Additionally, cladding-pumped amplifiers take a
