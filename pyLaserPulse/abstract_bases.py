@@ -35,7 +35,7 @@ class fibre_base(ABC):
     """
 
     def __init__(self, g, length, loss_file, Raman_file, beat_length, n2, fR,
-                 tol):
+                 tol, verbose=False):
         """
         Parameters
         ----------
@@ -59,6 +59,8 @@ class fibre_base(ABC):
         tol : float.
             Propagation error tolerance for the conservation quantity error
             method propagation step sizing algorithm.
+        verbose : bool
+            Print information to terminal if True
         """
         self.grid = g
         self.L = length
@@ -71,6 +73,23 @@ class fibre_base(ABC):
             interp_kind='linear', fill_value='extrapolate', input_log=True,
             return_log=False)
         self.Raman = utils.load_Raman(Raman_file, g.time_window, g.dt)
+        self.verbose = verbose
+
+    def make_verbose(self):
+        """
+        Change self.verbose to True
+        Called by optical_assemblies. If the optical assembly verbosity is
+        True, all component verbosities are also set to True.
+        """
+        self.verbose = True
+
+    def make_silent(self):
+        """
+        Change self.verbose to False
+        Called by optical_assemblies. If the optical assembly verbosity is
+        False, all component verbosities are also set to False.
+        """
+        self.verbose = False
 
     @abstractmethod
     def get_propagation_parameters(cls):
@@ -463,7 +482,12 @@ class fibre_base(ABC):
                             field_samples, dz_samples)
                 else:
                     return np.ones_like(ufft) * np.nan, dz_updated
+            if self.verbose:
+                print("\t%.1f %%" % (100 * propagated_distance / self.L),
+                      end='\r')
 
+        if self.verbose:
+            print("\n")
         if sampling:
             dz_samples.append(sample_interval)
             field_samples.append(utils.ifft(ufft, axis=-1))
@@ -547,7 +571,7 @@ class active_fibre_base(ABC):
     def __init__(
             self, g, N_ions, cross_section_file, seed_rep_rate, pump_points,
             pump_wl_lims, Sellmeier_file, lifetime, cladding_pumping,
-            time_domain_gain, boundary_conditions):
+            time_domain_gain, boundary_conditions, verbose=True):
         """
         Parameters
         ----------
@@ -582,6 +606,8 @@ class active_fibre_base(ABC):
             pump, signal, and ASE light in both directions through the fibre.
             The type of simulation -- i.e., single-pass or full boundary value
             solver -- is determined by this dictionary.
+        verbose : bool
+            Print information to terminal if True
 
             Valid keys:
                 co_pump_power : float
@@ -716,8 +742,9 @@ class active_fibre_base(ABC):
 
         self.get_pump_refractive_index()  # Defined in derived class.
 
-        # Print stuff by default. Turned off in optical_assemblies.
-        self.verbose = True
+        # Overridden by optical assemblies, but still required if the optical
+        # assemblies module is not used.
+        self.verbose = verbose 
 
         # Determine signal overlaps
         self.signal_overlaps = self.get_overlaps_core_light(
@@ -751,6 +778,22 @@ class active_fibre_base(ABC):
                 self.pump_effective_MFD)
 
         self._precalculate_propagation_values()
+
+    def make_verbose(self):
+        """
+        Change self.verbose to True
+        Called by optical_assemblies. If the optical assembly verbosity is
+        True, all component verbosities are also set to True.
+        """
+        self.verbose = True
+
+    def make_silent(self):
+        """
+        Change self.verbose to False
+        Called by optical_assemblies. If the optical assembly verbosity is
+        False, all component verbosities are also set to False.
+        """
+        self.verbose = False
 
     def _precalculate_propagation_values(self):
         """
@@ -1668,8 +1711,7 @@ class active_fibre_base(ABC):
         err = []
 
         if self.verbose:
-            print('Active fibre propagation\nConvergence error '
-                  '(spectral density only):')
+            print('Convergence error (spectral density only):')
         for i in range(self.num_iters):
             if (i % 2) == 0:  # co signals static, counter signals updated
                 static = split_idx[0]
@@ -2577,6 +2619,36 @@ class component_base(loss_spectrum_base, ABC):
             raise ValueError("Inapproporate value %r for crosstalk,"
                              " which must be a floating point value between 0"
                              " and 1." % crosstalk)
+
+    def make_verbose(self):
+        """
+        Change self.verbose to True
+        Called by optical_assemblies. If the optical assembly verbosity is
+        True, all component verbosities are also set to True.
+
+        Notes
+        -----
+        Verbosity is not set in __init__ because there is little to report
+        about standard component propagation. However, make_verbose is included
+        as a method because some derived classes CAN make use of verbosty
+        (e.g., grating compressors).
+        """
+        self.verbose = True
+
+    def make_silent(self):
+        """
+        Change self.verbose to False
+        Called by optical_assemblies. If the optical assembly verbosity is
+        False, all component verbosities are also set to False.
+
+        Notes
+        -----
+        Verbosity is not set in __init__ because there is little to report
+        about standard component propagation. However, make_silent is included
+        as a method because some derived classes CAN make use of verbosty
+        (e.g., grating compressors).
+        """
+        self.verbose = False
 
     def make_transmission_spectrum(self):
         """

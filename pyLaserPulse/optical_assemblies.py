@@ -81,6 +81,20 @@ class assembly(ABC):
             self.save_data = True
         self.verbose = verbose
 
+        # Override verbosity of all components if self.verbose
+        if self.verbose:
+            for c in self.components:
+                try:
+                    c.make_verbose()
+                except AttributeError:  # e.g., coupling classes.
+                    pass
+        else:
+            for c in self.components:
+                try:
+                    c.make_silent()
+                except AttributeError:  # e.g., coupling classes.
+                    pass
+
     def make_full_components_list(self, comps, wrap):
         """
         Cycle through components and introduce coupling losses between them
@@ -496,6 +510,8 @@ class passive_assembly(assembly):
 
         # Propagate through each component
         for val in self.components:
+            if self.verbose:
+                print('\n' + val.__class__.__name__)
             pulse = val.propagate(pulse)
 
             # If sampling is active, retrieve component locations and skip
@@ -716,12 +732,10 @@ class sm_fibre_amplifier(assembly):
             plot=plot, name=name, data_directory=data_directory,
             verbose=verbose)
 
-        # Copy gain fibre (some methods also useful here) and set verbosity of
-        # gain fibre to verbosity of optical assembly.
+        # Copy gain fibre (some methods also useful here)
         for c in self.components:
             if (isinstance(c, bc.step_index_active_fibre)
                     or isinstance(c, bc.photonic_crystal_active_fibre)):
-                c.verbose = self.verbose
                 self.gain_fibre = c
         if not self.gain_fibre.boundary_value_solver:
             raise ValueError(
@@ -814,6 +828,8 @@ class sm_fibre_amplifier(assembly):
 
         # Propagate through each component
         for val in self.components:
+            if self.verbose:
+                print('\n' + val.__class__.__name__)
             pulse = val.propagate(pulse)
 
             # Sample pulse PSD immediately after gain fibre

@@ -91,18 +91,18 @@ if __name__ == "__main__":
         PSDs[i, :, :] = op.power_spectral_density
 
     colors = ['seagreen', 'lightcoral']
-    dark_colors = ['darkgreen', 'indianred']
+    dark_colors = ['darkgreen', 'darkred']
     legend1 = []
     fig = plt.figure(num=1, figsize=(8, 4))
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
     for p in range(2):  # iterate over polarization basis vectors
-        l, = ax1.semilogy(
-            g.lambda_window * 1e9, np.average(PSDs[:, p, :], axis=0),
-            c=dark_colors[p])
         for i in range(num_simulations):
             ax1.semilogy(
                 g.lambda_window * 1e9, PSDs[i, p, :], c=colors[p], alpha=0.1)
+        l, = ax1.semilogy(
+            g.lambda_window * 1e9, np.average(PSDs[:, p, :], axis=0),
+            c=dark_colors[p])
         ax2.plot(
             lw * 1e9, cfodc[p, :], c=['k', 'grey'][p], ls=['-', '--'][p])
         legend1.append(l)

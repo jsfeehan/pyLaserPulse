@@ -87,7 +87,7 @@ ydf.add_pump(950e-9, 1e-9, 150, p.repetition_rate, 'counter')
 component_list = [ydf]
 amp = optical_assemblies.sm_fibre_amplifier(
     g, component_list, plot=True, name='amp 1', high_res_sampling=100,
-    data_directory=directory)
+    data_directory=directory, verbose=True)
 
 ######################
 # Run the simulation #

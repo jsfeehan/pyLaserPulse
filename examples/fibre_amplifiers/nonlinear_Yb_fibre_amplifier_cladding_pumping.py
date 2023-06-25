@@ -66,7 +66,7 @@ ydf = af.Nufern_PLMA_YDF_25_250(
 component_list = [pmf, ydf]
 amp = optical_assemblies.sm_fibre_amplifier(
         g, component_list, plot=True, name='amp 1', high_res_sampling=100,
-        data_directory=directory)
+        data_directory=directory, verbose=True)
 
 ######################
 # Run the simulation #

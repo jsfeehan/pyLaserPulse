@@ -33,7 +33,7 @@ class step_index_passive_fibre(bases.fibre_base):
     """
 
     def __init__(self, g, length, loss_file, Raman_file, core_diam, NA,
-                 beat_length, n2, fR, tol, Sellmeier_file):
+                 beat_length, n2, fR, tol, Sellmeier_file, verbose=False):
         """
         Parameters
         ----------
@@ -62,9 +62,12 @@ class step_index_passive_fibre(bases.fibre_base):
         Sellmeier_file : string
             Absolute path to the Sellmeier coefficients.
             See pyLaserPulse.data.paths.materials.Sellmeier_coefficients.
+        verbose : bool
+            Print information to terminal if True
         """
         super().__init__(
-            g, length, loss_file, Raman_file, beat_length, n2, fR, tol)
+            g, length, loss_file, Raman_file, beat_length, n2, fR, tol,
+            verbose=verbose)
         self.core_diam = core_diam
         self.NA = NA
         self.cladding_ref_index = utils.Sellmeier(
@@ -140,7 +143,8 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
 
     def __init__(
             self, g, length, loss_file, Raman_file, hole_pitch,
-            hole_diam_over_pitch, beat_length, n2, fR, tol, Sellmeier_file):
+            hole_diam_over_pitch, beat_length, n2, fR, tol, Sellmeier_file,
+            verbose=False):
         """
         Parameters
         ----------
@@ -172,7 +176,8 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
             See pyLaserPulse.data.paths.materials.Sellmeier_coefficients.
         """
         super().__init__(
-            g, length, loss_file, Raman_file, beat_length, n2, fR, tol)
+            g, length, loss_file, Raman_file, beat_length, n2, fR, tol,
+            verbose=verbose)
         self.hole_diam = hole_diam_over_pitch
         self.hole_pitch = hole_pitch
         self.core_diam = 2 * self.hole_pitch / np.sqrt(3)
@@ -250,7 +255,8 @@ class step_index_active_fibre(
                  NA, beat_length, n2, fR, tol, doping_concentration,
                  cross_section_file, seed_repetition_rate, pump_points,
                  ASE_wl_lims, Sellmeier_file, boundary_conditions,
-                 lifetime=1.5e-3, cladding_pumping={}, time_domain_gain=False):
+                 lifetime=1.5e-3, cladding_pumping={}, time_domain_gain=False,
+                 verbose=False):
         """
         Parameters
         ----------
@@ -371,7 +377,7 @@ class step_index_active_fibre(
         # Instantiate passive fibre
         step_index_passive_fibre.__init__(
             self, g, length, loss_file, Raman_file, core_diam, NA, beat_length,
-            n2, fR, tol, Sellmeier_file)
+            n2, fR, tol, Sellmeier_file, verbose=verbose)
 
         # Determine if core or cladding pumping and run checks on dictionaries
         # for cladding pumping and full ASE.
@@ -392,7 +398,8 @@ class step_index_active_fibre(
         bases.active_fibre_base.__init__(
             self, g, doping_concentration, cross_section_file,
             seed_repetition_rate, pump_points, ASE_wl_lims, Sellmeier_file,
-            lifetime, cladding_pumping, time_domain_gain, boundary_conditions)
+            lifetime, cladding_pumping, time_domain_gain, boundary_conditions,
+            verbose=verbose)
 
         # Get core ASE parameters if cladding pumping.
         if self.cladding_pumping:
@@ -471,7 +478,8 @@ class photonic_crystal_active_fibre(
             hole_diam_over_pitch, beat_length, n2, fR, tol,
             doping_concentration, cross_section_file, seed_repetition_rate,
             pump_points, ASE_wl_lims, Sellmeier_file, boundary_conditions,
-            lifetime=1.5e-3, cladding_pumping={}, time_domain_gain=False):
+            lifetime=1.5e-3, cladding_pumping={}, time_domain_gain=False,
+            verbose=False):
         """
         Parameters
         ----------
@@ -539,6 +547,8 @@ class photonic_crystal_active_fibre(
             True if mixed-domain gain operator (i.e., both frequency- and
             time-domain gain) is to be used. If False, only frequency-
             domain gain is simulated.
+        verbose : bool
+            Print information to terminal if True
 
         Notes
         -----
@@ -591,7 +601,8 @@ class photonic_crystal_active_fibre(
         # Instantiate passive fibre
         photonic_crystal_passive_fibre.__init__(
             self, g, length, loss_file, Raman_file, hole_pitch,
-            hole_diam_over_pitch, beat_length, n2, fR, tol, Sellmeier_file)
+            hole_diam_over_pitch, beat_length, n2, fR, tol, Sellmeier_file,
+            verbose=verbose)
 
         # Determine if core or cladding pumping and run checks on dictionaries
         # for cladding pumping and full ASE.
@@ -611,9 +622,8 @@ class photonic_crystal_active_fibre(
         bases.active_fibre_base.__init__(
             self, g, doping_concentration, cross_section_file,
             seed_repetition_rate, pump_points, ASE_wl_lims, Sellmeier_file,
-            lifetime, cladding_pumping, time_domain_gain, boundary_conditions)
-        # self, g, doping_concentration, cross_section_file, Sellmeier_file,
-        # lifetime, cladding_pumping, time_domain_gain, boundary_conditions)
+            lifetime, cladding_pumping, time_domain_gain, boundary_conditions,
+            verbose=verbose)
 
         # Get core ASE parameters if cladding pumping.
         if self.cladding_pumping:
@@ -776,7 +786,7 @@ class fibre_component():
                  transmission_bandwidth, lambda_c, epsilon, theta,
                  beamsplitting, crosstalk, order=2, output_coupler=False,
                  coupler_type="beamsplitter", beta_list=None,
-                 component_gdm=0):
+                 component_gdm=0, verbose=False):
         """
         Parameters
         ----------
@@ -834,6 +844,8 @@ class fibre_component():
             Delay accumulated between polarization components after
             propagating through the component. If gdm > 0, x is the slow
             axis.
+        verbose : bool
+            Print information to terminal if True
         """
         self.input_fibre = input_fibre
         self.output_fibre = output_fibre
@@ -842,6 +854,28 @@ class fibre_component():
                                    order=order, output_coupler=output_coupler,
                                    coupler_type=coupler_type,
                                    beta_list=beta_list, gdm=component_gdm)
+        if verbose:
+            self.make_verbose()
+
+    def make_verbose(self):
+        """
+        Change self.verbose to True
+        Called by optical_assemblies. If the optical assembly verbosity is
+        True, all component verbosities are also set to True.
+        """
+        self.input_fibre.make_verbose()
+        self.component.make_verbose()
+        self.output_fibre.make_verbose()
+
+    def make_silent(self):
+        """
+        Change self.verbose to False
+        Called by optical_assemblies. If the optical assembly verbosity is
+        False, all component verbosities are also set to False.
+        """
+        self.input_fibre.make_silent()
+        self.component.make_silent()
+        self.output_fibre.make_silent()
 
     def propagate(self, pulse):
         """
@@ -1071,7 +1105,8 @@ class fibre_pulse_picker():
                  transmission_bandwidth, lambda_c, epsilon, theta,
                  beamsplitting, crosstalk, time_open, rate_reduction_factor,
                  input_rep_rate, order=2, output_coupler=False,
-                 coupler_type="polarization", beta_list=None, gdm=0):
+                 coupler_type="polarization", beta_list=None, gdm=0,
+                 verbose=False):
         """
         Parameters
         ----------
@@ -1138,6 +1173,8 @@ class fibre_pulse_picker():
             Delay accumulated between polarization components after
             propagating through the component. If gdm > 0, x is the slow
             axis.
+        verbose : bool
+            Print information to terminal if True
 
         Notes
         -----
@@ -1177,6 +1214,29 @@ class fibre_pulse_picker():
             beamsplitting, g, crosstalk, time_open, rate_reduction_factor,
             input_rep_rate, order=order, output_coupler=output_coupler,
             coupler_type=coupler_type, beta_list=beta_list, gdm=gdm)
+
+        if verbose:
+            self.make_verbose()
+
+    def make_verbose(self):
+        """
+        Change self.verbose to True
+        Called by optical_assemblies. If the optical assembly verbosity is
+        True, all component verbosities are also set to True.
+        """
+        self.input_fibre.make_verbose()
+        self.pulse_picker.make_verbose()
+        self.output_fibre.make_verbose()
+
+    def make_silent(self):
+        """
+        Change self.verbose to False
+        Called by optical_assemblies. If the optical assembly verbosity is
+        False, all component verbosities are also set to False.
+        """
+        self.input_fibre.make_silent()
+        self.component.make_silent()
+        self.output_fibre.make_silent()
 
     def propagate(self, pulse):
         """

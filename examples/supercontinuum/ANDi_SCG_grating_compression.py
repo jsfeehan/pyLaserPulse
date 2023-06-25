@@ -68,8 +68,7 @@ pcf = pf.NKT_NL_1050_NEG_1(g, L, 1e-6, L_beat)
 # grating compressor defined using the base_components module
 gc = base_components.grating_compressor(
     loss, transmission, coating, g.lambda_c, epsilon, theta, beamsplitting,
-    crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True,
-    verbose=True)
+    crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True)
 
 ################################################################
 # Use the optical_assemblies module for automatic inclusion of #
@@ -79,12 +78,12 @@ gc = base_components.grating_compressor(
 scg_components = [iso, pcf]
 scg = optical_assemblies.passive_assembly(
     g, scg_components, 'scg', high_res_sampling=100,
-    plot=True, data_directory=directory)
+    plot=True, data_directory=directory, verbose=True)
 
 compressor_components = [gc]
 compression = optical_assemblies.passive_assembly(
     g, compressor_components, 'compressor', plot=True,
-    data_directory=directory)
+    data_directory=directory, verbose=True)
 
 ######################
 # Run the simulation #

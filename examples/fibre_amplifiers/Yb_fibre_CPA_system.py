@@ -77,7 +77,7 @@ TL_FWHM = utils.get_width(g.time_window*1e15, p.transform_limit)
 print("Starting FWHM duration: %.3f ps"
       "\nStarting FWHM spectral width: %.3f nm"
       "\nStarting transform limited FWHM duration: %.3f fs"
-      "\n Starting average power: %.3f mW"
+      "\nStarting average power: %.3f mW"
       "\nStarting pulse energy: %.3f nJ"
       % (T_FWHM, S_FWHM, TL_FWHM, p.average_power*1e3, p.pulse_energy*1e9))
 
@@ -92,8 +92,8 @@ ps = 1e-12
 ##########################################
 # Repeat components and generic settings #
 ##########################################
-tol = 1e-4  # integration tolerance for CQEM
-crosstalk = 0  # General crosstalk value for standard components.
+tol = 1e-4        # integration tolerance for CQEM
+crosstalk = 1e-5  # General crosstalk value for standard components.
 pm_pigtail = pf.PM980_XP(g, 0.3, tol)
 dc_pm_pigtail = pf.Nufern_PM_GDF_5_130(g, 0.3, tol)
 dc_10_125_pm_pigtail = pf.Nufern_PLMA_GDF_10_125_M(g, 0.3, tol)
@@ -151,7 +151,7 @@ components1 = [
         circulator_1_to_2, cfbg, circulator_2_to_3, combiner1, ydf1, bp1, aom]
 amp_1 = optical_assemblies.sm_fibre_amplifier(
     g, components1, high_res_sampling=num_samples, plot=True,
-    data_directory=directory, name='amp 1')
+    data_directory=directory, name='amp 1', verbose=True)
 p = amp_1.simulate(p)
 
 
@@ -178,7 +178,7 @@ components2 = [iso1, combiner2, ydf2, bp2]  # , aom]
 amp_2 = optical_assemblies.sm_fibre_amplifier(
     g, components2, high_res_sampling=num_samples, plot=True,
     data_directory=directory, name='amp 2',
-    co_ASE=amp_1.co_core_ASE_ESD_output)
+    co_ASE=amp_1.co_core_ASE_ESD_output, verbose=True)
 p = amp_2.simulate(p)
 
 
@@ -204,7 +204,7 @@ components3 = [iso2, combiner3, ydf3]
 amp_3 = optical_assemblies.sm_fibre_amplifier(
     g, components3, high_res_sampling=num_samples, plot=True,
     data_directory=directory, name='amp 3',
-    co_ASE=amp_2.co_core_ASE_ESD_output)
+    co_ASE=amp_2.co_core_ASE_ESD_output, verbose=True)
 p = amp_3.simulate(p)
 
 
@@ -222,10 +222,10 @@ sep_initial = 90e-2    # initial guess for grating separation
 angle_initial = 0.7   # initial guess for incidence angle, rad
 gc = base_components.grating_compressor(
     loss, transmission, coating, g.lambda_c, epsilon, theta, beamsplitting,
-    crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True,
-    verbose=True)
+    crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True)
 compressor = optical_assemblies.passive_assembly(
-        g, [gc], 'compressor', plot=True, data_directory=directory)
+        g, [gc], 'compressor', plot=True, data_directory=directory,
+        verbose=True)
 p = compressor.simulate(p)
 
 

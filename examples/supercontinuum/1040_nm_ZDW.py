@@ -49,7 +49,7 @@ scg = oa.passive_assembly(
     'scg',
     high_res_sampling=200,
     plot=True,
-    data_directory=directory)
+    data_directory=directory, verbose=True)
 
 
 ######################
