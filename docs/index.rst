@@ -17,3 +17,4 @@ pyLaserPulse documentation
 .. toctree::
    :maxdepth: 2
    :caption: Module, class, and function reference:
+   /modules/pyLaserPulse.utils.rst
