@@ -984,11 +984,11 @@ class pulse_picker(bases.component_base):
         Schematic of operation:
         Input pulse train:
                       1/rep_rate
-        P(T)           :<---->:
-         ^             |\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |
-         |             |\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |
-         |             |\u00A0\u00A0\u00A0\u00A0\u00A0|    |      |      |      |      |      |      |
-        -|---> T   ____|______________________________|___|______|______|_____
+        P(T)\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0:<---->:
+         ^\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |      |
+         |\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |      |
+         |\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |      |
+        -|---> T\u00A0\u00A0\u00A0____|______|______|______|______|______|______|______|_____
 
 
         Pulse picker transmission:
