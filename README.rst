@@ -351,7 +351,7 @@ By doing so, you will be encouraging others to get involved in this project, whi
 References
 ==========
 
-.. [#] Longer pulses can be modelled using pyLaserPulse, but this can lead to longer execution times if a broad wavelength grid is also needed because this requires a large number of time-frequency grid points. For >100 ns pulse to continuous-wave fibre laser and amplifier simulations requiring a broad wavelength grid, perhaps try the pyFiberAmp_ library (rate equation & boundary value solver with Raman; no GNLSE).
+.. [#] Longer pulses can be modelled using pyLaserPulse, but this can lead to longer execution times if a broad wavelength grid is also needed because this requires a large number of time-frequency grid points. For nanosecond-pulse to continuous-wave fibre laser and amplifier simulations requiring a broad wavelength grid, there is also the pyFiberAmp_ library (rate equation & boundary value solver with Raman; no GNLSE).
 .. _pyFiberAmp: https://github.com/Jomiri/pyfiberamp/
 .. [#] D Gloge, "Weakly guiding fibers", Applied Optics 10(10), pp 2252-2258 (1971)
 .. [#] K Saitoh and M Koshiba, "Empirical relations for simple design of photonic crystal fibers", Optics Express 13(1), pp 267-274 (2005)
