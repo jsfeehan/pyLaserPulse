@@ -2805,13 +2805,11 @@ class component_base(loss_spectrum_base, ABC):
         All derived classes should propagate the pulse through this method.
         If no additional functionality is required by the method func in
         the derived class, use the following syntax:
-
             @_component_base.propagator
             def propagate(self, pulse):
                 return pulse
 
         If additional functionality is required, use the following syntax:
-
             @_component_base.propagator
             def propagate(self, pulse):
                 self.another_method(pulse)
@@ -2907,13 +2905,11 @@ class component_base(loss_spectrum_base, ABC):
         All derived classes should propagate the ESD through this method.
         If no additional functionality is required by the method func in
         the derived class, use the following syntax:
-
             @_component_base.ESD_propagator
             def propagate_spectrum(self, pulse):
                 pass
 
         If additional functionality is required, use the following syntax:
-
             @_component_base.ESD_propagator
             def propagate_spectrum(self, pulse):
                 self.another_method(pulse)
