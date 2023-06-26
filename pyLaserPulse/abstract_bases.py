@@ -2906,15 +2906,15 @@ class component_base(loss_spectrum_base, ABC):
         If no additional functionality is required by the method func in
         the derived class, use the following syntax:
 
-            @_component_base.ESD_propagator
-            def propagate_spectrum(self, pulse):
-                pass
+        @_component_base.ESD_propagator
+        def propagate_spectrum(self, pulse):
+            pass
 
         If additional functionality is required, use the following syntax:
 
-            @_component_base.ESD_propagator
-            def propagate_spectrum(self, pulse):
-                self.another_method(pulse)
+        @_component_base.ESD_propagator
+        def propagate_spectrum(self, pulse):
+            self.another_method(pulse)
         """
 
         def wrapper(self, spectrum, omega_axis):
