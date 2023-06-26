@@ -982,35 +982,33 @@ class pulse_picker(bases.component_base):
         Notes
         -----
         Schematic of operation:
-        .. code:: python
-        str(
-            Input pulse train:
-                          1/rep_rate
-            P(T)           :<---->:
-             ^             |      |      |      |      |      |      |      |
-             |             |      |      |      |      |      |      |      |
-             |             |      |      |      |      |      |      |      |
-            -|---> T   ____|______|______|______|______|______|______|______|_____
+        Input pulse train:
+                      1/rep_rate
+        P(T)           :<---->:
+         ^             |\u00A0      |      |      |      |      |      |      |
+         |             |      |      |      |      |      |      |      |
+         |             |      |      |      |      |      |      |      |
+        -|---> T   ____|______|______|______|______|______|______|______|_____
 
 
-            Pulse picker transmission:
-                              time_open              rep_rate_reduction/rep_rate
-                               :<--->:                 :<------------------>:
-            V(T)               .......              .......              .......
-             ^                 |     |              |     |              |     |
-             |                 |     |              |     |              |     |
-             |                 |     |              |     |              |     |
-            -|---> T  _________|     |______________|     |______________|     |__
+        Pulse picker transmission:
+                          time_open              rep_rate_reduction/rep_rate
+                           :<--->:                 :<------------------>:
+        V(T)               .......              .......              .......
+         ^                 |     |              |     |              |     |
+         |                 |     |              |     |              |     |
+         |                 |     |              |     |              |     |
+        -|---> T  _________|     |______________|     |______________|     |__
 
 
-            Output pulse train:
-                                rep_rate_reduction/rep_rate
-            P(T)                  :<------------------>:
-             ^                    |                    |                    |
-             |                    |                    |                    |
-             |                    |                    |                    |
-            -|---> T  ____________|____________________|____________________|_____
-        )
+        Output pulse train:
+                            rep_rate_reduction/rep_rate
+        P(T)                  :<------------------>:
+         ^                    |                    |                    |
+         |                    |                    |                    |
+         |                    |                    |                    |
+        -|---> T  ____________|____________________|____________________|_____
+
         """
         super().__init__(loss, transmission_bandwidth, lambda_c, epsilon,
                          theta, beamsplitting, g, crosstalk, order,
