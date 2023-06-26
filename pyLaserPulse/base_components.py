@@ -978,37 +978,6 @@ class pulse_picker(bases.component_base):
             Delay accumulated between polarization components after
             propagating through the component. If gdm > 0, x is the slow
             axis.
-
-        Notes
-        -----
-        Schematic of operation:
-        Input pulse train:
-                      1/rep_rate
-        P(T)\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0:<---->:
-         ^\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |      |
-         |\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |      |
-         |\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0|      |      |      |      |      |      |      |
-        -|---> T\u00A0\u00A0\u00A0____|______|______|______|______|______|______|______|_____
-
-
-        Pulse picker transmission:
-                          time_open              rep_rate_reduction/rep_rate
-                           :<--->:                 :<------------------>:
-        V(T)               .......              .......              .......
-         ^                 |     |              |     |              |     |
-         |                 |     |              |     |              |     |
-         |                 |     |              |     |              |     |
-        -|---> T  _________|     |______________|     |______________|     |__
-
-
-        Output pulse train:
-                            rep_rate_reduction/rep_rate
-        P(T)                  :<------------------>:
-         ^                    |                    |                    |
-         |                    |                    |                    |
-         |                    |                    |                    |
-        -|---> T  ____________|____________________|____________________|_____
-
         """
         super().__init__(loss, transmission_bandwidth, lambda_c, epsilon,
                          theta, beamsplitting, g, crosstalk, order,
@@ -1175,37 +1144,6 @@ class fibre_pulse_picker():
             axis.
         verbose : bool
             Print information to terminal if True
-
-        Notes
-        -----
-        Schematic of operation:
-        Input pulse train:
-                      1/rep_rate
-        P(T)           :<---->:
-         ^             |      |      |      |      |      |      |      |
-         |             |      |      |      |      |      |      |      |
-         |             |      |      |      |      |      |      |      |
-        -|---> T   ____|______|______|______|______|______|______|______|_____
-
-
-        Pulse picker transmission:
-                          time_open              rep_rate_reduction/rep_rate
-                           :<--->:                 :<------------------>:
-        V(T)               .......              .......              .......
-         ^                 |     |              |     |              |     |
-         |                 |     |              |     |              |     |
-         |                 |     |              |     |              |     |
-        -|---> T  _________|     |______________|     |______________|     |__
-
-
-        Output pulse train:
-                            rep_rate_reduction/rep_rate
-        P(T)                  :<------------------>:
-         ^                    |                    |                    |
-         |                    |                    |                    |
-         |                    |                    |                    |
-        -|---> T  ____________|____________________|____________________|_____
-
         """
         self.input_fibre = input_fibre
         self.output_fibre = output_fibre
