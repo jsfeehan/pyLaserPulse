@@ -28,10 +28,6 @@ pyLaserPulse.utils
       swap_halves
    
    
-   .. automodule:: pyLaserPulse.utils
-      :members: complex_first_order_degree_of_coherence
-      :member-order: bysource
-   
    
    
 
