@@ -26,6 +26,6 @@ pyLaserPulse documentation
    :maxdepth: 2
    :caption: Module reference
 
-   /auto_source/utils
-   /auto_source/grid
-   /auto_source/pulse
+   /auto_source/pyLaserPulse.utils
+   /auto_source/pyLaserPulse.grid
+   /auto_source/pyLaserPulse.pulse
