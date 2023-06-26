@@ -7,8 +7,6 @@
 pyLaserPulse documentation
 ##########################
 
-..   unicode:: 0xA0
-
 .. toctree::
    :maxdepth: 2
    :caption: Getting started:
