@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../..'))
 
+
 project = 'pyLaserPulse'
 copyright = '2023, James Feehan'
 author = 'James Feehan'
