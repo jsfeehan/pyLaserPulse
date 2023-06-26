@@ -698,9 +698,9 @@ class component(bases.component_base):
         epsilon : complex
             Defines type of component (polarizer or retarder).
             Defined for field. For example:
-                epsilon = 0 + 1j for a quarter wave plate
-                epsilon = -1 for a half wave plate
-                epsilon = 0.1 for 20 dB polarization extinction
+                epsilon = 0 + 1j for a quarter wave plate,
+                epsilon = -1 for a half wave plate,
+                epsilon = 0.1 for 20 dB polarization extinction.
         theta : float
             Angle subtended by component optical axis and x-axis.
         beamsplitting : float
@@ -799,7 +799,7 @@ class fibre_component():
             pyLaserPulse.base_components.photonic_crystal_active_fibre
             etc.
         output_fibre : optical fibre object
-            Dfined using, for example:
+            Defined using, for example:
             pyLaserPulse.base_components.step_index_passive_fibre
             pyLaserPulse.base_components.photonic_crystal_passive_fibre
             pyLaserPulse.base_components.step_index_active_fibre
@@ -815,9 +815,9 @@ class fibre_component():
         epsilon : complex
             Defines type of component (polarizer or retarder).
             Defined for field. For example:
-                epsilon = 0 + 1j for a quarter wave plate
-                epsilon = -1 for a half wave plate
-                epsilon = 0.1 for 20 dB polarization extinction
+                epsilon = 0 + 1j for a quarter wave plate,
+                epsilon = -1 for a half wave plate,
+                epsilon = 0.1 for 20 dB polarization extinction.
         theta : float
             Angle subtended by component optical axis and x-axis.
         beamsplitting : float
@@ -939,9 +939,9 @@ class pulse_picker(bases.component_base):
         epsilon : complex
             Defines type of component (polarizer or retarder).
             Defined for field. For example:
-                epsilon = 0 + 1j for a quarter wave plate
-                epsilon = -1 for a half wave plate
-                epsilon = 0.1 for 20 dB polarization extinction
+                epsilon = 0 + 1j for a quarter wave plate,
+                epsilon = -1 for a half wave plate,
+                epsilon = 0.1 for 20 dB polarization extinction.
         theta : float
             Angle subtended by component optical axis and x-axis.
         beamsplitting : float
@@ -1135,9 +1135,9 @@ class fibre_pulse_picker():
         epsilon : complex
             Defines type of component (polarizer or retarder).
             Defined for field. For example:
-                epsilon = 0 + 1j for a quarter wave plate
-                epsilon = -1 for a half wave plate
-                epsilon = 0.1 for 20 dB polarization extinction
+                epsilon = 0 + 1j for a quarter wave plate,
+                epsilon = -1 for a half wave plate,
+                epsilon = 0.1 for 20 dB polarization extinction.
         theta : float
             Angle subtended by component optical axis and x-axis.
         beamsplitting : float
@@ -1304,9 +1304,9 @@ class grating_compressor(component):
         epsilon : complex
             Defines type of component (polarizer or retarder).
             Defined for field. For example:
-                epsilon = 0 + 1j for a quarter wave plate
-                epsilon = -1 for a half wave plate
-                epsilon = 0.1 for 20 dB polarization extinction
+                epsilon = 0 + 1j for a quarter wave plate,
+                epsilon = -1 for a half wave plate,
+                epsilon = 0.1 for 20 dB polarization extinction.
         theta : float
             Angle subtended by component optical axis and x-axis.
         beamsplitting : float

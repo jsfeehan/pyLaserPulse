@@ -605,9 +605,7 @@ class active_fibre_base(ABC):
             Set the boundary conditions for resolving the evolution of the
             pump, signal, and ASE light in both directions through the fibre.
             The type of simulation -- i.e., single-pass or full boundary value
-            solver -- is determined by this dictionary.
-
-            Valid keys:
+            solver -- is determined by this dictionary. Valid dictionary keys:
                 co_pump_power : float
                     Power of the co-propagating pump in W
                 co_pump_wavelength : float
