@@ -268,8 +268,6 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
         Fibre length.
     beat_length : float
         Polarization beat length in m
-    doping_concentration : float
-        Ion number density in m^-3
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_ponts : int
@@ -404,8 +402,6 @@ class Nufern_PLMA_YDF_10_125_M(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -464,8 +460,6 @@ class Nufern_PM_YDF_5_130_VIII(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -526,8 +520,6 @@ class Nufern_PLMA_YDF_25_250(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -589,8 +581,6 @@ class Nufern_PLMA_30_400(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -652,8 +642,6 @@ class Nufern_FUD_4288_LMA_YDF_48_400E(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -715,8 +703,6 @@ class Nufern_PM_YSF_HI_HP(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
