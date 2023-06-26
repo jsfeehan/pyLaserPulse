@@ -983,6 +983,8 @@ class pulse_picker(bases.component_base):
         -----
         Schematic of operation:
         Input pulse train:
+        ::
+
                       1/rep_rate
         P(T)           :<---->:
          ^             |      |      |      |      |      |      |      |
@@ -1008,6 +1010,7 @@ class pulse_picker(bases.component_base):
          |                    |                    |                    |
          |                    |                    |                    |
         -|---> T  ____________|____________________|____________________|_____
+
 
         """
         super().__init__(loss, transmission_bandwidth, lambda_c, epsilon,
