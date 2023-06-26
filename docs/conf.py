@@ -29,6 +29,7 @@ autodoc_mock_imports = ['numpy', 'scipy', 'matplotlib', 'PyQt5']
 autodoc_default_options = {
         'members': True,
         'special-members': '__init__',
+        'member-order': 'bysource',
         }
 
 
