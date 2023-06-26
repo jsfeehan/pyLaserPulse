@@ -334,7 +334,7 @@ This information regarding the compressor optimization and the optimized compres
 =============
 Documentation
 =============
-Documentation is still in progress, but the docstrings are detailed and there are example scripts which show how to model active and passive fibre systems and give a general overview of how to use pyLaserPulse (see pyLaserPulse/examples).
+Documentation is still in progress, but a preliminary module reference can be found 'here <pylaserpulse.readthedocs.io>'. The docstrings are detailed and can be accessed in the usual way (``help(pyLaserPulse.grid.grid)``, for example). There are also example scripts which show how to model active and passive fibre systems and give a general overview of how to use pyLaserPulse (see pyLaserPulse/examples).
 
 A lot of work has gone into debugging and finding 'gotchas', but these will spring up from time to time. If you have questions, comments, a bug to report, or suggestions for improvement, please get in touch via pylaserpulse@outlook.com.
 
