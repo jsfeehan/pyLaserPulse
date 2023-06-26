@@ -35,6 +35,15 @@ pyLaserPulse documentation
    :maxdepth: 2
    :caption: Module reference
 
-   /auto_source/pyLaserPulse.utils
+   /auto_source/pyLaserPulse.abstract_bases
+   /auto_source/pyLaserPulse.base_components
+   /auto_source/pyLaserPulse.bessel_mode_solver
+   /auto_source/pyLaserPulse.coupling
+   /auto_source/pyLaserPulse.data
+   /auto_source/pyLaserPulse.exceptions
    /auto_source/pyLaserPulse.grid
+   /auto_source/pyLaserPulse.optical_assemblies
    /auto_source/pyLaserPulse.pulse
+   /auto_source/pyLaserPulse.pump
+   /auto_source/pyLaserPulse.sys_info
+   /auto_source/pyLaserPulse.utils
