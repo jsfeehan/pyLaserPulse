@@ -17,5 +17,5 @@ pyLaserPulse's documentation
    :maxdepth: 2
    :caption: Module, class, and function reference
 
-   -- automodule:: pyLaserPulse
+   -- automodule:: pyLaserPulse.utils
         :members:
