@@ -31,11 +31,5 @@ pyLaserPulse.pulse
    
 
    
-   .. automodule:: pyLaserPulse.pulse
-      :members: pulse pulse_from_measured_PSD pulse_from_pyLaserPulse_simulation pulse_from_text_data
-      :special-members: __init__
-      :member-order: bysource   
-   
-
 
 
