@@ -606,8 +606,6 @@ class active_fibre_base(ABC):
             pump, signal, and ASE light in both directions through the fibre.
             The type of simulation -- i.e., single-pass or full boundary value
             solver -- is determined by this dictionary.
-        verbose : bool
-            Print information to terminal if True
 
             Valid keys:
                 co_pump_power : float
@@ -623,38 +621,43 @@ class active_fibre_base(ABC):
                 counter_pump_bandwidth : float
                     Bandwidth of the counter-propagating pump in m
 
-            If no counter-pump values are specified, then the propagation is
-            completed in a single step and no effort is made to resolve
-            counter-propagating signals (i.e., the boundary value problem is
-            not solved). This allows for co-pumping only. Example:
+        verbose : bool
+            Print information to terminal if True
 
+        Notes
+        -----
+        If no counter-pump values are specified, then the propagation is
+        completed in a single step and no effort is made to resolve counter-
+        propagating signals (i.e., the boundary value problem is not solved).
+        This allows for co-pumping only. Example:
+
+        boundary_conditions = {
+            'co_pump_power': 1, 'co_pump_wavelength': 976e-9,
+            'co_pump_bandwidth': 1e-9}
+
+        The boundary value problem is solved whenever dictionary key
+        'counter_pump_power' is present, but it is not necessary to specify the
+        wavelength or bandwidth of either the co- or counter-propagating pump
+        if the power is zero. Here are a few examples of valid
+        boundary_conditions dictionaries:
+
+        1) Co-pumping with full boundary value solver:
             boundary_conditions = {
                 'co_pump_power': 1, 'co_pump_wavelength': 976e-9,
-                'co_pump_bandwidth': 1e-9}
+                'co_pump_bandwidth': 1e-9, 'counter_pump_power': 0}
 
-            The boundary value problem is solved whenever dictionary key
-            'counter_pump_power' is present, but it is not necessary to
-            specify the wavelength or bandwidth of either the co- or counter-
-            propagating pump if the power is zero. Here are a few examples of
-            valid boundary_conditions dictionaries:
+        2) Bidirectional pumping with full boundary value solver:
+            boundary_conditions = {
+                'co_pump_power': 1, 'co_pump_wavelength': 976e-9,
+                'co_pump_bandwidth': 1e-9, 'counter_pump_power': 1,
+                'counter_pump_wavelength': 976e-9,
+                'counter_pump_bandwidth': 1e-9}
 
-            1) Co-pumping with full boundary value solver:
-                boundary_conditions = {
-                    'co_pump_power': 1, 'co_pump_wavelength': 976e-9,
-                    'co_pump_bandwidth': 1e-9, 'counter_pump_power': 0}
-
-            2) Bidirectional pumping with full boundary value solver:
-                boundary_conditions = {
-                    'co_pump_power': 1, 'co_pump_wavelength': 976e-9,
-                    'co_pump_bandwidth': 1e-9, 'counter_pump_power': 1,
-                    'counter_pump_wavelength': 976e-9,
-                    'counter_pump_bandwidth': 1e-9}
-
-            3) Counter-pumping with full boundary value solver:
-                boundary_conditions = {
-                    'co_pump_power': 0, 'counter_pump_power': 1,
-                    'counter_pump_wavelength': 976e-9,
-                    'counter_pump_bandwidth': 1e-9}
+        3) Counter-pumping with full boundary value solver:
+            boundary_conditions = {
+                'co_pump_power': 0, 'counter_pump_power': 1,
+                'counter_pump_wavelength': 976e-9,
+                'counter_pump_bandwidth': 1e-9}
         """
         self.grid = g
         self.lifetime = lifetime
@@ -2553,9 +2556,9 @@ class component_base(loss_spectrum_base, ABC):
         epsilon : complex
             Defines type of component (polarizer or retarder).
             Defined for field. For example:
-                epsilon = 0 + 1j for a quarter wave plate
-                epsilon = -1 for a half wave plate
-                epsilon = 0.1 for 20 dB polarization extinction
+                epsilon = 0 + 1j for a quarter wave plate,
+                epsilon = -1 for a half wave plate,
+                epsilon = 0.1 for 20 dB polarization extinction.
         theta : float
             Angle subtended by component optical axis and x-axis.
         beamsplitting : float
@@ -2805,11 +2808,13 @@ class component_base(loss_spectrum_base, ABC):
         All derived classes should propagate the pulse through this method.
         If no additional functionality is required by the method func in
         the derived class, use the following syntax:
+
             @_component_base.propagator
             def propagate(self, pulse):
                 return pulse
 
         If additional functionality is required, use the following syntax:
+
             @_component_base.propagator
             def propagate(self, pulse):
                 self.another_method(pulse)
@@ -2898,7 +2903,7 @@ class component_base(loss_spectrum_base, ABC):
 
         Parameters
         ----------
-        func : propagate method of the derived class.
+        func : propagate method of the derived class
 
         Notes
         -----
@@ -2982,6 +2987,11 @@ class coupling_transmission_base(loss_spectrum_base):
     """
 
     def __init__(self, grid):
+        """
+        Parameters
+        ----------
+        grid : pyLaserPulse.grid.grid object.
+        """
         super().__init__()
         self.grid = grid
 
