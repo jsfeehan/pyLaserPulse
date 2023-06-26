@@ -12,9 +12,10 @@ pyLaserPulse's documentation
 
    readme_link
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :maxdepth: 2
+   :caption: Module, class, and function reference
+
+   -- automodule:: pyLaserPulse
+        :members:
