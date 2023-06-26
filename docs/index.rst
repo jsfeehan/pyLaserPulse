@@ -3,9 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-############################
-pyLaserPulse's documentation
-############################
+##########################
+pyLaserPulse documentation
+##########################
+
+
 
 .. toctree::
    :maxdepth: 2
@@ -13,9 +15,8 @@ pyLaserPulse's documentation
 
    readme_link
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Module, class, and function reference:
 
-        /auto_source/utils
+   readme_link
