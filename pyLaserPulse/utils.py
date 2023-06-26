@@ -21,27 +21,22 @@ ifftshift = np.fft.ifftshift
 
 
 def check_dict_keys(key_list, d, param_name):
-    """Check that all items in key_list are keys in dict d.
-
-    :param key_list: keys (string) that are expected in dict d.
-    :type key_list: list
-    :param d: dictionary to check
-    :type d: dict
-    :param param_name: Name assigned to dictionary d in caller.
-    :type param_name: str
     """
-    # Parameters
-    # ----------
-    # key_list : list
-    #     keys (string) that are expected in dict d.
-    # d : dict
-    # param_name : string
-    #     Name assigned to dictionary d in caller.
+    Check that all items in key_list are keys in dict d.
 
-    # Raises
-    # ------
-    # KeyError
-    #     Raised if an item in key_list is not in dict d.
+    Parameters
+    ----------
+    key_list : list
+        keys (string) that are expected in dict d.
+    d : dict
+    param_name : string
+        Name assigned to dictionary d in caller.
+
+    Raises
+    ------
+    KeyError
+        Raised if an item in key_list is not in dict d.
+    """
     if not isinstance(d, dict):
         raise TypeError("%s must be a dictionary." % param_name)
     for item in key_list:
