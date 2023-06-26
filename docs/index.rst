@@ -18,9 +18,18 @@ pyLaserPulse documentation
 
 .. autosummary::   
    :toctree: modules
-   pyLaserPulse.utils
+   pyLaserPulse.abstract_bases
+   pyLaserPulse.base_components
+   pyLaserPulse.bessel_mode_solver
+   pyLaserPulse.coupling
+   pyLaserPulse.data
+   pyLaserPulse.exceptions
    pyLaserPulse.grid
+   pyLaserPulse.optical_assemblies
    pyLaserPulse.pulse
+   pyLaserPulse.pump
+   pyLaserPulse.sys_info
+   pyLaserPulse.utils
 
 .. toctree::
    :maxdepth: 2
