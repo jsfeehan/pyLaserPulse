@@ -16,7 +16,7 @@ pyLaserPulse documentation
    readme_link
 
 
-.. automodule::   
+.. autosummary::   
    :toctree: modules
    pyLaserPulse.utils
    pyLaserPulse.grid
