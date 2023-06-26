@@ -1,21 +1,18 @@
-.. pyLaserPulse documentation master file, created by
-   sphinx-quickstart on Sun Jun 25 17:29:44 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-##########################
 pyLaserPulse documentation
-##########################
+==========================
+
+.. toctree:: pyLaserPulse.utils
+   :members:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting started:
-
-   readme_link
+   :caption: Contents:
 
 
 
-.. autosummary::
-   :toctree: modules
+Indices and tables
+==================
 
-   pyLaserPulse.utils
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
