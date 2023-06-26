@@ -19,4 +19,9 @@ pyLaserPulse documentation
    :maxdepth: 2
    :caption: Module, class, and function reference:
 
-   readme_link
+.. autosummary::
+   :toctree: Modules
+
+   pyLaserPulse.utils
+   pyLaserPulse.pulse
+   pyLaserPulse.grid
