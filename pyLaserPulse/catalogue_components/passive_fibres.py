@@ -29,15 +29,19 @@ class Corning_HI1060(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+verbose : bool
+    Print information to terminal if True
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.19e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.19e-20, verbose=False):
         core_diam = 5.3e-6
         NA = 0.14
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class Corning_HI1060_FLEX(bc.step_index_passive_fibre):
@@ -57,6 +61,8 @@ class Corning_HI1060_FLEX(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -64,14 +70,16 @@ class Corning_HI1060_FLEX(bc.step_index_passive_fibre):
     to other specified (and more important) parameters, such as the MFD.
 
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.19e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.19e-20, verbose=False):
         core_diam = 3.65e-6
         NA = 0.19096
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class SMF_28(bc.step_index_passive_fibre):
@@ -91,15 +99,19 @@ class SMF_28(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.33e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.33e-20, verbose=False):
         core_diam = 8.6e-6
         NA = 0.120354
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class SMF_28e(bc.step_index_passive_fibre):
@@ -119,20 +131,24 @@ class SMF_28e(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
     NA = 0.1209533 chosen over specified value of 0.14 because this gives a
     better match to other (more important) specified values, such as the MFD.
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.33e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.33e-20, verbose=False):
         core_diam = 9e-6
         NA = 0.1209533
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class OFS_980(bc.step_index_passive_fibre):
@@ -152,15 +168,19 @@ class OFS_980(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.33e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.33e-20, verbose=False):
         core_diam = 4.3e-6
         NA = 0.1681453
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class Nufern_SM2000D(bc.step_index_passive_fibre):
@@ -180,6 +200,8 @@ class Nufern_SM2000D(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -187,14 +209,16 @@ class Nufern_SM2000D(bc.step_index_passive_fibre):
     MFD matches the specifications at 1550 nm. The dispersion at 1550 nm is
     -95.5 ps/(nm km) for this model, but specified to be -50 ps/(nm km).
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.33e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.33e-20, verbose=False):
         core_diam = 2.1e-6
         NA = 0.369495227
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class Nufern_FUD4258_UHNA(bc.step_index_passive_fibre):
@@ -214,15 +238,19 @@ class Nufern_FUD4258_UHNA(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.33e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.33e-20, verbose=False):
         core_diam = 2.4e-6
         NA = 0.26
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class Nufern_PLMA_GDF_10_125(bc.step_index_passive_fibre):
@@ -241,8 +269,10 @@ class Nufern_PLMA_GDF_10_125(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, tol, n2=2.19e-20):
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
         core_diam = 11e-6
         NA = 0.08853
         fR = 0.18
@@ -250,7 +280,8 @@ class Nufern_PLMA_GDF_10_125(bc.step_index_passive_fibre):
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class Nufern_PLMA_GDF_10_125_M(bc.step_index_passive_fibre):
@@ -269,8 +300,10 @@ class Nufern_PLMA_GDF_10_125_M(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, tol, n2=2.19e-20):
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
         core_diam = 11e-6
         NA = 0.075
         fR = 0.18
@@ -278,7 +311,8 @@ class Nufern_PLMA_GDF_10_125_M(bc.step_index_passive_fibre):
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class Nufern_PLMA_GDF_25_250(bc.step_index_passive_fibre):
@@ -296,8 +330,10 @@ class Nufern_PLMA_GDF_25_250(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, tol, n2=2.19e-20):
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
         core_diam = 25e-6
         NA = 0.065
         fR = 0.18
@@ -306,7 +342,8 @@ class Nufern_PLMA_GDF_25_250(bc.step_index_passive_fibre):
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class PM980_XP(bc.step_index_passive_fibre):
@@ -324,8 +361,10 @@ class PM980_XP(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, tol, n2=2.19e-20):
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
         core_diam = 5.5e-6
         NA = 0.12
         fR = 0.18
@@ -333,7 +372,8 @@ class PM980_XP(bc.step_index_passive_fibre):
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class Nufern_PM_GDF_5_130(bc.step_index_passive_fibre):
@@ -351,8 +391,10 @@ class Nufern_PM_GDF_5_130(bc.step_index_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length, tol, n2=2.19e-20):
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
         core_diam = 5.e-6
         NA = 0.12
         fR = 0.18
@@ -360,7 +402,8 @@ class Nufern_PM_GDF_5_130(bc.step_index_passive_fibre):
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
-            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica)
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class NKT_SC_5_1040(bc.photonic_crystal_passive_fibre):
@@ -380,12 +423,15 @@ class NKT_SC_5_1040(bc.photonic_crystal_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
     Non-PM, ~0.01 -- 0.011 1 / (W m) nonlinear coefficient, ZDW ~1040 nm.
     """
-    def __init__(self, grid, length, beat_length, tol, n2=2.19e-20):
+    def __init__(
+            self, grid, length, beat_length, tol, n2=2.19e-20, verbose=False):
         hole_pitch = 3.6e-6
         hole_diam_over_pitch = 0.575
         fR = 0.18
@@ -393,7 +439,8 @@ class NKT_SC_5_1040(bc.photonic_crystal_passive_fibre):
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, hole_pitch,
             hole_diam_over_pitch, beat_length, n2, fR, tol,
-            paths.materials.Sellmeier_coefficients.silica)
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class NKT_SC_5_1040_PM(bc.photonic_crystal_passive_fibre):
@@ -411,12 +458,14 @@ class NKT_SC_5_1040_PM(bc.photonic_crystal_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
     PM, ~0.01 -- 0.011 1 / (W m) nonlinear coefficient, ZDW ~1040 nm.
     """
-    def __init__(self, grid, length, tol, n2=2.19e-20):
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
         hole_pitch = 3.6e-6
         hole_diam_over_pitch = 0.575
         fR = 0.18
@@ -425,7 +474,8 @@ class NKT_SC_5_1040_PM(bc.photonic_crystal_passive_fibre):
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, hole_pitch,
             hole_diam_over_pitch, beat_length, n2, fR, tol,
-            paths.materials.Sellmeier_coefficients.silica)
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class NKT_NL_1050_NEG_1(bc.photonic_crystal_passive_fibre):
@@ -445,6 +495,8 @@ class NKT_NL_1050_NEG_1(bc.photonic_crystal_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -456,7 +508,8 @@ class NKT_NL_1050_NEG_1(bc.photonic_crystal_passive_fibre):
     generation in normal dispersion fibres", J. Opt. Soc. Am. B 34(4),
     pp 764-775 (2017).
     """
-    def __init__(self, grid, length, tol, beat_length, n2=2.19e-20):
+    def __init__(
+            self, grid, length, tol, beat_length, n2=2.19e-20, verbose=False):
         hole_pitch = 1.55e-6
         hole_diam_over_pitch = 0.37
         fR = 0.18
@@ -464,7 +517,8 @@ class NKT_NL_1050_NEG_1(bc.photonic_crystal_passive_fibre):
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, hole_pitch,
             hole_diam_over_pitch, beat_length, n2, fR, tol,
-            paths.materials.Sellmeier_coefficients.silica)
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class NKT_femtowhite_800(bc.photonic_crystal_passive_fibre):
@@ -485,6 +539,8 @@ class NKT_femtowhite_800(bc.photonic_crystal_passive_fibre):
         Nonlinear index in m^2 / W. Default value is 2.3e-20 m^2/W. Lower than
         common values for fused silica at 800 nm, but matches the specified
         nonlinear parameter.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -497,7 +553,8 @@ class NKT_femtowhite_800(bc.photonic_crystal_passive_fibre):
     specified on the data sheet but not shown in the dispersion plot given by
     NKT.
     """
-    def __init__(self, grid, length, tol, beat_length, n2=2.3e-20):
+    def __init__(
+            self, grid, length, tol, beat_length, n2=2.3e-20, verbose=False):
         hole_pitch = 1.339e-6
         hole_diam_over_pitch = 0.635
         fR = 0.18
@@ -505,7 +562,8 @@ class NKT_femtowhite_800(bc.photonic_crystal_passive_fibre):
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, hole_pitch,
             hole_diam_over_pitch, beat_length, n2, fR, tol,
-            paths.materials.Sellmeier_coefficients.silica)
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
 
 class NKT_DC_200_40_PZ_SI(bc.photonic_crystal_passive_fibre):
@@ -523,13 +581,15 @@ class NKT_DC_200_40_PZ_SI(bc.photonic_crystal_passive_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
     This fibre model is approximate only, and is not expected to produce highly
     accurate results.
     """
-    def __init__(self, grid, length, tol, n2=2.19e-20):
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
         fR = 0.18
 
         # Measured from images of fibre facet published by NKT
@@ -545,7 +605,8 @@ class NKT_DC_200_40_PZ_SI(bc.photonic_crystal_passive_fibre):
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, hole_pitch,
             hole_diam_over_pitch, beat_length, n2, fR, tol,
-            paths.materials.Sellmeier_coefficients.silica)
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
 
         # Reset core_diam and core_radius.
         # Approximation -- May not be entirely appropriate to use the PCF model

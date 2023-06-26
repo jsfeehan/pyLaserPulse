@@ -618,7 +618,6 @@ class active_fibre_base(ABC):
                     Central wavelength of the counter-propagating pump in m
                 counter_pump_bandwidth : float
                     Bandwidth of the counter-propagating pump in m
-
         verbose : bool
             Print information to terminal if True
 
