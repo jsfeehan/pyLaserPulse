@@ -16,10 +16,16 @@ pyLaserPulse documentation
    readme_link
 
 
+.. autosummary::
+   :toctree: modules
+   pyLaserPulse.utils
+   pyLaserPulse.grid
+   pyLaserPulse.pulse
+
 .. toctree::
    :maxdepth: 2
    :caption: Module reference
 
-   /auto_source/pyLaserPulse.utils
-   /auto_source/pyLaserPulse.pulse
-   /auto_source/pyLaserPulse.grid
+   /auto_source/utils
+   /auto_source/grid
+   /auto_source/pulse
