@@ -41,10 +41,12 @@ class nLight_Yb1200_4_125(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length, beat_length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
-                 time_domain_gain=False, n2=2.19e-20):
+                 time_domain_gain=False, n2=2.19e-20, verbose=False):
         core_diam = 4e-6
         NA = 0.12
         fR = 0.18
@@ -58,7 +60,7 @@ class nLight_Yb1200_4_125(bc.step_index_active_fibre):
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, cladding_pumping=False,
-            time_domain_gain=time_domain_gain)
+            time_domain_gain=time_domain_gain, verbose=verbose)
 
 
 class ORC_HD406_YDF(bc.step_index_active_fibre):
@@ -94,10 +96,13 @@ class ORC_HD406_YDF(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length, beat_length, doping_concentration,
                  seed_repetition_rate, pump_points, ASE_wl_lims,
-                 boundary_conditions, time_domain_gain=False, n2=2.19e-20):
+                 boundary_conditions, time_domain_gain=False, n2=2.19e-20,
+                 verbose=False):
         core_diam = 5.3e-6
         NA = 0.14
         fR = 0.18
@@ -109,7 +114,8 @@ class ORC_HD406_YDF(bc.step_index_active_fibre):
             paths.fibres.cross_sections.Yb_Al_silica, seed_repetition_rate,
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
-            lifetime=1.5e-3, time_domain_gain=time_domain_gain)
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
 
 
 class CorActive_SCF_YB550_4_125_19(bc.step_index_active_fibre):
@@ -141,10 +147,12 @@ class CorActive_SCF_YB550_4_125_19(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length, beat_length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
-                 time_domain_gain=False, n2=2.19e-20):
+                 time_domain_gain=False, n2=2.19e-20, verbose=False):
         core_diam = 4e-6
         NA = 0.19
         fR = 0.18
@@ -157,7 +165,8 @@ class CorActive_SCF_YB550_4_125_19(bc.step_index_active_fibre):
             paths.fibres.cross_sections.Yb_Al_silica, seed_repetition_rate,
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
-            lifetime=1.5e-3, time_domain_gain=time_domain_gain)
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
 
 
 class OFS_R37003(bc.step_index_active_fibre):
@@ -189,10 +198,12 @@ class OFS_R37003(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length, beat_length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
-                 time_domain_gain=False, n2=2.33e-20):
+                 time_domain_gain=False, n2=2.33e-20, verbose=False):
         core_diam = 2.9e-6
         NA = 0.2963
         fR = 0.18
@@ -205,7 +216,8 @@ class OFS_R37003(bc.step_index_active_fibre):
             paths.fibres.cross_sections.Er_silica, seed_repetition_rate,
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
-            lifetime=1.5e-3, time_domain_gain=time_domain_gain)
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
 
 
 class Thorlabs_Liekki_M5_980_125(bc.step_index_active_fibre):
@@ -237,10 +249,12 @@ class Thorlabs_Liekki_M5_980_125(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length, beat_length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
-                 time_domain_gain=False, n2=2.33e-20):
+                 time_domain_gain=False, n2=2.33e-20, verbose=False):
         core_diam = 6e-6
         NA = 0.2247
         fR = 0.18
@@ -253,7 +267,8 @@ class Thorlabs_Liekki_M5_980_125(bc.step_index_active_fibre):
             paths.fibres.cross_sections.Er_silica, seed_repetition_rate,
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
-            lifetime=1.5e-3, time_domain_gain=time_domain_gain)
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
 
 
 class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
@@ -268,8 +283,6 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
         Fibre length.
     beat_length : float
         Polarization beat length in m
-    doping_concentration : float
-        Ion number density in m^-3
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_ponts : int
@@ -289,6 +302,8 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -299,7 +314,7 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
     """
     def __init__(self, grid, length, seed_repetition_rate, pump_points,
                  ASE_wl_lims, boundary_conditions, time_domain_gain=False,
-                 cladding_pumping=True, n2=2.19e-20):
+                 cladding_pumping=True, n2=2.19e-20, verbose=False):
         fR = 0.18
         tol = 1e-5
 
@@ -333,7 +348,7 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
             seed_repetition_rate, pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1e-3, cladding_pumping=self.cladding_pumping,
-            time_domain_gain=time_domain_gain)
+            time_domain_gain=time_domain_gain, verbose=verbose)
 
         # Reset core_diam and core_radius.
         # Approximation -- May not be entirely appropriate to use the PCF model
@@ -375,10 +390,12 @@ class Nufern_EDFC_980_HP(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
         which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length, beat_length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
-                 time_domain_gain=False, n2=2.33e-20):
+                 time_domain_gain=False, n2=2.33e-20, verbose=False):
         core_diam = 3.2e-6
         NA = 0.22968
         fR = 0.18
@@ -391,7 +408,8 @@ class Nufern_EDFC_980_HP(bc.step_index_active_fibre):
             paths.fibres.cross_sections.Er_silica, seed_repetition_rate,
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
-            lifetime=1.5e-3, time_domain_gain=time_domain_gain)
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
 
 
 class Nufern_PLMA_YDF_10_125_M(bc.step_index_active_fibre):
@@ -404,8 +422,6 @@ class Nufern_PLMA_YDF_10_125_M(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -423,6 +439,8 @@ class Nufern_PLMA_YDF_10_125_M(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
    Notes
     -----
@@ -430,7 +448,7 @@ class Nufern_PLMA_YDF_10_125_M(bc.step_index_active_fibre):
     """
     def __init__(self, grid, length, seed_repetition_rate, pump_points,
                  ASE_wl_lims, boundary_conditions, time_domain_gain=False,
-                 cladding_pumping=False, n2=2.19e-20):
+                 cladding_pumping=False, n2=2.19e-20, verbose=False):
         core_diam = 11e-6
         NA = 0.075
         fR = 0.18
@@ -451,7 +469,7 @@ class Nufern_PLMA_YDF_10_125_M(bc.step_index_active_fibre):
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
-            cladding_pumping=self.cladding_pumping)
+            cladding_pumping=self.cladding_pumping, verbose=verbose)
 
 
 class Nufern_PM_YDF_5_130_VIII(bc.step_index_active_fibre):
@@ -464,8 +482,6 @@ class Nufern_PM_YDF_5_130_VIII(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -485,6 +501,8 @@ class Nufern_PM_YDF_5_130_VIII(bc.step_index_active_fibre):
         which is the value for fused silica around 1060 nm.
     cladding_pumping : bool
         Pump light is propagated in the cladding if true.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -492,7 +510,7 @@ class Nufern_PM_YDF_5_130_VIII(bc.step_index_active_fibre):
     """
     def __init__(self, grid, length, seed_repetition_rate, pump_points,
                  ASE_wl_lims, boundary_conditions, time_domain_gain=False,
-                 cladding_pumping=False, n2=2.19e-20):
+                 cladding_pumping=False, n2=2.19e-20, verbose=False):
         core_diam = 5e-6
         NA = 0.12
         fR = 0.18
@@ -513,7 +531,7 @@ class Nufern_PM_YDF_5_130_VIII(bc.step_index_active_fibre):
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
-            cladding_pumping=self.cladding_pumping)
+            cladding_pumping=self.cladding_pumping, verbose=verbose)
 
 
 class Nufern_PLMA_YDF_25_250(bc.step_index_active_fibre):
@@ -526,8 +544,6 @@ class Nufern_PLMA_YDF_25_250(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -547,6 +563,8 @@ class Nufern_PLMA_YDF_25_250(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -555,7 +573,7 @@ class Nufern_PLMA_YDF_25_250(bc.step_index_active_fibre):
     def __init__(self, grid, length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
                  time_domain_gain=False, cladding_pumping=False,
-                 n2=2.19e-20):
+                 n2=2.19e-20, verbose=False):
         core_diam = 25e-6
         NA = 0.065
         fR = 0.18
@@ -576,7 +594,7 @@ class Nufern_PLMA_YDF_25_250(bc.step_index_active_fibre):
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
-            cladding_pumping=self.cladding_pumping)
+            cladding_pumping=self.cladding_pumping, verbose=verbose)
 
 
 class Nufern_PLMA_30_400(bc.step_index_active_fibre):
@@ -589,8 +607,6 @@ class Nufern_PLMA_30_400(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -610,6 +626,8 @@ class Nufern_PLMA_30_400(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -618,7 +636,7 @@ class Nufern_PLMA_30_400(bc.step_index_active_fibre):
     def __init__(self, grid, length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
                  time_domain_gain=False, cladding_pumping=False,
-                 n2=2.19e-20):
+                 n2=2.19e-20, verbose=False):
         core_diam = 30e-6
         NA = 0.06
         fR = 0.18
@@ -639,7 +657,7 @@ class Nufern_PLMA_30_400(bc.step_index_active_fibre):
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
-            cladding_pumping=self.cladding_pumping)
+            cladding_pumping=self.cladding_pumping, verbose=verbose)
 
 
 class Nufern_FUD_4288_LMA_YDF_48_400E(bc.step_index_active_fibre):
@@ -652,8 +670,6 @@ class Nufern_FUD_4288_LMA_YDF_48_400E(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -673,6 +689,8 @@ class Nufern_FUD_4288_LMA_YDF_48_400E(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -681,7 +699,7 @@ class Nufern_FUD_4288_LMA_YDF_48_400E(bc.step_index_active_fibre):
     def __init__(self, grid, length, seed_repetition_rate,
                  pump_points, ASE_wl_lims, boundary_conditions,
                  time_domain_gain=False, cladding_pumping=False,
-                 n2=2.19e-20):
+                 n2=2.19e-20, verbose=False):
         core_diam = 48e-6
         NA = 0.05
         fR = 0.18
@@ -702,7 +720,7 @@ class Nufern_FUD_4288_LMA_YDF_48_400E(bc.step_index_active_fibre):
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
-            cladding_pumping=self.cladding_pumping)
+            cladding_pumping=self.cladding_pumping, verbose=verbose)
 
 
 class Nufern_PM_YSF_HI_HP(bc.step_index_active_fibre):
@@ -715,8 +733,6 @@ class Nufern_PM_YSF_HI_HP(bc.step_index_active_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    doping_concentration : float
-        Ion number density in m^-3.
     seed_repetition_rate : float
         Repetition rate of the seed laser pulses
     pump_points : int
@@ -734,10 +750,12 @@ class Nufern_PM_YSF_HI_HP(bc.step_index_active_fibre):
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length, seed_repetition_rate, pump_points,
                  ASE_wl_lims, boundary_conditions, time_domain_gain=False,
-                 n2=2.19e-20):
+                 n2=2.19e-20, verbose=False):
         core_diam = 6e-6
         NA = 0.11
         fR = 0.18
@@ -751,7 +769,8 @@ class Nufern_PM_YSF_HI_HP(bc.step_index_active_fibre):
             paths.fibres.cross_sections.Yb_Nufern_PM_YSF_HI_HP,
             seed_repetition_rate, pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
-            lifetime=0.945e-3, time_domain_gain=time_domain_gain)
+            lifetime=0.945e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
 
 
 class Thorlabs_Liekki_Yb1200_6_125_DC(bc.step_index_active_fibre):
@@ -783,6 +802,8 @@ class Thorlabs_Liekki_Yb1200_6_125_DC(bc.step_index_active_fibre):
         which is the value for fused silica around 1060 nm.
     cladding_pumping : bool
         Pump light is propagated in the cladding if true.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -793,7 +814,7 @@ class Thorlabs_Liekki_Yb1200_6_125_DC(bc.step_index_active_fibre):
     """
     def __init__(self, grid, length, seed_repetition_rate, pump_points,
                  ASE_wl_lims, boundary_conditions, time_domain_gain=False,
-                 cladding_pumping=False, n2=2.19e-20):
+                 cladding_pumping=False, n2=2.19e-20, verbose=False):
         core_diam = 5e-6
         NA = 0.12
         fR = 0.18
@@ -814,4 +835,4 @@ class Thorlabs_Liekki_Yb1200_6_125_DC(bc.step_index_active_fibre):
             pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
-            cladding_pumping=self.cladding_pumping)
+            cladding_pumping=self.cladding_pumping, verbose=verbose)
