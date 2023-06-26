@@ -32,7 +32,7 @@ pyLaserPulse documentation
    pyLaserPulse.optical_assemblies
    pyLaserPulse.pulse
    pyLaserPulse.pump
-   pyLaserPulse.single_plot_window
+   pyLaserPulse.single_plot_window.matplotlib_gallery
    pyLaserPulse.sys_info
    pyLaserPulse.utils
 
@@ -54,6 +54,6 @@ pyLaserPulse documentation
    /auto_source/pyLaserPulse.optical_assemblies
    /auto_source/pyLaserPulse.pulse
    /auto_source/pyLaserPulse.pump
-   /auto_source/pyLaserPulse.single_plot_window
+   /auto_source/pyLaserPulse.single_plot_window.matplotlib_gallery
    /auto_source/pyLaserPulse.sys_info
    /auto_source/pyLaserPulse.utils
