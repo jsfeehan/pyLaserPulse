@@ -29,6 +29,8 @@ class JDSU_fused_976_1030_WDM(bc.fibre_component):
         Length of the output fibre in m.
     beat_length : float
         Polarization beat length in m.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -46,7 +48,8 @@ class JDSU_fused_976_1030_WDM(bc.fibre_component):
     Measured loss data file is component_loss_profiles/976_1030_fused_WDM.txt
     Pigtails assumed to be HI1060.
     """
-    def __init__(self, grid, length_in, length_out, beat_length):
+    def __init__(
+            self, grid, length_in, length_out, beat_length, verbose=False):
         tol = 1e-5
         loss = 0  # interpolated from data file
         trans_bw = np.inf  # given in loss data file
@@ -58,7 +61,8 @@ class JDSU_fused_976_1030_WDM(bc.fibre_component):
         output_fibre = pf.Corning_HI1060(grid, length_out, beat_length, tol)
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw,
-            grid.lambda_c, epsilon, angle, beamsplitting, crosstalk)
+            grid.lambda_c, epsilon, angle, beamsplitting, crosstalk,
+            verbose=verbose)
 
         wdm_data = utils.interpolate_data_from_file(
                paths.components.loss_spectra.fused_WDM_976_1030,
@@ -80,6 +84,8 @@ class Thorlabs_IO_J_1030(bc.fibre_component):
         Input fibre length in m.
     length_out : float
         Output fibre length in m.
+    verbose : bool
+        Print information to terminal if True
 
     Notes
     -----
@@ -89,7 +95,7 @@ class Thorlabs_IO_J_1030(bc.fibre_component):
 
     Max operating power of 3 W.
     """
-    def __init__(self, grid, length_in, length_out):
+    def __init__(self, grid, length_in, length_out, verbose=False):
         tol = 1e-5
         loss = 0  # Loss profile interpolated from file
         trans_bw = np.inf  # Included in loss profile
@@ -101,7 +107,7 @@ class Thorlabs_IO_J_1030(bc.fibre_component):
         output_fibre = pf.PM980_XP(grid, length_out, tol)
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, grid.lambda_c,
-            epsilon, angle, beamsplitting, crosstalk)
+            epsilon, angle, beamsplitting, crosstalk, verbose=verbose)
         iso_data = utils.interpolate_data_from_file(
             paths.components.loss_spectra.Thorlabs_IO_J_1030,
             grid.lambda_window, 1e-9, 1, interp_kind='linear')
@@ -130,9 +136,11 @@ class Opneti_1x2_PM_filter_coupler_500mW(bc.fibre_component):
         split_fraction = 0.95, etc.
     output_coupler : bool
         If True, this component behaves like an output coupler or tap.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length_in, length_out, lambda_c, split_fraction,
-                 output_coupler=True):
+                 output_coupler=True, verbose=False):
         tol = 1e-5
         loss = 0.17
         trans_bw = 40e-9
@@ -145,7 +153,7 @@ class Opneti_1x2_PM_filter_coupler_500mW(bc.fibre_component):
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, lambda_c, epsilon,
             angle, split_fraction, crosstalk, order=5,
-            output_coupler=output_coupler)
+            output_coupler=output_coupler, verbose=verbose)
 
 
 class Opneti_1x2_PM_95_5_filter_coupler_500mW_fast_axis_blocked(
@@ -170,9 +178,11 @@ class Opneti_1x2_PM_95_5_filter_coupler_500mW_fast_axis_blocked(
         split_fraction = 0.95, etc.
     output_coupler : bool
         If True, this component behaves like an output coupler or tap.
+    verbose : bool
+        Print information to terminal if True
     """
     def __init__(self, grid, length_in, length_out, lambda_c,
-                 output_coupler=True):
+                 output_coupler=True, verbose=False):
         tol = 1e-5
         loss = 0.17
         trans_bw = 40e-9
@@ -186,7 +196,7 @@ class Opneti_1x2_PM_95_5_filter_coupler_500mW_fast_axis_blocked(
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, lambda_c, epsilon,
             angle, split_fraction, crosstalk, order=5,
-            output_coupler=output_coupler)
+            output_coupler=output_coupler, verbose=verbose)
 
         tap_data = utils.interpolate_data_from_file(
             paths.components.loss_spectra.Opneti_95_5_PM_fibre_tap_fast_axis_blocked,
@@ -211,8 +221,10 @@ class Opneti_PM_isolator_WDM_hybrid(bc.fibre_component):
         Output fibre length in m
     lambda_c : float
         Central operating wavelength in m
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length_in, length_out, lambda_c):
+    def __init__(self, grid, length_in, length_out, lambda_c, verbose=False):
         tol = 1e-5
         loss = 0.52
         trans_bw = 40e-9
@@ -225,7 +237,8 @@ class Opneti_PM_isolator_WDM_hybrid(bc.fibre_component):
         output_fibre = pf.PM980_XP(grid, length_out, tol)
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, lambda_c,
-            epsilon, angle, beamsplitting, crosstalk, order=5)
+            epsilon, angle, beamsplitting, crosstalk, order=5,
+            verbose=verbose)
 
 
 class Opneti_high_power_PM_isolator(bc.fibre_component):
@@ -242,8 +255,11 @@ class Opneti_high_power_PM_isolator(bc.fibre_component):
         Output fibre length in m
     lambda_c : float
         Central operating wavelength in m
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length_in, length_out, lambda_c):
+    def __init__(
+            self, grid, length_in, length_out, lambda_c, verbose=False):
         tol = 1e-5
         loss = 0.2
         trans_bw = 150e-9
@@ -256,7 +272,7 @@ class Opneti_high_power_PM_isolator(bc.fibre_component):
         output_fibre = pf.PM980_XP(grid, length_out, tol)
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, lambda_c, epsilon,
-            angle, beamsplitting, crosstalk, order=5)
+            angle, beamsplitting, crosstalk, order=5, verbose=verbose)
 
         iso_data = utils.interpolate_data_from_file(
             paths.components.loss_spectra.Opneti_high_power_isolator_HPMIS_1030_1_250_5,
@@ -280,8 +296,10 @@ class Opneti_high_power_filter_WDM_1020_1080(bc.fibre_component):
         Input fibre length in m
     length_out : float
         Output fibre length in m
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length_in, length_out):
+    def __init__(self, grid, length_in, length_out, verbose=False):
         tol = 1e-5
         loss = 0  # 0.17
         trans_bw = np.inf  # 60e-9
@@ -294,7 +312,7 @@ class Opneti_high_power_filter_WDM_1020_1080(bc.fibre_component):
         output_fibre = pf.PM980_XP(grid, length_out, tol)
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, grid.lambda_c,
-            epsilon, angle, beamsplitting, crosstalk, order=5)
+            epsilon, angle, beamsplitting, crosstalk, order=5, verbose=verbose)
 
         wdm_data = utils.interpolate_data_from_file(
             paths.components.loss_spectra.Opneti_microoptic_976_1030_wdm,
@@ -321,8 +339,11 @@ class AFR_fast_axis_blocking_isolator_PMI_03_1_P_N_B_F(bc.fibre_component):
         Output fibre length in m
     lambda_c : float
         Central operating wavelength in m
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length_in, length_out, lambda_c):
+    def __init__(
+            self, grid, length_in, length_out, lambda_c, verbose=False):
         tol = 1e-5
         loss = 0.5
         trans_bw = 20e-9
@@ -335,7 +356,7 @@ class AFR_fast_axis_blocking_isolator_PMI_03_1_P_N_B_F(bc.fibre_component):
         output_fibre = pf.PM980_XP(grid, length_out, tol)
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, lambda_c, epsilon,
-            angle, beamsplitting, crosstalk, order=5)
+            angle, beamsplitting, crosstalk, order=5, verbose=verbose)
 
 
 class Opneti_fast_axis_blocking_isolator_PMIS_S_P_1030(bc.fibre_component):
@@ -352,8 +373,11 @@ class Opneti_fast_axis_blocking_isolator_PMIS_S_P_1030(bc.fibre_component):
         Output fibre length in m
     lambda_c : float
         Central operating wavelength in m
+    verbose : bool
+        Print information to terminal if True
     """
-    def __init__(self, grid, length_in, length_out, lambda_c):
+    def __init__(
+            self, grid, length_in, length_out, lambda_c, verbose=False):
         tol = 1e-5
         loss = 0.5
         trans_bw = 20e-9
@@ -366,7 +390,7 @@ class Opneti_fast_axis_blocking_isolator_PMIS_S_P_1030(bc.fibre_component):
         output_fibre = pf.PM980_XP(grid, length_out, tol)
         super().__init__(
             grid, input_fibre, output_fibre, loss, trans_bw, lambda_c, epsilon,
-            angle, beamsplitting, crosstalk, order=5)
+            angle, beamsplitting, crosstalk, order=5, verbose=verbose)
 
         iso_data = utils.interpolate_data_from_file(
             paths.components.loss_spectra.Opneti_microoptic_isolator_PMIS_S_P_1030_F,
