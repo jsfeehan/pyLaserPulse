@@ -341,7 +341,7 @@ Citing pyLaserPulse
 ===================
 pyLaserPulse has benefitted from information shared freely and generously by others who have published open-source code and research findings, contributed to discussions, and provided feedback. Because of this, pyLaserPulse has been released under a GPLv3 license in the hope that it will be useful for the ultrafast laser community. This license does not allow for the inclusion of a clause stipulating that this project must be cited, but do please consider adding the following citation if pyLaserPulse has been useful for your work:
 
-Feehan, J. S. (2022). pyLaserPulse (Version 1.0.0) [Computer software]. https://github.com/jsfeehan/pyLaserPulse
+Feehan, J. S. (2022). pyLaserPulse (Version 0.0.0) [Computer software]. https://github.com/jsfeehan/pyLaserPulse
 
 By doing so, you will be encouraging others to get involved in this project, which will result in better, more feature-rich (and free!) software.
 
