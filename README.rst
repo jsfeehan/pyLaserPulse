@@ -3,26 +3,26 @@ pyLaserPulse
 ============
 
 
-pyLaserPulse is a comprehensive simulation toolbox for modelling polarization-resolved, on-axis laser pulse propagation through nonlinear, dispersive, passive, and active optical fibre assemblies, stretchers, and compressors. pyLaserPulse was developed with rapid prototyping of pulsed fibre systems in mind, and includes: an extensive catalogue of preset models of off-the-shelf components, material reflectivites, Raman response functions and rare-earth spectroscopic data, base types for modelling custom components, and a flexible API.
+pyLaserPulse is a comprehensive simulation toolbox for modelling polarization-resolved, on-axis laser pulse propagation through nonlinear, dispersive, passive, and active optical fibre assemblies, stretchers, and compressors. pyLaserPulse was developed with rapid prototyping of pulsed fibre systems in mind, and includes: full integration of the Giles model [#first]_ with the polarization-resolved generalized nonlinear Schrödinger equation; an extensive catalogue of preset models of off-the-shelf components, material reflectivites, Raman response functions and rare-earth spectroscopic data; base types for modelling custom components; and a flexible API.
 
-pyLaserPulse can be used to build highly accurate models of any (quasi-) single-mode, solid-core fibre system producing output pulses with durations ranging from just a few optical cycles to multiple nanoseconds [#]_. This includes fibre amplifiers, mode-locked fibre lasers, and supercontinuum generation.
+pyLaserPulse can be used to build highly accurate models of any (quasi-) single-mode, solid-core fibre system producing output pulses with durations ranging from just a few optical cycles to multiple nanoseconds [#second]_. This includes fibre amplifiers, mode-locked fibre lasers, and supercontinuum generation.
 
 pyLaserPulse includes:
-    * Models of single and double clad step-index [#]_ and photonic crystal [#]_ passive and active fibres.
+    * Models of single and double clad step-index [#third]_ and photonic crystal [#fourth]_ passive and active fibres.
 
     * Models of free-space and fibre-coupled components.
 
     * A polarization-resolved generalised nonlinear Schrödinger equation (GNLSE) solver.
 
-      - Fourth-order Runge-Kutta interaction picture method for integration (RK4IP) [#]_.
+      - Fourth-order Runge-Kutta interaction picture method for integration (RK4IP) [#fifth]_.
 
-      - Conservation quantity error method adaptive step sizing [#]_.
+      - Conservation quantity error method adaptive step sizing [#sixth]_.
 
       - Full dispersion and propagation loss.
 
-      - Self-steepening, self-phase modulation, four-wave mixing (co- and cross-polarized), cross-phase modulation between polarization and wavelength components, and the full polarization-resolved Raman response [#]_.
+      - Self-steepening, self-phase modulation, four-wave mixing (co- and cross-polarized), cross-phase modulation between polarization and wavelength components, and the full polarization-resolved Raman response [#seventh]_.
 
-    * The Giles model for gain and amplified spontaneous emission (ASE) [#]_.
+    * The Giles model for gain and amplified spontaneous emission (ASE) [#first]_.
 
       - Full integration of gain with the GNLSE for accurate modelling of highly nonlinear amplifiers.
 
@@ -34,7 +34,7 @@ pyLaserPulse includes:
 
     * Dispersion control.
 
-      - Grating-based pulse compressors [#]_ (see also [#]_) including material reflectivity profiles and a scalar model of diffraction efficiency [#]_.
+      - Grating-based pulse compressors [#eigth]_ (see also [#ninth]_) including material reflectivity profiles and a scalar model of diffraction efficiency [#tenth]_.
 
       - Single-mode fibre (SMF) pulse compression.
 
@@ -42,7 +42,7 @@ pyLaserPulse includes:
 
       - Fibre Bragg gratings.
 
-    * Quantum noise contributions including shot noise [#]_ and partition noise at partially reflective interfaces [#]_.
+    * Quantum noise contributions including shot noise [#eleventh]_ and partition noise at partially reflective interfaces [#twelfth]_.
 
     * A comprehensive plot library with full Matplotlib functionality.
 
@@ -70,7 +70,7 @@ pyLaserPulse isn't on PyPI (yet), but it is easy to set up using the following s
 
 
 =============
-The code [#]_
+The code [#thirteenth]_
 =============
 
 Example 1 - A nonlinear Yb-doped fibre amplifier
@@ -351,17 +351,17 @@ By doing so, you will be encouraging others to get involved in this project, whi
 References
 ==========
 
-.. [#] Longer pulses can be modelled using pyLaserPulse, but this can lead to longer execution times if a broad wavelength grid is also needed because this requires a large number of time-frequency grid points. For nanosecond-pulse to continuous-wave fibre laser and amplifier simulations requiring a broad wavelength grid, there is also the pyFiberAmp_ library (rate equation & boundary value solver with Raman; no GNLSE).
+.. [#first] C R Giles and E Desurvire, "Modeling erbium-doped fiber amplifiers", Journal of Lightwave Technology 9(2), pp 271-283 (1991)
+.. [#second] Longer pulses can be modelled using pyLaserPulse but if a wide wavelength span is also required then you will need to use a large number of grid points, which will increase the execution time. For nanosecond-pulse to continuous-wave fibre laser and amplifier simulations requiring a broad wavelength grid, there is also the pyFiberAmp_ library (rate equation & boundary value solver with Raman; no GNLSE).
 .. _pyFiberAmp: https://github.com/Jomiri/pyfiberamp/
-.. [#] D Gloge, "Weakly guiding fibers", Applied Optics 10(10), pp 2252-2258 (1971)
-.. [#] K Saitoh and M Koshiba, "Empirical relations for simple design of photonic crystal fibers", Optics Express 13(1), pp 267-274 (2005)
-.. [#] J Hult, "A fourth-order Runge-Kutta in the interaction picture method for simulating supercontinuum generation in optical fibers", Journal of Lightwave Technology 25(12), pp. 3770-3775 (2007) and https://freeopticsproject.org
-.. [#] A M Heidt, "Efficient adaptive step size method for the simulation of supercontinuum generation in optical fibers", Journal of Lightwave Technology 27(18), pp. 3984-3991 (2009) and https://freeopticsproject.org
-.. [#] S Trillo and S Wabnitz, "Parametric and Raman amplification in birefringent fibers", Journal of the Optical Society of America B 9(7), pp. 1061-1082 (1992)
-.. [#] C R Giles and E Desurvire, "Modeling erbium-doped fiber amplifiers", Journal of Lightwave Technology 9(2), pp 271-283 (1991)
-.. [#] R L Fork, C H Brito Cruz, P C Becker, C V Shank, "Compression of optical pulses to six femtoseconds by using cubic phase compensation", Optics Letters 12(7), pp 483-485 (1987)
-.. [#] F Kienle, "Advanced high-power optical parametric oscillators synchronously pumped by ultrafast fibre-based sources", PhD Thesis, University of Southampton, 2012 (see page 37). 
-.. [#] R Casini and P G Nelson, "On the intensity distribution function of blazed reflective diffraction gratings", Journal of the Optical Society of America A 31(10), pp 2179-2184 (2014)
-.. [#] P Drummond and J F Corney, "Quantum noise in optical fibers. I. Stochastic equations", Journal of the Optical Society of America B 18(2), pp 139-152 (2001)
-.. [#] B Huttner and Y Ben-Aryeh, "Influence of a beam splitter on photon statistics", Physical Review A 38(1), pp 204-211 (1988)
-.. [#] Manufacturers and suppliers mentioned in the example code are not affiliated with pyLaserPulse.
+.. [#third] D Gloge, "Weakly guiding fibers", Applied Optics 10(10), pp 2252-2258 (1971)
+.. [#fourth] K Saitoh and M Koshiba, "Empirical relations for simple design of photonic crystal fibers", Optics Express 13(1), pp 267-274 (2005)
+.. [#fifth] J Hult, "A fourth-order Runge-Kutta in the interaction picture method for simulating supercontinuum generation in optical fibers", Journal of Lightwave Technology 25(12), pp. 3770-3775 (2007) and https://freeopticsproject.org
+.. [#sixth] A M Heidt, "Efficient adaptive step size method for the simulation of supercontinuum generation in optical fibers", Journal of Lightwave Technology 27(18), pp. 3984-3991 (2009) and https://freeopticsproject.org
+.. [#seventh] S Trillo and S Wabnitz, "Parametric and Raman amplification in birefringent fibers", Journal of the Optical Society of America B 9(7), pp. 1061-1082 (1992)
+.. [#eigth] R L Fork, C H Brito Cruz, P C Becker, C V Shank, "Compression of optical pulses to six femtoseconds by using cubic phase compensation", Optics Letters 12(7), pp 483-485 (1987)
+.. [#ninth] F Kienle, "Advanced high-power optical parametric oscillators synchronously pumped by ultrafast fibre-based sources", PhD Thesis, University of Southampton, 2012 (see page 37). 
+.. [#tenth] R Casini and P G Nelson, "On the intensity distribution function of blazed reflective diffraction gratings", Journal of the Optical Society of America A 31(10), pp 2179-2184 (2014)
+.. [#eleventh] P Drummond and J F Corney, "Quantum noise in optical fibers. I. Stochastic equations", Journal of the Optical Society of America B 18(2), pp 139-152 (2001)
+.. [#twelfth] B Huttner and Y Ben-Aryeh, "Influence of a beam splitter on photon statistics", Physical Review A 38(1), pp 204-211 (1988)
+.. [#thirteenth] Manufacturers and suppliers mentioned in the example code are not affiliated with pyLaserPulse.
