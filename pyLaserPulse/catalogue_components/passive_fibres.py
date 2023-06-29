@@ -488,10 +488,10 @@ class NKT_NL_1050_NEG_1(bc.photonic_crystal_passive_fibre):
     grid : pyLaserPulse.grid.grid object
     length : float
         Fibre length.
-    beat_length : float
-        Polarization beat length in m
     tol : float
         Tolerance for propagation integration error
+    beat_length : float
+        Polarization beat length in m
     n2 : float
         Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
         which is the value for fused silica around 1060 nm.
