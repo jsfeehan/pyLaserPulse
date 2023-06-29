@@ -32,6 +32,8 @@ pyLaserPulse includes:
 
       - A choice of frequency-domain or hybrid time- and frequency-domain operators.
 
+      - Unlimited pump and ASE channels.
+
     * Dispersion control.
 
       - Grating-based pulse compressors [#eigth]_ (see also [#ninth]_) including material reflectivity profiles and a scalar model of diffraction efficiency [#tenth]_.
