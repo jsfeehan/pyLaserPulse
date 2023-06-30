@@ -162,7 +162,7 @@ The example below shows how to model a simple Yb-doped fibre amplifier comprised
 
 
 
-The ``optical_assemblies`` module used in the example above not only provides a simple way of turning a collection of component models into a convenient *assembly* which can then be simulated in a single line, it also generates plots which can be displayed using the ``single_plot_window.matplotlib_gallery`` module. The latter includes an intuitive, Qt-based gallery of plot thumbnails which, when clicked, are launched in a standard Matplotlib figure for full control over the plot visuals, axis limits, scaling, etc., as shown in the animation below.  
+The ``optical_assemblies`` module used in the example above provides an easy way of turning a collection of components into an assembly with coupling losses inserted automatically between them, manages high-resolution field sampling options and data saving, prints information to the terminal, and also generates plots which can be displayed using the ``single_plot_window.matplotlib_gallery`` module. The latter includes a Qt-based gallery of plot thumbnails which, when clicked, are launched in a standard Matplotlib figure for full control over the plot visuals, axis limits, scaling, etc., as shown in the animation below.
 
 .. image:: docs/videos/simulation_gallery.gif
     :align: center
