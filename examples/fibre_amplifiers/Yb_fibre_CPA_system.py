@@ -4,12 +4,14 @@
 Simulate a 3-amplifier Yb-doped CPA system using pyLaserPulse.
 
 The seed pulses have a central wavelength of 1083 nm, a repetition rate of 40
-MHz, and are chirped to 3 ps (transform limit of 124 fs). Three amplifiers
-follow, with an AOM to reduce the repetition rate to 1 MHz after the first. Each
-amplifier is cladding pumped to give the quasi-four-level dynamics required
-for high gain at the seed wavelength. The CFBG dispersion Taylor coefficients
-are calculated from the initial compressor dispersion and the net fibre
-dispersion.
+MHz, and are chirped to 3 ps (transform limit of 124 fs). The first component
+is a circulator and CFBG setup which stretches the pulses to ~275 ps FWHM.
+Three amplifiers follow, with an AOM to reduce the repetition rate to 1 MHz
+after the first. Each amplifier is cladding pumped to give the quasi-four-level
+dynamics required for high gain at the seed wavelength. The CFBG dispersion
+Taylor coefficients are calculated from the initial compressor dispersion and
+the net fibre dispersion (note that they are unlikely to be optimal for this
+CPA system).
 
 This example also shows how co-propagating ASE can be passed from one amplifier
 to the next using the optical_assemblies module and the co_ASE keyword
