@@ -116,7 +116,7 @@ class _pulse_base(ABC):
             # residual pump (co- and counter-) are estimated accurately.
             raise ValueError(
                 "The pulse-to-pulse time interval cannot be less than"
-                " the span of the temporal grid.\n Please either increase"
+                " the span of the temporal grid.\n Please either decrease"
                 " the repetition rate or widen grid.time_window.")
 
         # Containers for fields sampled during the propagation, at output
@@ -761,5 +761,66 @@ class pulse_from_text_data(_pulse_base):
         max_raw_data = np.amax(raw_data)
         tmp_pulse[:, 0] = P_0[0] * raw_data / max_raw_data
         tmp_pulse[:, 1] = P_0[1] * raw_data / max_raw_data
+        self.field = np.sqrt(tmp_pulse, dtype=np.complex128)
+        self.field = self.field.T
+
+
+class pulse_from_numpy_array(_pulse_base):
+    """
+    Laser pulse class.
+
+    Define a laser pulse using a 1D numpy array containing the pulse shape in
+    the time domain.
+    """
+    def __init__(self, grid, pulse_array, P_0, repetition_rate,
+                 quantum_noise_seed=None, high_res_sampling=False,
+                 save_high_res_samples=False, save_dir=None, initial_delay=0):
+        """
+        Parameters
+        ----------
+        grid : pyLaserPulse.grid.grid object
+        pulse_array : numpy array
+            Time-domain shape of the pulse. Doesn't need to be normalized.
+            Must be 1D and of len grid.points.
+        P_0 : list
+            [peak_power_x, peak_power_y]
+        repetition_rate : float
+            Repetition rate of the laser.
+        quantum_noise_seed : numpy array or NoneType
+            Custom starting quantum noise. If NoneType, default one photon per
+            mode is used.
+        high_res_sampling : bool
+            If True, propagation information is saved at intervals throughout
+            the propagation.
+        save_high_res_samples : bool
+            If True, high_res_sampling is saved.
+        save_dir : NoneType or string
+            Directory to which data will be saved.
+        initial_delay : float
+            Starting point of the pulse along the time axis in seconds.
+            E.g., if initial_delay = 0, the pulse will be centred at 0 ps in
+            the time window. If initial_delay = -1e-12, the pulse will be
+            centred at -1 ps in the time window.
+            This feature is useful if a large amount of asymmetrical broadening
+            is expected in the time domain (e.g., when pumping close to the
+            zero-dispersion wavelength in supercontinuum generation).
+        """
+        super().__init__(
+            grid, repetition_rate, high_res_sampling=high_res_sampling,
+            save_high_res_samples=save_high_res_samples, save_dir=save_dir,
+            initial_delay=initial_delay)
+        self.make_pulse(grid, pulse_array, P_0)
+        self.add_OPPM_noise(grid, noise_seed=quantum_noise_seed)
+        self.get_ESD_and_PSD(grid, self.field)
+        self.get_photon_spectrum(grid, self.field)
+        self.get_transform_limit(self.field)
+        self.get_energy_and_average_power(grid, self.field)
+        self._roll_along_time_axis(grid)
+
+    def make_pulse(self, grid, pulse_array, P_0):
+        tmp_pulse = np.zeros((grid.points, 2))
+        max_pulse_array = np.amax(pulse_array)
+        tmp_pulse[:, 0] = P_0[0] * pulse_array / max_pulse_array
+        tmp_pulse[:, 1] = P_0[1] * pulse_array / max_pulse_array
         self.field = np.sqrt(tmp_pulse, dtype=np.complex128)
         self.field = self.field.T
