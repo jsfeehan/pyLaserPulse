@@ -780,8 +780,8 @@ class pulse_from_numpy_array(_pulse_base):
         ----------
         grid : pyLaserPulse.grid.grid object
         pulse_array : numpy array
-            Time-domain shape of the pulse. Doesn't need to be normalized.
-            Must be 1D and of len grid.points.
+            Shape of the intensity profile of the pulse in the time domain.
+            Doesn't need to be normalized. Must be 1D and of len grid.points.
         P_0 : list
             [peak_power_x, peak_power_y]
         repetition_rate : float
