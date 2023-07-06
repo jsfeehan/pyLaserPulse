@@ -1821,7 +1821,7 @@ class active_fibre_base(ABC):
         av_Esat = np.average(self.Esat, weights=spec)
         f = utils.ifft(spec_field)
         P = np.sum(f.real**2 + f.imag**2, axis=0)
-        f *= np.exp(-1 * np.cumsum(P * self.grid.dt / av_Esat) / 2)
+        f *= np.exp(-1 * np.cumsum(P * self.grid.dt / av_Esat) * dz / 2)
         spec_field = utils.fft(f)
         return spec_field
 
