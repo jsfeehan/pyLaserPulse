@@ -10,8 +10,6 @@ class MatplotlibWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None, windowTitle=None):
         """
         Application that puts all plots in a single window.
-        Plots can be selected from a comboBox drop-down menu.
-        The combobox is populated from plot_dict.keys().
 
         James Feehan, 14/5/2022
         """
