@@ -144,3 +144,40 @@ class Andover_155FS10_25_bandpass(bc.component):
         loss_data[loss_data < 0] = 0
         loss_data = peak_transmission * loss_data / np.amax(loss_data)
         self.transmission_spectrum = utils.fftshift(loss_data)
+
+
+class AA_Optoelectronic_AOM_MT200_A02_980_1100(bc.pulse_picker):
+    """
+    AA Optoelectronic AOM MT200-A02-xx, 200 MHz.
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    time_open : float
+        Time in s that the pulse picker is 'open', i.e., lets light through
+        Cannot be less than 20 ns (specified rise time of 10 ns).
+    rate_reduction_factor : int
+        Ratio of the input and output repetition rates of the pulse picker.
+    input_rep_rate : float
+        Repetition rate of the seed laser before the pulse picker.
+
+    Notes
+    -----
+    The diffraction efficiency of free-space AOMs is dependent on the wavelength
+    and beam diameter. The minimum specified diffraction efficiency of 80% is
+    used in this model.
+    """
+    def __init__(self, grid, time_open, rate_reduction_factor, input_rep_rate):
+        if time_open >= 20e-9:
+            loss = 0.98 * 0.8  # 98 % transmission, 80 % diffraction efficiency
+            lambda_c = 1040e-9
+            trans_bw = 120e-9  # specified for 980 - 1100 nm
+            epsilon = 1
+            super().__init__(
+                loss, trans_bw, lambda_c, epsilon, 0, 0, grid, 1e-5, time_open,
+                rate_reduction_factor, input_rep_rate)
+        else:
+            raise ValueError(
+                "The AA Optoelectronic MT200-A0.2-xx 200 MHz AOM has a "
+                "specified rise time of 10 ns. Parameter time_open cannot be "
+                "less than 20 ns.")
