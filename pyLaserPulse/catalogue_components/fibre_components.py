@@ -468,7 +468,7 @@ class Aerodiode_fiber_coupled_100MHz_AOM_1064(bc.fibre_pulse_picker):
             tol = 1e-5
             input_fibre = pf.PM980_XP(grid, length_in, tol)
             output_fibre = pf.PM980_XP(grid, length_out, tol)
-            loss = 1 - 10**(-0.12)  # typical 3.5 dB insertion loss
+            loss = 1 - 10**(-0.12)  # typical 1.2 dB insertion loss
             lambda_c = 1045e-9
             trans_bw = 90e-9  # specified for 1000 - 1090 nm
             epsilon = 0.1  # 20 dB - PER not specified by Aerodiode
