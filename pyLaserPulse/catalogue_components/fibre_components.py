@@ -428,14 +428,14 @@ class Gooch_and_Housego_FiberQ_PM_1060_200MHz(bc.fibre_pulse_picker):
             tol = 1e-5
             input_fibre = pf.PM980_XP(grid, length_in, tol)
             output_fibre = pf.PM980_XP(grid, length_out, tol)
-            loss = 10**(-0.35)  # typical 3.5 dB insertion loss
+            loss = 1 - 10**(-0.35)  # typical 3.5 dB insertion loss
             lambda_c = 1060e-9
             trans_bw = 60e-9  # specified for 1030 - 1090 nm
             epsilon = 0.1  # 20 dB polarization extinction ratio
             super().__init__(
                 grid, input_fibre, output_fibre, loss, trans_bw, lambda_c,
                 epsilon, 0, 0, 1e-5, time_open, rate_reduction_factor,
-                input_rep_rate)
+                input_rep_rate, order=5)
         else:
             raise ValueError(
                 "The G&H FiberQ PM 1060 200 MHz AOM has a specified rise time "
@@ -464,18 +464,18 @@ class Aerodiode_fiber_coupled_100MHz_AOM_1064(bc.fibre_pulse_picker):
     def __init__(
             self, grid, length_in, length_out, time_open, rate_reduction_factor,
             input_rep_rate):
-        if time_open >= 20e-9:
+        if time_open >= 90e-9:
             tol = 1e-5
             input_fibre = pf.PM980_XP(grid, length_in, tol)
             output_fibre = pf.PM980_XP(grid, length_out, tol)
-            loss = 10**(-0.12)  # typical 3.5 dB insertion loss
+            loss = 1 - 10**(-0.12)  # typical 3.5 dB insertion loss
             lambda_c = 1045e-9
             trans_bw = 90e-9  # specified for 1000 - 1090 nm
             epsilon = 0.1  # 20 dB - PER not specified by Aerodiode
             super().__init__(
                 grid, input_fibre, output_fibre, loss, trans_bw, lambda_c,
                 epsilon, 0, 0, 1e-5, time_open, rate_reduction_factor,
-                input_rep_rate)
+                input_rep_rate, order=10)
         else:
             raise ValueError(
                 "The Aerodiode 1064AOM-1 100 MHz AOM has a specified rise time "
@@ -508,14 +508,14 @@ class Aerodiode_fiber_coupled_200MHz_AOM_1064(bc.fibre_pulse_picker):
             tol = 1e-5
             input_fibre = pf.PM980_XP(grid, length_in, tol)
             output_fibre = pf.PM980_XP(grid, length_out, tol)
-            loss = 10**(-0.25)  # typical 3.5 dB insertion loss
+            loss = 1 - 10**(-0.25)  # typical 2.5 dB insertion loss
             lambda_c = 1045e-9
             trans_bw = 90e-9  # specified for 1000 - 1090 nm
             epsilon = 0.1  # 20 dB - PER not specified by Aerodiode
             super().__init__(
                 grid, input_fibre, output_fibre, loss, trans_bw, lambda_c,
                 epsilon, 0, 0, 1e-5, time_open, rate_reduction_factor,
-                input_rep_rate)
+                input_rep_rate, order=10)
         else:
             raise ValueError(
                 "The Aerodiode 1064AOM-1 200 MHz AOM has a specified rise time "

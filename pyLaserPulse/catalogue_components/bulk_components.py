@@ -169,13 +169,13 @@ class AA_Optoelectronic_AOM_MT200_A02_980_1100(bc.pulse_picker):
     """
     def __init__(self, grid, time_open, rate_reduction_factor, input_rep_rate):
         if time_open >= 20e-9:
-            loss = 0.98 * 0.8  # 98 % transmission, 80 % diffraction efficiency
+            loss = 1 - (0.98 * 0.8)  # 98 % trans., 80 % diff. efficiency
             lambda_c = 1040e-9
             trans_bw = 120e-9  # specified for 980 - 1100 nm
             epsilon = 1
             super().__init__(
                 loss, trans_bw, lambda_c, epsilon, 0, 0, grid, 1e-5, time_open,
-                rate_reduction_factor, input_rep_rate)
+                rate_reduction_factor, input_rep_rate, order=10)
         else:
             raise ValueError(
                 "The AA Optoelectronic MT200-A0.2-xx 200 MHz AOM has a "
