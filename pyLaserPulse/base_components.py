@@ -921,7 +921,6 @@ class pulse_picker(bases.component_base):
     Class for AOMs, EOMs and, assuming the input repetition rate is low enough
     and only one pulse is let through, choppers as well.
     """
-
     def __init__(self, loss, transmission_bandwidth, lambda_c, epsilon, theta,
                  beamsplitting, g, crosstalk, time_open, rate_reduction_factor,
                  input_rep_rate, order=2, output_coupler=False,
