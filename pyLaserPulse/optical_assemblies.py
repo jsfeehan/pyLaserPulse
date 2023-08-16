@@ -1379,8 +1379,8 @@ class sm_fibre_amplifier(assembly):
                 'pump_points': self.gain_fibre.pump.points,
                 'pump_wl_lims': self.gain_fibre.pump.lambda_lims,
                 'pump_lambda_window': self.gain_fibre.pump.lambda_window,
-                'co_pump_PSD_samples': self.gain_fibre.pump.high_res_samples,
-                'counter_pump_PSD_samples': self.gain_fibre.counter_pump.high_res_samples}
+                'co_pump_PSD_samples': np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :],
+                'counter_pump_PSD_samples': np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]}
         else:
             savez_dict = {
                 'sample_points': z,
@@ -1395,7 +1395,7 @@ class sm_fibre_amplifier(assembly):
                 'pump_points': self.gain_fibre.pump.points,
                 'pump_wl_lims': self.gain_fibre.pump.lambda_lims,
                 'pump_lambda_window': self.gain_fibre.pump.lambda_window,
-                'co_pump_PSD_samples': self.gain_fibre.pump.high_res_samples,
-                'counter_pump_PSD_samples': self.gain_fibre.counter_pump.high_res_samples}
+                'co_pump_PSD_samples': np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :],
+                'counter_pump_PSD_samples': np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]}
         np.savez(self.directory + "optical_assembly.npz", **savez_dict)
  
