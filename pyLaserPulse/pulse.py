@@ -681,15 +681,19 @@ class pulse_from_pyLaserPulse_simulation(_pulse_base):
             is expected in the time domain (e.g., when pumping close to the
             zero-dispersion wavelength in supercontinuum generation).
         """
+        self.filename = str()
+        self.pulse_data = dict()
         if not data_directory.endswith(os.sep):
-            pulse_data = np.load(data_directory + os.sep + 'pulse.npz')
+            self.filename = data_directory + os.sep + 'pulse.npz'
+            self.pulse_data = np.load(self.filename)
         else:
-            pulse_data = np.load(data_directory + 'pulse.npz')
-        rr = float(pulse_data['repetition_rate'])  # otherwise numpy array
+            self.filename = data_directory + 'pulse.npz'
+            self.pulse_data = np.load(self.filename)
+        rr = float(self.pulse_data['repetition_rate'])  # otherwise numpy array
         super().__init__(grid, rr, high_res_sampling=high_res_sampling,
                          save_high_res_samples=save_high_res_samples,
                          save_dir=save_dir, initial_delay=initial_delay)
-        self.make_pulse(pulse_data)
+        self.make_pulse(self.pulse_data)
         self.get_ESD_and_PSD(grid, self.field)
         self.get_photon_spectrum(grid, self.field)
         self.get_transform_limit(self.field)
@@ -698,6 +702,17 @@ class pulse_from_pyLaserPulse_simulation(_pulse_base):
 
     def make_pulse(self, pulse_data):
         self.field = pulse_data['field']
+
+    def load_high_res_sample_data(self):
+        try:
+            self.high_res_B_integral_samples = \
+                self.pulse_data['B_integral_samples']
+            self.high_res_field_samples = self.pulse_data['field_samples']
+            self.high_res_rep_rate_samples =self.pulse_data['rep_rate_samples']
+            self.high_res_field_sample_points = self.pulse_data['sample_points']
+        except KeyError as e:
+            msg = self.filename + ' contains no high resolution sampling data'
+            raise KeyError(msg) from e
 
 
 class pulse_from_text_data(_pulse_base):
