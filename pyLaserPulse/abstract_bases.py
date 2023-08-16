@@ -2373,6 +2373,20 @@ class active_fibre_base(ABC):
 
                 # Make field samples in gain fibre an attribute.
                 self.pulse_field_samples = np.asarray(field_samples)
+
+                # Sampling for pump light
+                self.pump.high_res_samples = \
+                    utils.get_ESD_and_PSD(
+                        self.pump.lambda_window,
+                        spec_samples[:, :, self.stacks.slices['co_pump']],
+                        pulse.repetition_rate)[1]
+                self.pump.high_res_sample_points = self.dz_samples
+                self.counter_pump.high_res_samples = \
+                    utils.get_ESD_and_PSD(
+                        self.counter_pump.lambda_window,
+                        spec_samples[:, :, self.stacks.slices['counter_pump']],
+                        pulse.repetition_rate)[1]
+                self.counter_pump.high_res_sample_points = self.dz_samples
             else:
                 ESD_at_signal_input, pulse.field, spec_samples, N2, \
                     field_err = \

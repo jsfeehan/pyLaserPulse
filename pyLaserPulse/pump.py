@@ -107,6 +107,9 @@ class pump:
             self.propagated_spectrum = np.zeros_like(self.spectrum)
             self.direction *= -1
 
+        self.high_res_samples = []
+        self.high_res_sample_points = []
+
     def get_ESD_and_PSD(self, spectrum, repetition_rate):
         """
         Calculate the energy spectral density and the power spectral density
