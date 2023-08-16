@@ -704,6 +704,26 @@ class pulse_from_pyLaserPulse_simulation(_pulse_base):
         self.field = pulse_data['field']
 
     def load_high_res_sample_data(self):
+        """
+        Load the high resolution sampling data from the data file used to
+        define the pulse.
+
+        These aren't loaded at instantiation because it can take some time if
+        the data file is large.
+
+        This method populates:
+            self.high_res_B_integral_samples
+            self.high_res_field_samples
+            self.high_res_rep_rate_samples
+            self.high_res_field_sample_points
+
+        Notes
+        -----
+        self.high_res_rep_rate_samples is unlikely to be directly useful, and
+        is generally only required for active fibre simulations and for proper
+        scaling of the power spectral density as a function of
+        self.high_res_field_sample_points.
+        """
         try:
             self.high_res_B_integral_samples = \
                 self.pulse_data['B_integral_samples']
