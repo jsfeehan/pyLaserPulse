@@ -336,6 +336,11 @@ Documentation is still in progress, but a detailed module reference can be found
 
 A lot of work has gone into debugging and finding 'gotchas', but these will spring up from time to time. If you have questions, comments, a bug to report, or suggestions for improvement, please get in touch via pylaserpulse@outlook.com.
 
+============
+Contributing
+============
+This repository is for the active development of pyLaserPulse. If you would like to contribute a new feature or bugfix, or to report an issue, please submit your contribution to this repository using GitHub's pull request and issue tracking features.
+
 ===================
 Citing pyLaserPulse
 ===================
