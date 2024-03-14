@@ -334,12 +334,12 @@ Documentation
 =============
 Documentation is still in progress, but a detailed module reference can be found at https://pylaserpulse.readthedocs.io. The docstrings can also be accessed in the usual way (e.g., ``help(pyLaserPulse.grid.grid)``). There are also example scripts which show how to model active and passive fibre systems and give a general overview of how to use pyLaserPulse (see pyLaserPulse/examples).
 
-A lot of work has gone into debugging and finding 'gotchas', but these will spring up from time to time. If you have questions, comments, a bug to report, or suggestions for improvement, please get in touch via pylaserpulse@outlook.com.
-
-============
-Contributing
-============
+=============
+Contributions
+=============
 This repository is for the active development of pyLaserPulse. If you would like to contribute a new feature or bugfix, or to report an issue, please submit your contribution to this repository using GitHub's pull request and issue tracking features.
+
+For anything else, please send an email to pylaserpulse@outlook.com.
 
 ===================
 Citing pyLaserPulse
