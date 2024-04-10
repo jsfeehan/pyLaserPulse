@@ -76,8 +76,6 @@ Example 1 - A nonlinear Yb-doped fibre amplifier
 The example below shows how to model a simple Yb-doped fibre amplifier comprised of off-the-shelf components using the ``catalogue_components`` module. A hybrid isolator/WDM precedes a 1 m length of step-index Yb-doped fibre which is core pumped in the signal propagation direction at 916 nm. The amplifier is seeded with a 150 fs, sech\ :sup:`2`\  input pulse with a peak power of 150 W and 30 dB polarization purity.
 
 .. code:: python
-    :number-lines:
-
         from pyLaserPulse import grid
         from pyLaserPulse import pulse
         from pyLaserPulse import optical_assemblies
@@ -170,7 +168,6 @@ The ``optical_assemblies`` module used in the example above provides an easy way
 All components have a ``verbose`` keyword argument, but this is overridden by the same keyword argument used when instantiating classes in the ``optical_assemblies`` module. When ``True``, information about the progress of the simulation is printed to the terminal. The output for this example is given below. The amplifier name is printed, as well as the name of each component, the percentage propagation for the input and output fibres of each component, and the convergence of the boundary value solver for the active fibre.
 
 .. code:: bash
-    :number-lines:
 
         Simulating    amp 1
         --------------------
@@ -206,7 +203,6 @@ Example 2 - Optical wavebreaking in all-normal-dispersion PCF and grating-based 
 The code below models supercontinuum generation in PCF and compression of the spectrally-broadened pulses using a grating-based compressor. 100 fs, 5 kW seed pulses with a central wavelength of 1050 nm first pass through a free-space isolator (modelled using the ``base_components.component`` class) before being coupled into the PCF (modelled using the ``catalogue_components.passive_fibre.NKT_NL_1050_NEG_1`` class). The spectrally broadened and chirped pulses then propagate through the compressor (modelled using the ``base_components.grating_compressor`` class). The ``optimize`` keyword argument is ``True`` when the compressor is instantiated, so the compressor will be optimized for maximum pulse peak power by adjusting the grating angle and separation (diffraction efficiency vs. angle of incidence is incorporated automatically). The ``verbose`` keyword argument of the ``compression`` optical assembly was also ``True``, so the results of this optimization will be printed to the terminal.
 
 .. code:: python
-    :number-lines:
 
         from pyLaserPulse import grid
         from pyLaserPulse import pulse
@@ -311,7 +307,6 @@ A few plots from this simulation are shown below. The development of the pulse a
 This information regarding the compressor optimization and the optimized compressor setup is as follows:
 
 .. code:: bash
-    :number-lines:
 
 	Optimizing the compressor
 	-------------------------
