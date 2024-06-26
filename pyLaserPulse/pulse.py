@@ -556,8 +556,11 @@ class pulse(_pulse_base):
             base_pulse *= np.exp(
                 2j * np.log(2) * chirp * (grid.time_window / duration)**2)
         elif pulse_shape == "sech":
-            base_pulse = 1 / np.cosh(grid.time_window / (duration / 1.76),
-                                     dtype=np.complex128)**(1 - 1j * chirp)
+            base_pulse = 1 / np.power(np.cosh(grid.time_window /
+                                              (duration / 1.76)),
+                                      1 - 1j * chirp, dtype=complex)
+            # Replace NaNs with zeros -- comes from complex power
+            base_pulse[np.isnan(base_pulse)] = 0
         else:
             raise ValueError("pulse_shape must be 'Gauss' or 'sech'")
 
