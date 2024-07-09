@@ -639,7 +639,8 @@ class pulse_from_measured_PSD(_pulse_base):
             spectrum_file, grid.lambda_window * 1e9, 1, 1, input_log=True,
             fill_value=0)
 
-        spec[spec < spec_threshold] = 0  # 1e-20
+        spec -= spec_threshold
+        spec[spec < 0] = 0  # 1e-20
         psf = np.exp(-2 * np.log(2) * grid.omega**2 / (10 * grid.dOmega**2))
         spec = np.abs(utils.fft_convolve(spec, psf))
         spec = np.sqrt(spec)  # convert to field
