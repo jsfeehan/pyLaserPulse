@@ -27,7 +27,7 @@ g = grid.grid(points, wl, max_wl)
 
 # pulse defined using the pulse module
 duration = 80e-15  # pulse duration, s
-Pp = [47e3, 47]    # Peak power [slow axis, fast axis]
+Pp = [15e3, 1.5]    # Peak power [slow axis, fast axis]
 shape = 'sech'     # can accept 'Gauss'
 rr = 50e6          # repetition rate
 delay = -12e-12    # Initial delay from T = 0 s.

@@ -570,9 +570,9 @@ def get_Taylor_coeffs_from_beta2(beta_2, grid):
         idx_min = find_nearest(lim, grid.lambda_window)[0]
         idx_max = find_nearest(-1 * grid.omega[idx_min], grid.omega)[0]
 
-    # Truncate to 11th order. In testing, >11th order could not be found.
+    # Truncate to 11th order. In testing, >11th order could't be found reliably.
     tc = np.polyfit(
-        grid.omega[idx_min:idx_max], beta_2[idx_min:idx_max], 11)[::-1]
+        grid.omega[idx_min:idx_max], beta_2[idx_min:idx_max], 9)[::-1]
     Taylors = np.zeros((len(tc) + 2))
     Taylors[2::] = tc
     print(Taylors)

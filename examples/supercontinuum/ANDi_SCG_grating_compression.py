@@ -28,13 +28,13 @@ max_wl = 8000e-9      # Maximum wavelength, m
 
 # Laser pulse parameters
 tau = 100e-15         # Pulse duration, s
-P_peak = [5000, 25]   # [P_x, P_y], W
+P_peak = [25000, 250]   # [P_x, P_y], W
 f_rep = 40e6          # Repetition frequency, Hz
 shape = 'Gauss'       # Can also take 'sech'
 
 # ANDi photonic crystal fibre parameters
 L_beat = 1e-2  # polarization beat length (m)
-L = 1          # length, m
+L = .25          # length, m
 
 # grating compressor parameters
 loss = 0.04            # percent loss per grating reflection
