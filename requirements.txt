@@ -4,4 +4,4 @@ psutil==5.9.5
 PyQt5==5.15.9
 PyQt5_sip==12.12.1
 scipy==1.11.0
-setuptools==68.0.0
+setuptools==75.1.0

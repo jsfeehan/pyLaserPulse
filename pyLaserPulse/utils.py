@@ -575,7 +575,6 @@ def get_Taylor_coeffs_from_beta2(beta_2, grid):
         grid.omega[idx_min:idx_max], beta_2[idx_min:idx_max], 9)[::-1]
     Taylors = np.zeros((len(tc) + 2))
     Taylors[2::] = tc
-    print(Taylors)
 
     beta = np.zeros_like(grid.omega, dtype=np.complex128)
     for i, tc in enumerate(Taylors):
