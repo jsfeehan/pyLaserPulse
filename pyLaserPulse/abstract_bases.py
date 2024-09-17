@@ -178,18 +178,18 @@ class fibre_base(ABC):
         self._get_polarization_group_velocity_mismatch()
         self._make_linear_operator()
         self._make_self_steepening_term()
-        self._get_dispersion_Taylor_coefficients()
+    #     self._get_dispersion_Taylor_coefficients()
 
-    def _get_dispersion_Taylor_coefficients(self):
-        """
-        Calculate beta3, 4, and 5 from self.beta_2. Store in tuple self.Taylors.
-        """
-        b3 = np.gradient(self.beta_2, self.grid.omega, edge_order=2)
-        b4 = np.gradient(b3, self.grid.omega, edge_order=2)
-        b5 = np.gradient(b4, self.grid.omega, edge_order=2)
-        self.Taylors = (
-            0, 0, self.beta_2[self.grid.midpoint], b3[self.grid.midpoint],
-            b4[self.grid.midpoint], b5[self.grid.midpoint])
+    # def _get_dispersion_Taylor_coefficients(self):
+    #     """
+    #     Calculate beta3, 4, and 5 from self.beta_2. Store in tuple self.Taylors.
+    #     """
+    #     b3 = np.gradient(self.beta_2, self.grid.omega, edge_order=2)
+    #     b4 = np.gradient(b3, self.grid.omega, edge_order=2)
+    #     b5 = np.gradient(b4, self.grid.omega, edge_order=2)
+    #     self.Taylors = (
+    #         0, 0, self.beta_2[self.grid.midpoint], b3[self.grid.midpoint],
+    #         b4[self.grid.midpoint], b5[self.grid.midpoint])
 
     def _DFWM_phasematching(self, z):
         """
