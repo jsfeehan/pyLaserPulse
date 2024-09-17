@@ -464,8 +464,8 @@ class NKT_SC_5_1040(bc.photonic_crystal_passive_fibre):
     """
     def __init__(
             self, grid, length, beat_length, tol, n2=2.19e-20, verbose=False):
-        hole_pitch = 3.6e-6
-        hole_diam_over_pitch = 0.575
+        hole_pitch = 3.5e-6
+        hole_diam_over_pitch = 0.585
         fR = 0.18
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
@@ -498,8 +498,8 @@ class NKT_SC_5_1040_PM(bc.photonic_crystal_passive_fibre):
     PM, ~0.01 -- 0.011 1 / (W m) nonlinear coefficient, ZDW ~1040 nm.
     """
     def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
-        hole_pitch = 3.6e-6
-        hole_diam_over_pitch = 0.575
+        hole_pitch = 3.5e-6
+        hole_diam_over_pitch = 0.585
         fR = 0.18
         beat_length = 6e-3  # dn = 1.7e-4 is given on spec. sheet.
         super().__init__(

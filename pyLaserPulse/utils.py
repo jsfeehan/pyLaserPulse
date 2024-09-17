@@ -10,6 +10,7 @@ General functions.
 
 
 import numpy as np
+import math
 from scipy.interpolate import interp1d
 import scipy.constants as const
 
@@ -530,3 +531,53 @@ def PCF_propagation_parameters_K_Saitoh(
                      fill_value='extrapolate')
         beta_2 = f(lambda_window)
     return V, ref_index, D, beta_2
+
+
+def get_Taylor_coeffs_from_beta2(beta_2, grid):
+    """
+    Calculate the Taylor coefficients which describe the propagation constant
+    calculated using, e.g., Gloge, Saitoh (depending on what is being
+    simulated).
+
+    Parameters
+    ----------
+    beta_2 : numpy array
+        Dispersion curve in s^2 / m
+    grid : pyLaserPulse.grid.grid object
+
+    Returns
+    -------
+    beta : numpy array
+        Complex part of the propagation constant.
+
+    Notes
+    -----
+    Second-order gradient of beta with respect to omega will give the dispersion
+    curve to within the accuracy of the Taylor expansion.
+
+    This function could be used for retrieving the Taylor coefficients for,
+    e.g., grating compressors, but analytic formulae should be used instead
+    where available.
+    """
+    idx_max = grid.points - 1
+    idx_min = 0
+    lim = 2 * grid.lambda_c
+    if grid.lambda_max > lim:
+        # Get min and max indices for Taylor coefficient calculations.
+        # Only required for very large frequency grid spans.
+        # From testing, seems that 2x central wavelength is a good upper limit.
+        # Recall indexing for grid.lambda_window is reversed.
+        idx_min = find_nearest(lim, grid.lambda_window)[0]
+        idx_max = find_nearest(-1 * grid.omega[idx_min], grid.omega)[0]
+
+    # Truncate to 11th order. In testing, >11th order could't be found reliably.
+    tc = np.polyfit(
+        grid.omega[idx_min:idx_max], beta_2[idx_min:idx_max], 9)[::-1]
+    Taylors = np.zeros((len(tc) + 2))
+    Taylors[2::] = tc
+    print(Taylors)
+
+    beta = np.zeros_like(grid.omega, dtype=np.complex128)
+    for i, tc in enumerate(Taylors):
+        beta += 1j * tc * grid.omega**i / math.factorial(i)
+    return Taylors, beta

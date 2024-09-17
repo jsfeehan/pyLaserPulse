@@ -48,7 +48,7 @@ def scg_sim(_g):
     """
     # pulse
     duration = 200e-15  # pulse duration, s
-    Pp = [47e3, 47]     # Peak power [slow axis, fast axis]
+    Pp = [15e3, 15]     # Peak power [slow axis, fast axis]
     shape = 'sech'      # can accept 'Gauss'
     rr = 50e6           # repetition rate
     delay = 0           # Initial delay from T = 0 s.
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     # grid
     points = 2**13    # Time-frequency grid points
     wl = 1040e-9      # Grid & pulse central wavelength
-    max_wl = 2000e-9  # Max grid wavelength
+    max_wl = 4000e-9  # Max grid wavelength
     g = grid.grid(points, wl, max_wl)
 
     num_processes = psutil.cpu_count(logical=False)  # only use physical cores
