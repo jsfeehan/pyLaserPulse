@@ -34,30 +34,32 @@ import pyLaserPulse.optical_assemblies as oa
 import pyLaserPulse.single_plot_window as spw
 
 if __name__ == "__main__":
-    g = grid.grid(2**14, 1040e-9, 2000e-9)
+    g = grid.grid(2**14, 800e-9, 1200e-9)
     p = pulse.pulse(100e-15, [200000, 0], 'Gauss', 40e6, g)
 
-    pcf = cc.passive_fibres.NKT_NL_1050_NEG_1(g, 0.25, 1e-5, -1e-3)
+    # pcf = cc.passive_fibres.NKT_NL_1050_NEG_1(g, 0.25, 1e-5, -1e-3)
 
-    # REQUIRES FUNCTION THAT RETURNS THE DISPERSION CURVE.
+    # polyFitCo = np.polyfit(g.omega, pcf.beta_2, 11)
+    # print(polyFitCo[::-1])
 
-    polyFitCo = np.polyfit(g.omega, pcf.beta_2, 11)
-    print(polyFitCo[::-1])
+    # polyFitCo = polyFitCo[::-1]
+    # tc = np.zeros((len(polyFitCo)+2))
+    # tc[2::] = polyFitCo
 
-    polyFitCo = polyFitCo[::-1]
-    tc = np.zeros((len(polyFitCo)+2))
-    tc[2::] = polyFitCo
+    tc = [0, 0, -11.83*1e-12**2, 8.1038e-2*1e-12**3, -9.5205e-5*1e-12**4,
+          2.0737e-7*1e-12**5, -5.3943e-10*1e-12**6, 1.3486e-12*1e-12**7,
+          -2.5495e-15*1e-12**8, 3.0524e-18*1e-12**9, -1.714e-21*1e-12**10]
+
 
     foo = np.zeros((g.points), dtype=np.complex128)
-    for i, b in enumerate(polyFitCo):  # tc):
+    for i, b in enumerate(tc):
         print(i, b)
-        foo += 1j * b * g.omega**(i) / math.factorial(i)
+        foo += 1e-3 * 1j * b * g.omega**(i) /  math.factorial(i)
 
-    D = -2*np.pi*const.c * foo.imag / g.lambda_window**2
+    D = -2e6*np.pi*const.c * foo.imag / g.lambda_window**2
 
-    ## This dispersion value looks good, now to add birefringence.
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(g.lambda_window, D*1e6) 
+    ax.plot(g.lambda_window, foo.imag) 
     plt.show()
 
