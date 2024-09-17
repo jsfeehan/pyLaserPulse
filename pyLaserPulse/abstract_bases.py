@@ -10,6 +10,7 @@ Module of abstract base classes for optical components.
 
 
 from abc import ABC, abstractmethod
+import math
 import numpy as np
 import scipy.interpolate as interp
 import scipy.constants as const
@@ -124,11 +125,22 @@ class fibre_base(ABC):
         """
         Define self.linear_operator.
         """
-        self.linear_operator = self.loss / 2 \
-            + 1j * self.beta_2 * self.grid.omega**2 / 2
+        self.Taylors, beta = utils.get_Taylor_coeffs_from_beta2(
+            self.beta_2, self.grid)
+        self.linear_operator = 0.5 * self.loss + beta
+
         self.linear_operator = self.linear_operator[None, :].repeat(2, axis=0)
         self.linear_operator[0, :] += -1j * self.beta_1 * self.grid.omega / 2
         self.linear_operator[1, :] += 1j * self.beta_1 * self.grid.omega / 2
+
+        # Create new arrays holding dispersion data used for the propagation
+        self.beta_2_Taylors = np.gradient(
+            self.linear_operator.imag, self.grid.omega, edge_order=2, axis=1)
+        self.beta_2_Taylors = np.gradient(
+            self.beta_2_Taylors, self.grid.omega, edge_order=2, axis=1)
+        self.D_Taylors = -2 * np.pi * const.c * self.beta_2_Taylors \
+            / self.grid.lambda_window**2
+
         self.linear_operator = utils.fftshift(self.linear_operator, axes=-1)
 
     def _get_birefringence(self):

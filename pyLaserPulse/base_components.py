@@ -1391,6 +1391,9 @@ class grating_compressor(component):
         """
         Calculate the second order dispersion of the compressor.
         """
+        # Note: Better results obtained with the manual Taylor coeff calculation
+        # using the formulae given in Fork & Shank and F. Kienle's PhD thesis,
+        # rather than the utils.get_Taylor_coeffs_from_beta2 function.
         factor_1 = -8 * np.pi**2 * const.c / (self.grid.omega_window**3
                                               * self.groove_spacing**2)
         factor_2 = self.grating_separation / np.cos(self.diff_angle)
