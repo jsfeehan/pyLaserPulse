@@ -246,7 +246,7 @@ class fibre_base(ABC):
             SPM_XPM_DFWM = field * (1. - self.fR) * (P + (2. / 3.) * P_r) \
                 + (1. - self.fR) * field_r**2 * conjfield_pm / 3.
             Raman_SPM_XPM = self.fR * field * self.grid.dt * utils.ifft(
-                self.Raman[:, 0] * P_fft + self.Raman[:, 0] * P_fft_r)
+                (self.Raman[:, 0] + self.Raman[:, 1]) * P_fft + self.Raman[:, 0] * P_fft_r)
             Raman_DFWM = self.fR * field_r * self.grid.dt * \
                 utils.ifft(0.5 * self.Raman[:, 1] * utils.fft(
                     field * conjfield_r + field_r * conjfield_pm))
