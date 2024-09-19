@@ -220,6 +220,117 @@ class OFS_R37003(bc.step_index_active_fibre):
             verbose=verbose)
 
 
+class OFS_EDF07_PM(bc.step_index_active_fibre):
+    """
+    step_index_active_fibre with default parameters which provide fibre
+    properties matching OFS EDF07 PM.
+
+    Low doping concentration Er-doped fibre (spec. ~7 dB/m @ 1530 nm).
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    seed_repetition_rate : float
+        Repetition rate of the seed laser pulses
+    pump_points : int
+        Number of points in the pump light grid.
+    ASE_wl_lims : list
+        Wavelength limits of the pump and ASE grid, [min_wl, max_wl] in m.
+    boundary_conditions : dict
+        Set the boundary conditions for resolving the evolution of the pump,
+        signal, and ASE light in both directions through the fibre.
+        The type of simulation -- i.e., single-pass or full boundary value
+        solver -- is determined by this dictionary.
+        See pyLaserPulse.base_components.step_index_active_fibre
+    time_domain_gain : Boolean
+        Time domain gain included if True.
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
+        which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
+    """
+    def __init__(self, grid, length, seed_repetition_rate, pump_points,
+                 ASE_wl_lims, boundary_conditions, time_domain_gain=False,
+                 n2=2.33e-20, verbose=False):
+        core_diam = 5.5e-6
+        NA = 0.21
+        fR = 0.18
+        tol = 1e-5
+        beat_length = 5.2e-3  # dn = 3e-4 given on spec. sheet.
+        doping_concentration = 3.85e24  # m^-3
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
+            n2, fR, tol, doping_concentration,
+            paths.fibres.cross_sections.Er_silica,
+            seed_repetition_rate, pump_points, ASE_wl_lims,
+            paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
+
+
+class nLight_Er80_4_125_HD_PM(bc.step_index_active_fibre):
+    """
+    step_index_active_fibre with default parameters which provide fibre
+    properties matching nLight Er80-4/125-HD-PM.
+
+    High doping concentration Er-doped fibre (spec. 80+/-20 dB/m @ 1530 nm).
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    seed_repetition_rate : float
+        Repetition rate of the seed laser pulses
+    pump_points : int
+        Number of points in the pump light grid.
+    ASE_wl_lims : list
+        Wavelength limits of the pump and ASE grid, [min_wl, max_wl] in m.
+    boundary_conditions : dict
+        Set the boundary conditions for resolving the evolution of the pump,
+        signal, and ASE light in both directions through the fibre.
+        The type of simulation -- i.e., single-pass or full boundary value
+        solver -- is determined by this dictionary.
+        See pyLaserPulse.base_components.step_index_active_fibre
+    time_domain_gain : Boolean
+        Time domain gain included if True.
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
+        which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
+
+    Notes
+    -----
+    Core diameter and NA were selected to match the specified dispersion value
+    and MFD at 1550 nm. These are -22 ps/(nm km) and 6.5 +/- 1 um, respectively.
+    The values given by the choice of core diameter and NA below are
+    -19.4 ps/(nm km) and 5.6 um, respectively.
+    """
+    def __init__(self, grid, length, seed_repetition_rate, pump_points,
+                 ASE_wl_lims, boundary_conditions, time_domain_gain=False,
+                 n2=2.33e-20, verbose=False):
+        core_diam = 3.45e-6
+        NA = 0.22
+        fR = 0.18
+        tol = 1e-5
+        beat_length = 1.5e-2  # dn = 3e-4 given on spec. sheet.
+        doping_concentration = 6e25  # m^-3
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
+            n2, fR, tol, doping_concentration,
+            paths.fibres.cross_sections.Er_silica,
+            seed_repetition_rate, pump_points, ASE_wl_lims,
+            paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            verbose=verbose)
+
+
 class Thorlabs_Liekki_M5_980_125(bc.step_index_active_fibre):
     """
     step_index_active_fibre with default parameters which provide fibre
