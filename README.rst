@@ -3,7 +3,7 @@ pyLaserPulse
 ============
 
 
-pyLaserPulse is a comprehensive simulation toolbox for modelling polarization-resolved, on-axis laser pulse propagation through nonlinear, dispersive, passive, and active optical fibre assemblies, stretchers, and compressors. pyLaserPulse was developed with rapid prototyping of pulsed fibre systems in mind, and includes: full integration of the Giles model [#first]_ with the polarization-resolved generalized nonlinear Schrödinger equation; an extensive catalogue of preset models of off-the-shelf components, material reflectivites, Raman response functions and rare-earth spectroscopic data; base types for modelling custom components.
+pyLaserPulse is a comprehensive simulation toolbox for modelling polarization-resolved, on-axis laser pulse propagation through nonlinear, dispersive, passive, and active optical fibre assemblies, stretchers, and compressors. pyLaserPulse was developed with rapid prototyping of pulsed fibre systems in mind, and includes: full integration of the Giles model [#first]_ with the polarization-resolved generalized nonlinear Schrödinger equation; an extensive catalogue of preset models of off-the-shelf components, material reflectivites, Raman response functions and rare-earth spectroscopic data; and base types for modelling custom components.
 
 pyLaserPulse can be used to build highly accurate models of any (quasi-) single-mode, solid-core fibre system producing output pulses with durations ranging from just a few optical cycles to multiple nanoseconds [#second]_. This includes fibre amplifiers, mode-locked fibre lasers, and supercontinuum generation.
 
