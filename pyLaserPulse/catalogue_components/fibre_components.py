@@ -520,3 +520,45 @@ class Aerodiode_fiber_coupled_200MHz_AOM_1064(bc.fibre_pulse_picker):
             raise ValueError(
                 "The Aerodiode 1064AOM-1 200 MHz AOM has a specified rise time "
                 "of 10 ns. Parameter time_open cannot be less than 20 ns.")
+
+
+class DKPhotonics_P_WDM_iso_tap_980_1550(bc.fibre_component):
+    """
+    DK Photonics polarization maintaining WDM isolating tap coupler for
+    980/1528-1565.
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length_in : float
+        Input fibre length in m
+    length_out : float
+        Output fibre length in m
+    split_fraction : float
+        Ratio of the beam splitting as a fraction. E.g., if 1% is tapped from
+        the beam, split_fraction = 0.99, if 5% is tapped from the beam,
+        split_fraction = 0.95, etc.
+    split_fraction : float
+        Tap fraction. output_coupler = True must be set.
+    output_coupler : bool
+        If True, this component behaves like an output coupler or tap.
+    verbose : bool
+        Print information to terminal if True
+    """
+    def __init__(self, grid, length_in, length_out, split_fraction,
+                output_coupler=True, verbose=False):
+        tol = 1e-5
+        loss = 0.26
+        lambda_c = 1547e-9
+        trans_bw = 100e-9
+        epsilon = 0.1  # specified 20 dB fast-axis extinction
+        angle = 0
+        crosstalk = 0.0
+        input_fibre = pf.PM1550_XP(grid, length_in, tol)
+        output_fibre = pf.PM1550_XP(grid, length_out, tol)
+
+        super().__init__(
+            grid, input_fibre, output_fibre, loss, trans_bw, lambda_c, epsilon,
+            angle, split_fraction, crosstalk, order=5,
+            coupler_type='beamsplitter', output_coupler=output_coupler,
+            verbose=verbose)

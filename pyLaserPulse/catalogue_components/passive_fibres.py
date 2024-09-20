@@ -408,6 +408,36 @@ class PM980_XP(bc.step_index_passive_fibre):
             verbose=verbose)
 
 
+class PM1550_XP(bc.step_index_passive_fibre):
+    """
+    step_index_passive_fibre with default parameters which provide fibre
+    properties matching PM1550_XP as listed on the Thorlabs website.
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    tol : float
+        Tolerance for propagation integration error
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.33e-20 m^2/W,
+        which is the value for fused silica around 1550 nm.
+    verbose : bool
+        Print information to terminal if True
+    """
+    def __init__(self, grid, length, tol, n2=2.33e-20, verbose=False):
+        core_diam = 8.5e-6
+        NA = 0.125
+        fR = 0.18
+        beat_length = 2.7e-3  # Specified as <5 mm at 1550 nm
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
+
+
 class Nufern_PM_GDF_5_130(bc.step_index_passive_fibre):
     """
     step_index_passive_fibre with default parameters which provide fibre
@@ -431,6 +461,54 @@ class Nufern_PM_GDF_5_130(bc.step_index_passive_fibre):
         NA = 0.12
         fR = 0.18
         beat_length = 4.12e-3  # Minimum specified value.
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
+
+
+class OFS_80414p2(bc.step_index_passive_fibre):
+    """
+    step_index_passive_fibre with default parameters which provide fibre
+    properties matching OFS 80414p2 highly-nonlinear PM fibre. D ~ 2ps/(nm km)
+    at 1550 nm.
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    tol : float
+        Tolerance for propagation integration error
+    n2 : float
+        Nonlinear index in m^2 / W.
+    verbose : bool
+        Print information to terminal if True
+
+    Notes
+    -----
+    Using a step-index model for this fibre is likely to be inappropriate. The
+    core diameter, NA, and n2 were chosen for the best match to the specified
+    values for the effective mode area, dispersion at 1550 nm, and the nonlinear
+    coefficient, and most likely are not representative (or even sensible)
+    values for this fibre type.
+
+    The specified values are:
+    effective area: 12.5 square microns
+    D(1550 nm): 2 ps/(nm km)
+    nonlinear coefficient: 10.7 1/(W km)
+
+    The model values are:
+    effective area: 12.73 square microns
+    D(1550 nm): 2.37 ps/(nm km)
+    nonlinear coefficient: 10.83 1/(W km)
+    """
+    def __init__(self, grid, length, tol, n2=3.4e-20, verbose=False):
+        core_diam = 3.65e-6
+        NA = 0.315
+        fR = 0.18
+        beat_length = 1e80  # 5e-3  # Guess, no birefringence information given.
         super().__init__(
             grid, length, paths.materials.loss_spectra.silica,
             paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
