@@ -533,6 +533,32 @@ def PCF_propagation_parameters_K_Saitoh(
     return V, ref_index, D, beta_2
 
 
+def Taylor_expansion(coeffs, axis, axis_centre=0):
+    """
+    Taylor expansion.
+
+    Parameters
+    ----------
+    coeffs : iterable of floats (list, tuple, numpy array)
+        Taylor coefficients. Can be obtained from curve data using, e.g.,
+        numpy.polyfit.
+    axis : numpy array
+        Axis over which the Taylor expansion is the be calculated.
+    axis_centre : float
+        Centre of axis. Default is zero. The Taylor expansion will be calculated
+        over axis - axis_centre.
+
+    Notes
+    -----
+    For retrieving Taylor coefficients for dispersion curves, see
+    pyLaserPulse.utils.get_Taylor_coeffs_from_beta2.
+    """
+    TE = np.zeros_like(axis, dtype=np.complex128)
+    for i, tc in enumerate(coeffs):
+        TE += tc * (axis - axis_centre)**i / math.factorial(i)
+    return TE
+
+
 def get_Taylor_coeffs_from_beta2(beta_2, grid):
     """
     Calculate the Taylor coefficients which describe the propagation constant
@@ -576,7 +602,6 @@ def get_Taylor_coeffs_from_beta2(beta_2, grid):
     Taylors = np.zeros((len(tc) + 2))
     Taylors[2::] = tc
 
-    beta = np.zeros_like(grid.omega, dtype=np.complex128)
-    for i, tc in enumerate(Taylors):
-        beta += 1j * tc * grid.omega**i / math.factorial(i)
+    beta = Taylor_expansion(Taylors, grid.omega)
+
     return Taylors, beta

@@ -127,9 +127,13 @@ class fibre_base(ABC):
         """
         self.Taylors, beta = utils.get_Taylor_coeffs_from_beta2(
             self.beta_2, self.grid)
-        self.linear_operator = 0.5 * self.loss + beta
+        self.linear_operator = 0.5 * self.loss + 1j * beta
+        self._linear_operator_definition()
 
-        self.linear_operator = self.linear_operator[None, :].repeat(2, axis=0)
+    def _linear_operator_definition(self):
+        if self.linear_operator.shape[0] != 2:
+            self.linear_operator = \
+                self.linear_operator[None, :].repeat(2, axis=0)
         self.linear_operator[0, :] += -1j * self.beta_1 * self.grid.omega / 2
         self.linear_operator[1, :] += 1j * self.beta_1 * self.grid.omega / 2
 
@@ -140,8 +144,28 @@ class fibre_base(ABC):
             self.beta_2_Taylors, self.grid.omega, edge_order=2, axis=1)
         self.D_Taylors = -2 * np.pi * const.c * self.beta_2_Taylors \
             / self.grid.lambda_window**2
-
         self.linear_operator = utils.fftshift(self.linear_operator, axes=-1)
+
+    def override_dispersion_using_Taylor_coefficients(
+            self, Taylor_coefficients):
+        """
+        Redefine the linear operator using Taylor coefficients for the
+        dispersion instead of models based on the fibre geometry.
+
+        Parameters
+        ----------
+        Taylor_coefficients : list of floats
+            Taylor coefficients [beta_2, beta_3, ... beta_n] describing the
+            fibre dispersion curve.
+        """
+        self.Taylors = Taylor_coefficients
+        self.Taylors.insert(0, 0)  # 0th
+        self.Taylors.insert(1, 0)  # 1st (handled by beat length)
+
+        beta = utils.Taylor_expansion(self.Taylors, self.grid.omega)
+
+        self.linear_operator = 0.5 * self.loss + 1j * beta
+        self._linear_operator_definition()
 
     def _get_birefringence(self):
         """
