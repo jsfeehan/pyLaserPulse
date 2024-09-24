@@ -1336,6 +1336,7 @@ class sm_fibre_amplifier(assembly):
                 np.sum(self.gain_fibre.pump.high_res_samples[i, :, :]
                        * self.gain_fibre.pump.d_wl * 1e6))
         co_power = np.asarray(co_power)
+        max_P = np.amax(co_power)
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Power in the pump & ASE channels\n'
@@ -1362,6 +1363,9 @@ class sm_fibre_amplifier(assembly):
             fmt.append('axes.fill_between(ax.lines[1].get_data()[0], 0, '
                + 'ax.lines[1].get_data()[1], color="darkorchid", '
                + 'alpha=0.33)')
+            if np.amax(counter_power) > np.amax(co_power):
+                max_P = np.amax(counter_power)
+        ax.set_ylim([0, 1.1 * max_P])
         legend_fmt += "])"
         fmt.append(legend_fmt)
         self.plot_dict[
