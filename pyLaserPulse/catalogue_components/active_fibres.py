@@ -251,11 +251,17 @@ class OFS_EDF07_PM(bc.step_index_active_fibre):
         which is the value for fused silica around 1060 nm.
     verbose : bool
         Print information to terminal if True
+
+    Notes
+    -----
+    Dispersion values are NOT calculated from the fibre structure. Instead,
+    Taylor coefficients derived from measured dispersion data are used with the
+    override_dispersion_using_Taylor_coefficients method.
     """
     def __init__(self, grid, length, seed_repetition_rate, pump_points,
                  ASE_wl_lims, boundary_conditions, time_domain_gain=False,
                  n2=2.33e-20, verbose=False):
-        core_diam = 5.5e-6
+        core_diam = 4.5e-6
         NA = 0.21
         fR = 0.18
         tol = 1e-5
@@ -270,6 +276,15 @@ class OFS_EDF07_PM(bc.step_index_active_fibre):
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
             verbose=verbose)
+
+        # Estimated Taylor coefficients -- numpy polyfit to dispersion curve.
+        # Approximate only.
+        Taylors = [
+            3.57136311e-026, 6.58171065e-041, -1.80618683e-055,
+            2.44585290e-070, -1.27178335e-085, 1.02371874e-100,
+            -8.15133802e-116, -3.11227103e-129, -1.50932274e-144,
+            3.33607789e-158]
+        self.override_dispersion_using_Taylor_coefficients(Taylors)
 
 
 class OFS_EDF08_PM(bc.step_index_active_fibre):
@@ -309,18 +324,14 @@ class OFS_EDF08_PM(bc.step_index_active_fibre):
 
     Notes
     -----
-    Without a specification sheet, I have based this fibre on EDF07-PM but have
-    adjusted the core diameter to be similar to nLight Er80-4/125-HD-PM to
-    provide the normal dispersion around 1560 nm that has been reported for this
-    fibre (in. e.g., Sinclair et al., Rev. Sci. Instrum. 86(8), 2015).
-    I have asked for clarification from OFS.
-    (James Feehan <pylaserpulse@hotmail.com>)
+    Dispersion values are NOT calculated from the fibre structure. Instead,
+    Taylor coefficients derived from measured dispersion data are used with the
+    override_dispersion_using_Taylor_coefficients method.
     """
     def __init__(self, grid, length, seed_repetition_rate, pump_points,
                  ASE_wl_lims, boundary_conditions, time_domain_gain=False,
                  n2=2.33e-20, verbose=False):
-        # core_diam = 5.5e-6
-        core_diam = 3.45e-6
+        core_diam = 4.5e-6
         NA = 0.21
         fR = 0.18
         tol = 1e-5
@@ -335,6 +346,15 @@ class OFS_EDF08_PM(bc.step_index_active_fibre):
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
             lifetime=1.5e-3, time_domain_gain=time_domain_gain,
             verbose=verbose)
+
+        # Estimated Taylor coefficients -- numpy polyfit to dispersion curve.
+        # Approximate only.
+        Taylors = [
+            2.04472032e-026, 1.04793944e-040, -2.25364515e-055,
+            4.43083159e-070, -6.99350240e-084, -3.64616938e-098,
+            1.10330252e-110, 3.92135618e-125, -5.82910283e-138,
+            -1.21900693e-152]
+        self.override_dispersion_using_Taylor_coefficients(Taylors)
 
 
 class nLight_Er80_4_125_HD_PM(bc.step_index_active_fibre):
