@@ -887,6 +887,7 @@ class sm_fibre_amplifier(assembly):
                     pulse.repetition_rate)
                 self.plot_pulse_samples(pulse)
                 self.plot_energy_and_average_power(pulse)
+                self.plot_pump_powers_over_gain_fibre()
         if self.save_data:
             self.save(pulse, self.grid)
         return pulse
@@ -1325,6 +1326,46 @@ class sm_fibre_amplifier(assembly):
                + 'alpha=0.33)']
         self.plot_dict[
             self.name + ': B integral over gain fibre'] = (ax, fmt)
+
+    def plot_pump_powers_over_gain_fibre(self):
+        co_power = []
+        num_samples = self.gain_fibre.pump.high_res_samples.shape[0]
+        axis = np.linspace(0, self.gain_fibre.L, num_samples)
+        for i in range(num_samples):
+            co_power.append(
+                np.sum(self.gain_fibre.pump.high_res_samples[i, :, :]
+                       * self.gain_fibre.pump.d_wl * 1e6))
+        co_power = np.asarray(co_power)
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Power in the pump & ASE channels\n'
+                     'over the gain fibre')
+        ax.plot(axis, co_power, c='seagreen')
+        ax.set_xlabel('z, m', fontsize=13)
+        ax.set_ylabel('Power, W', fontsize=13)
+        ax.yaxis.label.set_color('seagreen')
+        ax.set_xlim([0, self.gain_fibre.L])
+        fmt = ['axes.fill_between(ax.lines[0].get_data()[0], 0, '
+               + 'ax.lines[0].get_data()[1], color="seagreen", '
+               + 'alpha=0.33)']
+        legend_fmt = "axes.legend(['Co'"
+        if self.gain_fibre.boundary_value_solver:
+            counter_power = []
+            num_samples = self.gain_fibre.counter_pump.high_res_samples.shape[0]
+            for i in range(num_samples):
+                counter_power.append(np.sum(
+                    self.gain_fibre.counter_pump.high_res_samples[i, :, :]
+                    * self.gain_fibre.counter_pump.d_wl * 1e6))
+            counter_power = np.asarray(counter_power)
+            ax.plot(axis, counter_power, c='darkorchid')
+            legend_fmt += ", 'Counter'"
+            fmt.append('axes.fill_between(ax.lines[1].get_data()[0], 0, '
+               + 'ax.lines[1].get_data()[1], color="darkorchid", '
+               + 'alpha=0.33)')
+        legend_fmt += "])"
+        fmt.append(legend_fmt)
+        self.plot_dict[
+            self.name + ': Pump and ASE power over gain fibre'] = (ax, fmt)
 
     @assembly.saver
     def save(self):
