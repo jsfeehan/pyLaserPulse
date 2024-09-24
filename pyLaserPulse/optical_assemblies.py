@@ -1307,7 +1307,6 @@ class sm_fibre_amplifier(assembly):
     def plot_change_in_B_over_gain_fibre(self, pulse):
         """
         Same as assembly but just for the gain fibre.
-        James Feehan, 18/7/2022
         """
         B = np.asarray(self.gain_fibre.B_samples).T
 
@@ -1328,6 +1327,10 @@ class sm_fibre_amplifier(assembly):
             self.name + ': B integral over gain fibre'] = (ax, fmt)
 
     def plot_pump_powers_over_gain_fibre(self):
+        """
+        Plot the power in the co- and counter-propagating pump and ASE channels
+        over the length of the gain fibre.
+        """
         co_power = []
         num_samples = self.gain_fibre.pump.high_res_samples.shape[0]
         axis = np.linspace(0, self.gain_fibre.L, num_samples)
