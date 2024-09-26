@@ -2127,7 +2127,7 @@ class active_fibre_base(ABC):
                 raise exc.NanFieldError(msg)
 
         if sampling:
-            dz_samples.append(dz * (sample_interval + 1))
+            dz_samples.append(dz * sample_interval)
             field_samples.append(utils.ifft(ufft, axis=-1).copy())
             spectrum_samples.append(spectrum.copy())
             return np.append(co_at_output, counter_at_input, axis=1), \
@@ -2376,7 +2376,7 @@ class active_fibre_base(ABC):
                     self._propagate_boundary_value_solver_field(
                         pulse.field, pulse.repetition_rate, spec_samples,
                         stack_spec, inversion, sampling=pulse.high_res_samples,
-                        num_samples=pulse.num_samples)
+                        num_samples=self.num_steps)
                 pulse.high_res_field_samples += field_samples
                 pulse.high_res_rep_rate_samples += \
                     [pulse.repetition_rate] * len(self.dz_samples)
@@ -2387,6 +2387,7 @@ class active_fibre_base(ABC):
                 self.B_samples /= (
                     self.grid.lambda_c
                     * self.signal_mode_area[self.grid.midpoint])
+
                 if len(pulse.high_res_B_integral_samples) != 0:
                     cumulative_B = \
                         self.B_samples + pulse.high_res_B_integral_samples[-1]

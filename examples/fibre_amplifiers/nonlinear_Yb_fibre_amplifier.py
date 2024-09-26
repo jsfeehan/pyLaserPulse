@@ -66,7 +66,7 @@ ydf = af.Nufern_PM_YSF_HI_HP(g, L, p.repetition_rate, ase_points, ase_wl_lims,
 ################################################################
 component_list = [iso_wdm, ydf]
 amp = optical_assemblies.sm_fibre_amplifier(
-    g, component_list, plot=True, name='amp 1', high_res_sampling=100,
+    g, component_list, plot=True, name='amp 1', high_res_sampling=200,
     data_directory=directory, verbose=True)
 
 ######################
