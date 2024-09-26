@@ -1333,7 +1333,6 @@ class sm_fibre_amplifier(assembly):
         """
         co_power = []
         num_samples = self.gain_fibre.pump.high_res_samples.shape[0]
-        axis = np.linspace(0, self.gain_fibre.L, num_samples)
         for i in range(num_samples):
             co_power.append(
                 np.sum(self.gain_fibre.pump.high_res_samples[i, :, :]
@@ -1344,7 +1343,7 @@ class sm_fibre_amplifier(assembly):
         ax = fig.add_subplot(111)
         ax.set_title('Power in the pump & ASE channels\n'
                      'over the gain fibre')
-        ax.plot(axis, co_power, c='seagreen')
+        ax.plot(np.cumsum(self.gain_fibre.dz_samples), co_power, c='seagreen')
         ax.set_xlabel('z, m', fontsize=13)
         ax.set_ylabel('Power, W', fontsize=13)
         ax.yaxis.label.set_color('seagreen')
@@ -1361,7 +1360,7 @@ class sm_fibre_amplifier(assembly):
                     self.gain_fibre.counter_pump.high_res_samples[i, :, :]
                     * self.gain_fibre.counter_pump.d_wl * 1e6))
             counter_power = np.asarray(counter_power)
-            ax.plot(axis, counter_power, c='darkorchid')
+            ax.plot(np.cumsum(self.gain_fibre.dz_samples), counter_power, c='darkorchid')
             legend_fmt += ", 'Counter'"
             fmt.append('axes.fill_between(ax.lines[1].get_data()[0], 0, '
                + 'ax.lines[1].get_data()[1], color="darkorchid", '
