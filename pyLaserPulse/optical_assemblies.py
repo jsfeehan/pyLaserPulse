@@ -870,7 +870,6 @@ class sm_fibre_amplifier(assembly):
             pulse.high_res_samples = False
 
         self.update_pulse_class(pulse, pulse.field)
-        pulse.output = np.asarray(pulse.output)
 
         # Make ASE array passed to next amplifier:
         self.make_co_core_ASE_output_spectra()
