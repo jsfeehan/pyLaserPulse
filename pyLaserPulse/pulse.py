@@ -383,16 +383,22 @@ class _pulse_base(ABC):
         self.chirp = 2 * np.pi * const.c / (
             grid.omega_c + np.gradient(phase, grid.dt, axis=1))
 
-    def get_polarization_ellipse_angles(self, grid, field):
+    def get_polarization_ellipse_angles(self, field):
         """
         Calculate the polarization ellipse orientation and ellipticity angles as
         a function of time.
 
         Parameters
         ----------
-        grid : pyLaerPulse.grid.grid object
         field: numpy array
             Can be self.field or self.output
+
+        Returns
+        -------
+        numpy array
+            polarization angle of field
+        numpy array
+            ellipticity of field
 
         Notes:
         ------
@@ -405,40 +411,40 @@ class _pulse_base(ABC):
         polarization dynamics for femto and picosecond pulses in normal
         dispersion fibers', Opt. Express 28(15), pp. 21447-21463 (2020).
         """
-        abs_field = np.abs(self.field)
+        abs_field = np.abs(field)
         magnitude_field = (abs_field[0, :]**2 + abs_field[1, :]**2)**.5
-        phi = np.unwrap(np.angle(self.field), axis=1)
-        delta = phi[0, :] - phi[1, :]  # Phase diff. between pol. components.
+        phi = np.angle(field)
+        delta = phi[1, :] - phi[0, :]  # Phase diff. between pol. components.
 
-        self.pol_angle = 0.5 * np.arctan2(
-            2 * abs_field[0, :] * abs_field[1, :] * np.cos(delta),
-            abs_field[0, :]**2 - abs_field[1, :]**2
+        pol_angle = 0.5 * np.arctan(
+            2 * abs_field[0, :] * abs_field[1, :] * np.cos(delta) /
+             (abs_field[0, :]**2 - abs_field[1, :]**2)
         )
 
-        A1 = (abs_field[0, :]**2 * np.cos(self.pol_angle)**2
-              + abs_field[1, :]**2 * np.sin(self.pol_angle)**2
+        a = magnitude_field * (
+            0.5 * (1 + (
+                1 - np.sin(2 * pol_angle)**2 * np.sin(delta)**2)**.5)
+        )**.5
+        b = magnitude_field * (
+            0.5 * (1 - (
+                1 - np.sin(2 * pol_angle)**2 * np.sin(delta)**2)**.5)
+        )**.5
+
+        A1 = (abs_field[0, :]**2 * np.cos(pol_angle)**2
+              + abs_field[1, :]**2 * np.sin(pol_angle)**2
               + abs_field[0, :] * abs_field[1, :]
-                  * np.cos(delta) * np.sin(2 * self.pol_angle))
+                  * np.cos(delta) * np.sin(2 * pol_angle))
         A1 = A1**.5
 
-        A2 = (abs_field[0, :]**2 * np.sin(self.pol_angle)**2
-              + abs_field[1, :]**2 * np.cos(self.pol_angle)**2
-              + abs_field[0, :] * abs_field[1, :]
-                  * np.cos(delta) * np.sin(2 * self.pol_angle))
+        A2 = (abs_field[0, :]**2 * np.sin(pol_angle)**2
+              + abs_field[1, :]**2 * np.cos(pol_angle)**2
+              - abs_field[0, :] * abs_field[1, :]
+                  * np.cos(delta) * np.sin(2 * pol_angle))
         A2 = A2**.5
 
-        self.pol_angle[A2 > A1] += np.pi / 2
+        pol_angle[A2 > A1] += np.pi / 2
 
-        a = magnitude_field * np.sqrt(
-            0.5 * (1 + np.sqrt(
-                1 - np.sin(2 * self.pol_angle)**2 * np.sin(delta)**2))
-        )
-        b = magnitude_field * np.sqrt(
-            0.5 * (1 - np.sqrt(
-                1 - np.sin(2 * self.pol_angle)**2 * np.sin(delta)**2))
-        )
-
-        self.pol_ellipticity = np.arctan2(b, a)
+        return pol_angle, np.arctan(b / a)  # polarization angle and ellipticity
 
     def roundtrip_reset(self):
         """
