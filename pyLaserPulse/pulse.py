@@ -418,31 +418,25 @@ class _pulse_base(ABC):
 
         pol_angle = 0.5 * np.arctan(
             2 * abs_field[0, :] * abs_field[1, :] * np.cos(delta) /
-             (abs_field[0, :]**2 - abs_field[1, :]**2)
-        )
+             (abs_field[0, :]**2 - abs_field[1, :]**2))
 
-        a = magnitude_field * (
-            0.5 * (1 + (
-                1 - np.sin(2 * pol_angle)**2 * np.sin(delta)**2)**.5)
-        )**.5
-        b = magnitude_field * (
-            0.5 * (1 - (
-                1 - np.sin(2 * pol_angle)**2 * np.sin(delta)**2)**.5)
-        )**.5
+        A1 = np.sqrt(
+            abs_field[0, :]**2 * np.cos(pol_angle)**2
+            + abs_field[1, :]**2 * np.sin(pol_angle)**2
+            + abs_field[0, :] * abs_field[1, :]
+            * np.cos(delta) * np.sin(2 * pol_angle))
 
-        A1 = (abs_field[0, :]**2 * np.cos(pol_angle)**2
-              + abs_field[1, :]**2 * np.sin(pol_angle)**2
-              + abs_field[0, :] * abs_field[1, :]
-                  * np.cos(delta) * np.sin(2 * pol_angle))
-        A1 = A1**.5
+        A2 = np.sqrt(
+            abs_field[0, :]**2 * np.sin(pol_angle)**2
+            + abs_field[1, :]**2 * np.cos(pol_angle)**2
+            - abs_field[0, :] * abs_field[1, :]
+            * np.cos(delta) * np.sin(2 * pol_angle))
 
-        A2 = (abs_field[0, :]**2 * np.sin(pol_angle)**2
-              + abs_field[1, :]**2 * np.cos(pol_angle)**2
-              - abs_field[0, :] * abs_field[1, :]
-                  * np.cos(delta) * np.sin(2 * pol_angle))
-        A2 = A2**.5
+        pol_angle[A2 >= A1] += np.pi / 2
 
-        pol_angle[A2 > A1] += np.pi / 2
+        arg = np.sqrt(1 - np.sin(2 * pol_angle)**2 * np.sin(delta)**2)
+        a = magnitude_field * np.sqrt(0.5 * (1 + arg))
+        b = magnitude_field * np.sqrt(0.5 * (1 - arg))
 
         return pol_angle, np.arctan(b / a)  # polarization angle and ellipticity
 
