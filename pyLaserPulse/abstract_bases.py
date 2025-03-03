@@ -71,8 +71,8 @@ class fibre_base(ABC):
         self.tol = tol
         self.loss = utils.interpolate_data_from_file(
             loss_file, self.grid.lambda_window, 1e-6, 1e-3,
-            interp_kind='linear', fill_value='extrapolate', input_log=True,
-            return_log=False)
+            interp_kind='linear', fill_value='extrapolate', input_log=False,
+            return_log=True)
         self.Raman = utils.load_Raman(Raman_file, g.time_window, g.dt)
         self.verbose = verbose
 
