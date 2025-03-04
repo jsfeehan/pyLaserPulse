@@ -1849,11 +1849,11 @@ class saturable_Bragg_reflector(component):
 
         Parameters
         ----------
-        pulse : pulse object
+        pulse : pyLaserPulse.pulse.pulse object
 
         Returns
         -------
-        pulse : pulse object
+        pulse : pyLaserPulse.pulse.pulse object
 
         Notes
         -----

@@ -1123,8 +1123,14 @@ class active_fibre_base(ABC):
 
         if direction == 'co':
             self.pump.spectrum += spec
+            esd, _ = self.pump.get_ESD_and_PSD(
+                self.pump.spectrum, repetition_rate)
+            self.pump.energy = np.sum(esd * self.pump.d_wl)
         elif direction == 'counter':
             self.counter_pump.spectrum += spec
+            esd, _ = self.counter_pump.get_ESD_and_PSD(
+                self.counter_pump.spectrum, repetition_rate)
+            self.counter_pump.energy = np.sum(esd * self.counter_pump.d_wl)
 
     def _stack_propagation_arrays_co_signal(
             self, pulse_spec, pulse_ASE_scaling, repetition_rate):
@@ -2511,15 +2517,15 @@ class active_fibre_base(ABC):
                 self.stacks.spectra[:, self.stacks.slices['co_pump']]
 
         if self.oscillator:  # Redefine pump each call so it is never depleted
-            if self.boundary_value_solver:
-                raise Exception(
-                    "Full ASE simulations are currently not supported with"
-                    " mixed time and frequency domain gain.")
-            else:
-                self.pump = pmp.pump(self.pump.bandwidth, self.pump.lambda_c,
-                                     self.pump.energy, points=self.pump.points,
-                                     lambda_lims=self.pump.lambda_lims,
-                                     ASE_scaling=self.pump.ASE_scaling)
+            # if self.boundary_value_solver:
+            #     raise Exception(
+            #         "Full ASE simulations are currently not supported with"
+            #         " mixed time and frequency domain gain.")
+            # else:
+            self.pump = pmp.pump(self.pump.bandwidth, self.pump.lambda_c,
+                                    self.pump.energy, points=self.pump.points,
+                                    lambda_lims=self.pump.lambda_lims,
+                                    ASE_scaling=self.pump.ASE_scaling)
         return pulse
 
 

@@ -635,6 +635,7 @@ class sm_fibre_laser(assembly):
                             "pulse.save_high_res_samples == True")
 
         for i in range(self.round_trips):
+            print(i)
             pulse.roundtrip_reset()  # Reset single-use member variables
 
             # Handle high-resolution field sampling
