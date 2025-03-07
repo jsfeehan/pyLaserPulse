@@ -107,6 +107,7 @@ dc_25_250_pm_pigtail = pf.Nufern_PLMA_GDF_25_250(g, 0.3, tol)
 num_samples = 10  # num field samples per component
 
 
+print("Before amp 1: ", p.ASE_scaling)
 ######################################################################
 # chirped fibre Bragg grating stretcher, amp 1, and AOM pulse picker #
 ######################################################################
@@ -159,7 +160,7 @@ amp_1 = optical_assemblies.sm_fibre_amplifier(
     g, components1, high_res_sampling=num_samples, plot=True,
     data_directory=directory, name='amp 1', verbose=True)
 p = amp_1.simulate(p)
-
+print("After amp 1: ", p.ASE_scaling)
 
 #########
 # Amp 2 #
@@ -186,7 +187,7 @@ amp_2 = optical_assemblies.sm_fibre_amplifier(
     data_directory=directory, name='amp 2',
     co_ASE=amp_1.co_core_ASE_ESD_output, verbose=True)
 p = amp_2.simulate(p)
-
+print("After Amp 2: ", p.ASE_scaling)
 
 #########
 # Amp 3 #
@@ -212,7 +213,7 @@ amp_3 = optical_assemblies.sm_fibre_amplifier(
     data_directory=directory, name='amp 3',
     co_ASE=amp_2.co_core_ASE_ESD_output, verbose=True)
 p = amp_3.simulate(p)
-
+print("After amp 3: ", p.ASE_scaling)
 
 ##############
 # Compressor #
@@ -233,7 +234,7 @@ compressor = optical_assemblies.passive_assembly(
         g, [gc], 'compressor', plot=True, data_directory=directory,
         verbose=True)
 p = compressor.simulate(p)
-
+print("After compressor: ", p.ASE_scaling)
 
 ############
 # Plotting #
