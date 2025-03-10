@@ -222,6 +222,19 @@ class _pulse_base(ABC):
                 utils.ifft(utils.ifftshift(A_OPPM, axes=-1), axis=-1) \
                 * grid.dOmega / np.sqrt(2 * np.pi)
 
+    def change_repetition_rate(self, grid, new_rep_rate):
+        """
+        Change the repetition rate of the pulse train.
+
+        Parameters
+        ----------
+        grid : pyLaserPulse.grid.grid object
+        new_rep_rate : float
+            New repetition rate
+        """
+        self.repetition_rate = new_rep_rate
+        self.ASM_scaling = grid.t_range * new_rep_rate
+
     def get_ESD_and_PSD(self, grid, field):
         """
         Calculate the energy spectral density and the power spectral density

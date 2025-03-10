@@ -110,6 +110,62 @@ class pump:
         self.high_res_samples = []
         self.high_res_sample_points = []
 
+    def add_pump(self, wavelength, bandwidth, energy):
+        """
+        Add a new pump source to the existing spectrum.
+
+        Useful for mixed-wavelength pumpgin.
+
+        Parameters
+        ----------
+        wavelength : float
+            Pump wavelength, nm
+        bandwidth : float
+            Pump bandwidth, nm
+        energy : float
+            Optical energy of the pump light.
+            This is usually defined as the pump power divided by the repetition
+            rate of the seed laser pulses being amplified.
+
+        Notes
+        -----
+        wavelength must be within the existing pump and ASE wavelength grid.
+        """
+        if not (self.lambda_lims[0] < wavelength
+                < self.lambda_lims[1]):
+            raise ValueError(
+                "Parameter wavelength must be a float between the pump grid "
+                "wavelength limits %f nm and %f nm"
+                % (self.lambda_lims[0], self.lambda_lims[1]))
+
+        # Without the following, pump spectrum is often just a single point
+        if bandwidth < 2 * np.amax(self.d_wl):
+            bandwidth = 2 * np.amax(self.d_wl)
+
+        spec = np.zeros_like(self.spectrum)
+        spec[:, np.abs(
+            self.lambda_window - wavelength)**2 < (bandwidth / 2)**2] = 1
+        spec /= np.sum(spec * self.dOmega)
+        spec *= energy
+
+        self.spectrum += spec
+        self.energy += energy
+
+    def change_repetition_rate(self, g, repetition_rate):
+        """
+        To be called if the pulse laser repetition rate is changed and this
+        object is being re-used.
+
+        Likely only to be needed when defining and oscillator.
+
+        Parameters
+        ----------
+        g : pyLaserPulse.grid.grid object.
+        repetition_rate : float
+            New laser repetition rate.
+        """
+        self.ASE_scaling = 1 - g.t_range * repetition_rate
+
     def get_ESD_and_PSD(self, spectrum, repetition_rate):
         """
         Calculate the energy spectral density and the power spectral density

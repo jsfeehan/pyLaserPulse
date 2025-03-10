@@ -106,11 +106,14 @@ class Yb_fibre_Fabry_Perot:
         rep_rate /= 2  # Fabry Perot cavity; full length is 2x calculated
         print(rep_rate)
 
-        self.p.repetition_rate = rep_rate
+        # self.p.repetition_rate = rep_rate
+        self.p.change_repetition_rate(self.g, rep_rate)
 
         # Pump energy per HALF round trip (the gain is propagated twice):
         gain1.add_pump(976e-9, 1e-9, pump_power/2, rep_rate, direction="co")  # Needs swapping if counter propagating pump also added later.
+        gain1.pump.change_repetition_rate(self.g, self.p.repetition_rate)
         gain2.add_pump(976e-9, 1e-9, pump_power/2, rep_rate, direction="co")  # Needs swapping if counter propagating pump also added later.
+        gain2.pump.change_repetition_rate(self.g, self.p.repetition_rate)
 
         # components list -- symmetrical; linear Fabry Perot cavity. Each
         # component is passed twice, once per propagation direction per round
@@ -125,7 +128,7 @@ class Yb_fibre_Fabry_Perot:
         return self.p
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(10)
+    laser = Yb_fibre_Fabry_Perot(150)
     L_gain = 0.604
     L_wdm = 0.538
     L_oc = 0.225

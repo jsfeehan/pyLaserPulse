@@ -726,7 +726,7 @@ class active_fibre_base(ABC):
 
         # Sort out pump(s) for appropriate geometry (determined by contents of
         # boundary_conditions).
-        ASE_scaling = 1 - self.grid.t_range / seed_rep_rate
+        ASE_scaling = 1 - self.grid.t_range * seed_rep_rate
         if self.boundary_value_solver:
             self.pump = pmp.pump(
                 self.boundary_conditions['co_pump_bandwidth'],
@@ -1104,33 +1104,11 @@ class active_fibre_base(ABC):
         if direction not in ['co', 'counter']:
             raise ValueError("Parameter direction must be either 'co' or"
                              " 'counter")
-        if not (self.pump.lambda_lims[0] < wavelength
-                < self.pump.lambda_lims[1]):
-            raise ValueError(
-                "Parameter wavelength must be a float between the pump grid "
-                "wavelength limits %f nm and %f nm"
-                % (self.pump.lambda_lims[0], self.pump.lambda_lims[1]))
-
-        # Without the following, pump spectrum is often just a single point
-        if bandwidth < 2 * np.amax(self.pump.d_wl):
-            bandwidth = 2 * np.amax(self.pump.d_wl)
-
-        spec = np.zeros_like(self.pump.spectrum)
-        spec[:, np.abs(
-            self.pump.lambda_window - wavelength)**2 < (bandwidth / 2)**2] = 1
-        spec /= np.sum(spec * self.pump.dOmega)
-        spec *= power / repetition_rate
-
         if direction == 'co':
-            self.pump.spectrum += spec
-            esd, _ = self.pump.get_ESD_and_PSD(
-                self.pump.spectrum, repetition_rate)
-            self.pump.energy = np.sum(esd * self.pump.d_wl)
+            self.pump.add_pump(wavelength, bandwidth, power / repetition_rate)
         elif direction == 'counter':
-            self.counter_pump.spectrum += spec
-            esd, _ = self.counter_pump.get_ESD_and_PSD(
-                self.counter_pump.spectrum, repetition_rate)
-            self.counter_pump.energy = np.sum(esd * self.counter_pump.d_wl)
+            self.counter_pump.add_pump(
+                wavelength, bandwidth, power / repetition_rate)
 
     def _stack_propagation_arrays_co_signal(
             self, pulse_spec, pulse_ASE_scaling, repetition_rate):
@@ -2348,17 +2326,6 @@ class active_fibre_base(ABC):
             # by reference, so is modified by them.
             self.forward_propagation = True
 
-            # # If counter or bidirectional pumping, start with counter signals
-            # # Swap first and second halves of all stacks except directions
-            # # and slices
-            # if (np.sum(self.counter_pump.spectrum)
-            #         >= np.sum(self.pump.spectrum)):
-            #     self.forward_propagation = False
-            #     for v in vars(self.stacks):
-            #         if v != 'slices' and v != 'directions':
-            #             self.stacks.__dict__[v] = utils.swap_halves(
-            #                 self.stacks.__dict__[v])
-
             if pulse.high_res_samples and pulse.num_samples > self.num_steps:
                 self.num_steps = pulse.num_samples
 
@@ -2424,21 +2391,6 @@ class active_fibre_base(ABC):
                     self._propagate_boundary_value_solver_field(
                         pulse.field, pulse.repetition_rate, spec_samples,
                         stack_spec, inversion)
-
-            # # Reverse the stack swap if counter or bidirectional pumping.
-            # # (NB: input spectra required here).
-            # if (np.sum(self.counter_pump.spectrum)
-            #         >= np.sum(self.pump.spectrum)):
-            #     for v in vars(self.stacks):
-            #         if v != 'slices' and v != 'directions':
-            #             self.stacks.__dict__[v] = utils.swap_halves(
-            #                 self.stacks.__dict__[v])
-            #     spec_samples = utils.swap_halves(spec_samples)
-            #     spec_samples = spec_samples[::-1, :, :]
-            #     if pulse.high_res_samples:
-            #         self.spectral_samples = utils.swap_halves(
-            #             self.spectral_samples)
-            #     N2 = N2[::-1]
 
             # Unstack spec_samples for results, make optimization loss arrays
             # from lists

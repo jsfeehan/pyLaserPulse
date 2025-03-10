@@ -1036,10 +1036,7 @@ class pulse_picker(bases.component_base):
         -------
         pyLaserPulse.pulse.pulse object
         """
-        print("Rep rate before: ", pulse.repetition_rate)
-        pulse.repetition_rate = pulse.repetition_rate / self.rate_reduction_factor
-        print("t_range and rep. rate after: ", self.grid.t_range, pulse.repetition_rate)
-        self.ASE_scaling = self.grid.t_range * pulse.repetition_rate
+        pulse.change_repetition_rate(self.grid, self.output_rep_rate)
         pulse.field = self.apply_temporal_transmission_window(pulse.field)
         return pulse
 
