@@ -30,6 +30,13 @@ class Yb_fibre_Fabry_Perot:
 
         self.round_trips = round_trips
 
+    def _propagation(self):
+        """
+        Passed to optical_assemblies.sm_fibre_laser.
+        """
+
+        
+
     def simulate(
             self, L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, sbr_mod_depth,
             sbr_Fsat, sbr_tau, grating_separation, grating_angle, pump_power):
@@ -104,7 +111,6 @@ class Yb_fibre_Fabry_Perot:
                 + single_pass_compressor * 1.0003
             )
         rep_rate /= 2  # Fabry Perot cavity; full length is 2x calculated
-        print(rep_rate)
 
         # self.p.repetition_rate = rep_rate
         self.p.change_repetition_rate(self.g, rep_rate)
