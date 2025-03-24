@@ -2468,17 +2468,35 @@ class active_fibre_base(ABC):
             self.pump.propagated_spectrum = \
                 self.stacks.spectra[:, self.stacks.slices['co_pump']]
 
-        if self.oscillator:  # Redefine pump each call so it is never depleted
-            # if self.boundary_value_solver:
-            #     raise Exception(
-            #         "Full ASE simulations are currently not supported with"
-            #         " mixed time and frequency domain gain.")
-            # else:
-            self.pump = pmp.pump(self.pump.bandwidth, self.pump.lambda_c,
-                                    self.pump.energy, points=self.pump.points,
-                                    lambda_lims=self.pump.lambda_lims,
-                                    ASE_scaling=self.pump.ASE_scaling)
+        # if self.oscillator:  # Redefine pump each call so it is never depleted
+        #     # if self.boundary_value_solver:
+        #     #     raise Exception(
+        #     #         "Full ASE simulations are currently not supported with"
+        #     #         " mixed time and frequency domain gain.")
+        #     # else:
+        #     self.pump = pmp.pump(self.pump.bandwidth, self.pump.lambda_c,
+        #                             self.pump.energy, points=self.pump.points,
+        #                             lambda_lims=self.pump.lambda_lims,
+        #                             ASE_scaling=self.pump.ASE_scaling)
         return pulse
+
+    def _replenish_pump(self):
+        """
+        Used to 'replenish' the pump for each round trip of an oscillator.
+        Not required for amplifier simulations, and handled entirely by
+        the optical_assemblies module.
+        """
+        self.pump = pmp.pump(
+                self.pump.bandwidth, self.pump.lambda_c,
+                self.pump.energy, points=self.pump.points,
+                lambda_lims=self.pump.lambda_lims,
+                ASE_scaling=self.pump.ASE_scaling)
+        if self.boundary_value_solver:
+            self.counter_pump = pmp.pump(
+                self.counter_pump.bandwidth, self.counter_pump.lambda_c,
+                self.counter_pump.energy, points=self.counter_pump.points,
+                lambda_lims=self.counter_pump.lambda_lims,
+                ASE_scaling=self.counter_pump.ASE_scaling)
 
 
 class loss_spectrum_base(ABC):

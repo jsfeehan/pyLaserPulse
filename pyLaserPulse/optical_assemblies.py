@@ -613,11 +613,14 @@ class sm_fibre_laser:
         -------
         pyLaserPulse.pulse.pulse
         """
+        import matplotlib.pyplot as plt
         for rt in range(self.round_trips):
+            print(rt)
             pulse.roundtrip_reset()
             for j, amp in enumerate(self.amplifiers):
                 # No need for OPPM addition here (unlike other optical assembly
                 # classes) because this is handled by the amplifier objects.
+                print(amp.name)
                 if rt == 0 and j == 0:
                     # 0th round trip co_core_ASE from quantum noise only.
                     pulse = amp.simulate(pulse)
@@ -625,6 +628,15 @@ class sm_fibre_laser:
                     amp.add_co_core_ASE(
                             self.amplifiers[j-1].co_core_ASE_ESD_output)
                     pulse = amp.simulate(pulse)
+
+                _, psd1 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.pump.propagated_spectrum, pulse.repetition_rate)
+                _, psd2 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.counter_pump.propagated_spectrum, pulse.repetition_rate)
+
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+                ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd1.T)
+                ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd2.T)
+                plt.show()
 
                 # Handle NaN solutions
                 if np.any(np.isnan(pulse.field)):
@@ -903,6 +915,7 @@ class sm_fibre_amplifier(assembly):
                 before_g = False
             if before_g:
                 try:
+                    print(c)
                     spectrum = c.propagate_spectrum(spectrum, omega_axis)
                 except AttributeError:
                     pass
