@@ -519,7 +519,6 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
         hole_diam = 2.44e-6
         hole_diam_over_pitch = hole_diam / hole_pitch
         core_diam = 0.5 * 40e-6  # x.5 provides best match to published MFD
-        core_radius = core_diam / 2
 
         # Doping concentration set by modelling small-signal absorption and
         # matching value to spec. sheet for cladding absorption at 976 nm.
@@ -543,18 +542,9 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
             doping_concentration, paths.fibres.cross_sections.Yb_Al_silica,
             seed_repetition_rate, pump_points, ASE_wl_lims,
             paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
-            lifetime=1e-3, cladding_pumping=self.cladding_pumping,
+            core_diam=core_diam, lifetime=1e-3,
+            cladding_pumping=self.cladding_pumping,
             time_domain_gain=time_domain_gain, verbose=verbose)
-
-        # Reset core_diam and core_radius.
-        # Approximation -- May not be entirely appropriate to use the PCF model
-        # for this fibre type (influence of stress rods on propagation
-        # parameters is unknown, and more than one air hole removed to form the
-        # large core).
-        self.core_diam = core_diam
-        self.core_radius = core_radius
-        self.get_GNLSE_and_birefringence_parameters()  # effective MFD, etc.
-        self._precalculate_propagation_values()  # E_sat, etc.
 
 
 class Nufern_EDFC_980_HP(bc.step_index_active_fibre):

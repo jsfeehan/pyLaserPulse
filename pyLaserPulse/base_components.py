@@ -144,7 +144,7 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
     def __init__(
             self, g, length, loss_file, Raman_file, hole_pitch,
             hole_diam_over_pitch, beat_length, n2, fR, tol, Sellmeier_file,
-            verbose=False):
+            core_diam=None, verbose=False):
         """
         Parameters
         ----------
@@ -174,13 +174,22 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
         Sellmeier_file : string
             Absolute path to the Sellmeier coefficients.
             See pyLaserPulse.data.paths.materials.Sellmeier_coefficients.
+        core_diam : Nonetype or float
+            Diameter of the signal core in metres. If None, the standard value
+            is used for hexagonal-lattice PCF, where the core is made up of a
+            single missing air hole.
+        verbose : bool
+            Print information to terminal if True
         """
         super().__init__(
             g, length, loss_file, Raman_file, beat_length, n2, fR, tol,
             verbose=verbose)
         self.hole_diam = hole_diam_over_pitch
         self.hole_pitch = hole_pitch
-        self.core_diam = 2 * self.hole_pitch / np.sqrt(3)
+        if core_diam is not None:
+            self.core_diam = core_diam
+        else:
+            self.core_diam = 2 * self.hole_pitch / np.sqrt(3)
         self.core_radius = self.core_diam / 2
         self.Sellmeier_file = Sellmeier_file
         self.material_ref_index = utils.Sellmeier(
@@ -478,8 +487,8 @@ class photonic_crystal_active_fibre(
             hole_diam_over_pitch, beat_length, n2, fR, tol,
             doping_concentration, cross_section_file, seed_repetition_rate,
             pump_points, ASE_wl_lims, Sellmeier_file, boundary_conditions,
-            lifetime=1.5e-3, cladding_pumping={}, time_domain_gain=False,
-            verbose=False):
+            core_diam=None, lifetime=1.5e-3, cladding_pumping={},
+            time_domain_gain=False, verbose=False):
         """
         Parameters
         ----------
@@ -530,6 +539,10 @@ class photonic_crystal_active_fibre(
             solver -- is determined by this dictionary.
             See the Notes section below for a full description of how this
             parameters is defined.
+        core_diam : Nonetype or float
+            Diameter of the signal core in metres. If None, the standard value
+            is used for hexagonal-lattice PCF, where the core is made up of a
+            single missing air hole.
         lifetime : float
             Upper-state lifetime of the rare-earth dopant in s.
         cladding_pumping : dict.
@@ -602,7 +615,7 @@ class photonic_crystal_active_fibre(
         photonic_crystal_passive_fibre.__init__(
             self, g, length, loss_file, Raman_file, hole_pitch,
             hole_diam_over_pitch, beat_length, n2, fR, tol, Sellmeier_file,
-            verbose=verbose)
+            core_diam=core_diam, verbose=verbose)
 
         # Determine if core or cladding pumping and run checks on dictionaries
         # for cladding pumping and full ASE.
@@ -667,10 +680,12 @@ class photonic_crystal_active_fibre(
             self.pump_ref_index = \
                 self.pump_cladding_ref_index + self.pump_delta_n
         else:
-            V, self.pump_ref_index, _, _ = \
-                self.get_propagation_parameters(
+            V, self.pump_ref_index, _, _= \
+                utils.PCF_propagation_parameters_K_Saitoh(
                     self.pump.lambda_window, self.pump.midpoint,
-                    self.pump.omega_window)
+                    self.pump.omega_window, self.a, self.b, self.c, self.d,
+                    self.hole_pitch, self.hole_diam, self.core_radius,
+                    self.Sellmeier_file)
             p_II = self.Petermann_II(V)
             self.pump_effective_MFD, self.pump_mode_area = \
                 self.get_pump_and_ASE_propagation_parameters(
