@@ -1053,7 +1053,6 @@ class active_fibre_base(ABC):
             solver.amplitude_distribution**2 * r * dr * 2 * np.pi)**2
         effective_area /= np.sum(
             solver.amplitude_distribution**4 * r * dr * 2 * np.pi)
-        print("Core diameter as seen in pump cladding overlap calculation: ", self.core_diam)
         overlap = np.pi * (self.core_diam / 2)**2 / effective_area
         overlap = overlap.repeat(points)
         effective_area = effective_area.repeat(points)
