@@ -1001,10 +1001,6 @@ class active_fibre_base(ABC):
 
             # Field; no factor of 2log(2) required for spatial distribution.
             mode_profile = np.exp(-1 * x_axis**2 / (decimated_MFD / 2)**2)
-            # mode_profile /= np.sum(
-            #     mode_profile * x_axis * dx * 2*np.pi, axis=0)
-            # decimated_overlaps = np.sum(
-            #     mode_profile * fibre_profile * x_axis * dx * 2*np.pi, axis=0)
             mode_profile /= np.sum(mode_profile, axis=0)
             decimated_overlaps = np.sum(mode_profile * fibre_profile, axis=0)
             overlaps = interp.interp1d(
@@ -1050,8 +1046,6 @@ class active_fibre_base(ABC):
             self.pump_ref_index, self.pump_cladding_ref_index, lambda_c)
         r = np.linspace(0, solver.clad_rad, 2**11)  # polar axis
         dr = np.diff(r)[0]
-        fibre_profile = np.zeros_like(r)
-        fibre_profile[r <= self.core_diam / 2] = 1
         solver.solve(max_modes=4000)
         solver.make_modes(r, num_modes=4000)
         solver.get_amplitude_distribution(std=4000)
@@ -1059,6 +1053,7 @@ class active_fibre_base(ABC):
             solver.amplitude_distribution**2 * r * dr * 2 * np.pi)**2
         effective_area /= np.sum(
             solver.amplitude_distribution**4 * r * dr * 2 * np.pi)
+        print("Core diameter as seen in pump cladding overlap calculation: ", self.core_diam)
         overlap = np.pi * (self.core_diam / 2)**2 / effective_area
         overlap = overlap.repeat(points)
         effective_area = effective_area.repeat(points)
