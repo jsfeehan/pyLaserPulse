@@ -522,7 +522,7 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
 
         # Doping concentration set by modelling small-signal absorption and
         # matching value to spec. sheet for cladding absorption at 976 nm.
-        doping_concentration = 1.3e26  # gives nominal 12 dB/m
+        doping_concentration = 6.5e25  # gives nominal 12 dB/m
 
         beat_length = 1e-2  # dn >= 1e-4 given on spec. sheet.
 
