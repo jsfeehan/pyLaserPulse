@@ -522,7 +522,15 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
 
         # Doping concentration set by modelling small-signal absorption and
         # matching value to spec. sheet for cladding absorption at 976 nm.
+<<<<<<< HEAD
         doping_concentration = 6.5e25  # gives nominal 12 dB/m
+=======
+<<<<<<< Updated upstream
+        doping_concentration = 1.3e26  # gives nominal 12 dB/m
+=======
+        doping_concentration = 1.5e25  # 10-11 dB/m
+>>>>>>> Stashed changes
+>>>>>>> pcf_gain_debug
 
         beat_length = 1e-2  # dn >= 1e-4 given on spec. sheet.
 
@@ -545,6 +553,20 @@ class NKT_DC_200_40_PZ_YB(bc.photonic_crystal_active_fibre):
             core_diam=core_diam, lifetime=1e-3,
             cladding_pumping=self.cladding_pumping,
             time_domain_gain=time_domain_gain, verbose=verbose)
+
+        # Because the standard PCF model is not accurate for a fibre of this
+        # type, a 20 micron core diameter is used to give the best signal
+        # propagation parameters (overlap, mode field diameter, nonlinear
+        # parameter, etc). However, this significantly underestimates the pump
+        # overlap when cladding pumping. This can be addressed by resetting the
+        # core diameter and radius, and then repeating the cladding light
+        # overlap calculations.
+        if cladding_pumping:
+            self.core_diam = 40e-6
+            self.core_radius = self.core_diam / 2
+            self.pump_overlaps, self.pump_mode_area = \
+                self._get_cladding_light_overlap_and_effective_area(
+                    self.pump.lambda_c, self.pump.points)
 
 
 class Nufern_EDFC_980_HP(bc.step_index_active_fibre):
