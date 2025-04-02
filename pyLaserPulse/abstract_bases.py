@@ -2835,8 +2835,6 @@ class component_base(loss_spectrum_base, ABC):
         def wrapper(self, pulse):
             pulse = func(self, pulse)
             return self._propagate(pulse)
-            # pulse = self._propagate(pulse)
-            # return func(self, pulse)
         return wrapper
 
     def _propagate(self, pulse):

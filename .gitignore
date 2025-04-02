@@ -17,6 +17,8 @@ build/
 dist/
 pyLaserPulse.egg-info/
 
+*.py.swp
+
 # junk files
 test.py
 change_details.sh

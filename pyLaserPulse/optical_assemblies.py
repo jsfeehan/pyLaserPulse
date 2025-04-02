@@ -613,7 +613,7 @@ class sm_fibre_laser:
         -------
         pyLaserPulse.pulse.pulse
         """
-        import matplotlib.pyplot as plt
+        # import matplotlib.pyplot as plt
         for rt in range(self.round_trips):
             print(rt)
             pulse.roundtrip_reset()
@@ -629,14 +629,14 @@ class sm_fibre_laser:
                             self.amplifiers[j-1].co_core_ASE_ESD_output)
                     pulse = amp.simulate(pulse)
 
-                _, psd1 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.pump.propagated_spectrum, pulse.repetition_rate)
-                _, psd2 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.counter_pump.propagated_spectrum, pulse.repetition_rate)
+                # _, psd1 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.pump.propagated_spectrum, pulse.repetition_rate)
+                # _, psd2 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.counter_pump.propagated_spectrum, pulse.repetition_rate)
 
-                fig = plt.figure()
-                ax = fig.add_subplot(111)
-                ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd1.T)
-                ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd2.T)
-                plt.show()
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111)
+                # ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd1.T)
+                # ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd2.T)
+                # plt.show()
 
                 # Handle NaN solutions
                 if np.any(np.isnan(pulse.field)):
@@ -915,7 +915,6 @@ class sm_fibre_amplifier(assembly):
                 before_g = False
             if before_g:
                 try:
-                    print(c)
                     spectrum = c.propagate_spectrum(spectrum, omega_axis)
                 except AttributeError:
                     pass
@@ -930,10 +929,6 @@ class sm_fibre_amplifier(assembly):
 
         Returns the pulse class.
         """
-        # infostring = '\nSimulating    %s' % self.name
-        # infostring += '\n' + '-'*len(infostring)
-        # print(infostring)
-
         pulse.get_ESD_and_PSD(self.grid, pulse.field)
         self.input_pulse_PSD = pulse.power_spectral_density
 

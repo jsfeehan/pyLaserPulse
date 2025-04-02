@@ -1775,7 +1775,8 @@ class rotated_splice:
         pulse.field = field
         return pulse
 
-class saturable_Bragg_reflector(component):
+
+class saturable_Bragg_reflector:
     """
     Class for simulating a saturable Bragg reflector/SESAM device as a 2-level
     system.
@@ -1799,9 +1800,9 @@ class saturable_Bragg_reflector(component):
     1) loss + modulation_depth MUST BE <= 1. The loss as a function of time is
     the sum of the non-saturable losses and the nonlinear losses.
 
-    2) This class does NOT inherit the component class. It is a nonlinear device
-    and requires special treatment. It might be adapted to benefit from the
-    component class in the future.
+    2) This class does NOT inherit the component class. It is a nonlinear
+    device and requires special treatment. It might be adapted to benefit from
+    the component class in the future.
 
     3) It is difficult to calculate the saturable loss as a function of time
     consistently because the field 'slides around' the time window and
@@ -1822,6 +1823,8 @@ class saturable_Bragg_reflector(component):
         self.grid = g
         self.loss_vs_time = np.zeros((self.grid.points))
         self.effective_area = A_eff
+        self.reflection_spectrum = np.zeros((2, g.points)) \
+            + loss + self.modulation_depth
 
     def dA_dt(self, L, t):
         """
@@ -1886,3 +1889,49 @@ class saturable_Bragg_reflector(component):
         self.loss_vs_time = np.roll(self.loss_vs_time, idxmin)
         pulse.field = _field
         return pulse
+
+    def propagate_spectrum(self, spectrum, omega_axis):
+        """
+        Apply the reflectivity spectrum to an input energy spectral density.
+        This is useful for modelling the effect of a component on, for example,
+        ASE and pump light.
+
+        Parameters
+        ----------
+        spectrum : numpy array, dtype float64.
+            shape(2, n_points). Energy spectrum of the light.
+        omega_axis : numpy array, dtype float64.
+            Angular frequency axis.
+
+        Returns
+        -------
+        numpy array
+            spectrum after propagating through the component.
+        """
+        ref_spec = np.zeros((2, len(omega_axis)))
+        shifted_ref_spec = utils.fftshift(
+            self.reflection_spectrum, axes=-1)
+        # If spectrum omega grid is in self.grid.omega_window:
+        if (self.grid.omega_window.min() < omega_axis.min()
+           and self.grid.omega_window.max() > omega_axis.max()):
+            for i in range(2):
+                ref_spec[i, :] = np.interp(
+                    omega_axis, self.grid.omega_window,
+                    shifted_ref_spec[i, :])
+        # If spectrum omega grid has values outside of self.grid.omega_window
+        else:
+            max_idx = utils.find_nearest(
+                omega_axis.max(), self.grid.omega_window)[0]
+            min_idx = utils.find_nearest(
+                omega_axis.min(), self.grid.omega_window)[0]
+            upper_val = shifted_ref_spec[:, max_idx]
+            lower_val = shifted_ref_spec[:, min_idx]
+            for i in range(2):
+                ref_spec[i, :] = np.interp(
+                    omega_axis, self.grid.omega_window,
+                    shifted_ref_spec[i, :], left=lower_val[i],
+                    right=upper_val[i])
+        spectrum = np.sqrt(spectrum)
+        spectrum *= ref_spec
+        spectrum = np.abs(spectrum)**2
+        return spectrum

@@ -244,7 +244,7 @@ class Yb_fibre_Fabry_Perot:
 
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(10)
+    laser = Yb_fibre_Fabry_Perot(100)
     L_gain = 0.604
     L_wdm = 0.538
     L_oc = 0.225
