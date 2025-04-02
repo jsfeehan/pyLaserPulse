@@ -13,6 +13,7 @@ import scipy.optimize as opt
 import scipy.constants as const
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
+from scipy.integrate import odeint
 
 import pyLaserPulse.abstract_bases as bases
 import pyLaserPulse.utils as utils
@@ -1050,7 +1051,7 @@ class pulse_picker(bases.component_base):
         -------
         pyLaserPulse.pulse.pulse object
         """
-        pulse.repetition_rate = pulse.repetition_rate / self.rate_reduction_factor
+        pulse.change_repetition_rate(self.grid, self.output_rep_rate)
         pulse.field = self.apply_temporal_transmission_window(pulse.field)
         return pulse
 
@@ -1788,3 +1789,164 @@ class rotated_splice:
         field = np.dot(self.rot_matrix, field)
         pulse.field = field
         return pulse
+
+
+class saturable_Bragg_reflector:
+    """
+    Class for simulating a saturable Bragg reflector/SESAM device as a 2-level
+    system.
+
+    Parameters
+    ----------
+    loss : float
+        Loss associated with complete transparency of the saturable absorber
+        layer (e.g., 0.03 if the maximum reflectivity is 97%.)
+    modulation_depth : float
+        Nonlinear change in the loss.
+    relaxation_time : float
+        Time for saturable absorber inversion to reduce by one e-fold.
+    saturation_fluence : float
+        Saturation fluence.
+    A_eff : float
+        Effective area of the incident beam.
+
+    Notes
+    -----
+    1) loss + modulation_depth MUST BE <= 1. The loss as a function of time is
+    the sum of the non-saturable losses and the nonlinear losses.
+
+    2) This class does NOT inherit the component class. It is a nonlinear
+    device and requires special treatment. It might be adapted to benefit from
+    the component class in the future.
+
+    3) It is difficult to calculate the saturable loss as a function of time
+    consistently because the field 'slides around' the time window and
+    can be wrapped (i.e., a post pulse can become a pre-pulse), which will
+    change the saturable loss calculation. However, the most important
+    thing for accuracy is to make sure that the calculation starts from
+    the smallest possible field amplitude to ensure the minimum error in the
+    1st absorption value. Large error in the saturable loss will result if,
+    for example, the pulse amplitude is non-zero at the time window
+    boundaries.
+    """
+    def __init__(self, loss, modulation_depth, relaxation_time,
+                 saturation_fluence, A_eff, g):
+        self.loss = loss
+        self.modulation_depth = modulation_depth
+        self.relaxation_time = relaxation_time
+        self.saturation_fluence = saturation_fluence
+        self.grid = g
+        self.loss_vs_time = np.zeros((self.grid.points))
+        self.effective_area = A_eff
+        self.reflection_spectrum = np.zeros((2, g.points)) \
+            + loss + self.modulation_depth
+
+    def dA_dt(self, L, t):
+        """
+        PDE describing the dynamics of a 2-level saturable absorber.
+
+        Parameters
+        ----------
+        L : float
+            The current saturable loss value
+        intensity : float
+            The current incident intensity
+
+        Returns
+        -------
+        The gradient of the saturable loss with respect to time.
+        """
+        intensity = self._intensity_interp(t)
+        return (((self.modulation_depth - L) / self.relaxation_time)
+                - L * intensity / self.saturation_fluence)
+
+    def propagate(self, pulse):
+        """
+        Calculate the saturable loss as a function of time and apply it to the
+        field envelope.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse.pulse object
+
+        Returns
+        -------
+        pulse : pyLaserPulse.pulse.pulse object
+
+        Notes
+        -----
+        The field, intensity, and saturable loss are rolled so that the 0th
+        element (the start of the calculation) is the global amplitude minimum.
+        The rolling is reversed once the saturable loss has been applied to the
+        field. The resulting error (a discontinuity in saturable loss) remains,
+        but only impacts the very smallest amplitude value (which, ideally, is
+        quantum noise). This solution mitigates difficulties arising from Note
+        3 in the __init__ docstring.
+        """
+        _field = pulse.field
+        _intensity = np.abs(_field)**2 / self.effective_area
+        _intensity = np.sum(_intensity, axis=0)
+        idxmin = np.argmin(_intensity)
+        _intensity = np.roll(_intensity, -idxmin)
+        _field = np.roll(_field, -idxmin)
+        self.loss_vs_time[0] = self.modulation_depth
+        self._intensity_interp = interp1d(
+            self.grid.time_window, _intensity, kind='linear')
+
+        self.loss_vs_time = odeint(
+            self.dA_dt, self.modulation_depth, self.grid.time_window,
+            tcrit=self.grid.time_window)
+        self.loss_vs_time += self.loss
+        self.reflectivity_vs_time = 1 - self.loss_vs_time
+        _field *= np.sqrt(np.squeeze(self.reflectivity_vs_time))
+        _field = np.roll(_field, idxmin)
+        self.reflectivity_vs_time = np.roll(self.reflectivity_vs_time, idxmin)
+        self.loss_vs_time = np.roll(self.loss_vs_time, idxmin)
+        pulse.field = _field
+        return pulse
+
+    def propagate_spectrum(self, spectrum, omega_axis):
+        """
+        Apply the reflectivity spectrum to an input energy spectral density.
+        This is useful for modelling the effect of a component on, for example,
+        ASE and pump light.
+
+        Parameters
+        ----------
+        spectrum : numpy array, dtype float64.
+            shape(2, n_points). Energy spectrum of the light.
+        omega_axis : numpy array, dtype float64.
+            Angular frequency axis.
+
+        Returns
+        -------
+        numpy array
+            spectrum after propagating through the component.
+        """
+        ref_spec = np.zeros((2, len(omega_axis)))
+        shifted_ref_spec = utils.fftshift(
+            self.reflection_spectrum, axes=-1)
+        # If spectrum omega grid is in self.grid.omega_window:
+        if (self.grid.omega_window.min() < omega_axis.min()
+           and self.grid.omega_window.max() > omega_axis.max()):
+            for i in range(2):
+                ref_spec[i, :] = np.interp(
+                    omega_axis, self.grid.omega_window,
+                    shifted_ref_spec[i, :])
+        # If spectrum omega grid has values outside of self.grid.omega_window
+        else:
+            max_idx = utils.find_nearest(
+                omega_axis.max(), self.grid.omega_window)[0]
+            min_idx = utils.find_nearest(
+                omega_axis.min(), self.grid.omega_window)[0]
+            upper_val = shifted_ref_spec[:, max_idx]
+            lower_val = shifted_ref_spec[:, min_idx]
+            for i in range(2):
+                ref_spec[i, :] = np.interp(
+                    omega_axis, self.grid.omega_window,
+                    shifted_ref_spec[i, :], left=lower_val[i],
+                    right=upper_val[i])
+        spectrum = np.sqrt(spectrum)
+        spectrum *= ref_spec
+        spectrum = np.abs(spectrum)**2
+        return spectrum

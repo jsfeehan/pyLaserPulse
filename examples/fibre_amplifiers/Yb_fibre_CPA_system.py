@@ -112,8 +112,8 @@ num_samples = 10  # num field samples per component
 ######################################################################
 circulator_1_to_2 = base_components.fibre_component(
     g, pm_pigtail, pm_pigtail, 0.2, 100e-9, g.lambda_c, 0.1, 0, 0, crosstalk)
-# CFBG dispersion calculated by adding the compressor dispersion and total fibre
-# dispersion and then multiplying by -1.
+# CFBG dispersion calculated by adding the compressor dispersion and total
+# fibre dispersion and then multiplying by -1.
 beta_2 = -1 * ps**2 * (
     0.045 + 0.058 + 0.028 + 0.0043 + 0.12 + 0.047 + 0.072 - 13.53)
 beta_3 = -1 * ps**3 * (
@@ -187,7 +187,6 @@ amp_2 = optical_assemblies.sm_fibre_amplifier(
     co_ASE=amp_1.co_core_ASE_ESD_output, verbose=True)
 p = amp_2.simulate(p)
 
-
 #########
 # Amp 3 #
 #########
@@ -213,7 +212,6 @@ amp_3 = optical_assemblies.sm_fibre_amplifier(
     co_ASE=amp_2.co_core_ASE_ESD_output, verbose=True)
 p = amp_3.simulate(p)
 
-
 ##############
 # Compressor #
 ##############
@@ -233,7 +231,6 @@ compressor = optical_assemblies.passive_assembly(
         g, [gc], 'compressor', plot=True, data_directory=directory,
         verbose=True)
 p = compressor.simulate(p)
-
 
 ############
 # Plotting #
