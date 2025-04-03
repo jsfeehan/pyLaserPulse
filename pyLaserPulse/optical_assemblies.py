@@ -615,12 +615,12 @@ class sm_fibre_laser:
         """
         # import matplotlib.pyplot as plt
         for rt in range(self.round_trips):
-            print(rt)
+            # print(rt)
             pulse.roundtrip_reset()
             for j, amp in enumerate(self.amplifiers):
                 # No need for OPPM addition here (unlike other optical assembly
                 # classes) because this is handled by the amplifier objects.
-                print(amp.name)
+                # print(amp.name)
                 if rt == 0 and j == 0:
                     # 0th round trip co_core_ASE from quantum noise only.
                     pulse = amp.simulate(pulse)
@@ -663,13 +663,19 @@ class sm_fibre_laser:
         """
         if isinstance(field, list):
             field = np.asarray(field[0])
-        pulse.get_ESD_and_PSD(self.grid, field)
-        pulse.get_energy_and_average_power(self.grid, field)
+        # pulse.get_ESD_and_PSD(self.grid, field)
+        # pulse.get_energy_and_average_power(self.grid, field)
+        pulse.get_ESD_and_PSD(self.grid, pulse.output)
+        pulse.get_energy_and_average_power(self.grid, pulse.output)
+        print(pulse.energy_spectral_density.shape)
+        print(pulse.power_spectral_density.shape)
 
-        pulse.energy_spectral_density = np.asarray(
-            pulse.energy_spectral_density)
-        pulse.power_spectral_density = np.asarray(
-            pulse.power_spectral_density)
+        pulse.output = np.asarray(pulse.output)
+        # pulse.energy_spectral_density = np.asarray(
+        #     pulse.energy_spectral_density)
+        # pulse.power_spectral_density = np.asarray(
+        #     pulse.power_spectral_density)
+        pulse.output_samples = np.asarray(pulse.output_samples)
         pulse.pulse_energy = np.asarray(pulse.pulse_energy)
         return pulse
 

@@ -141,7 +141,7 @@ class Yb_fibre_Fabry_Perot:
         self.amp_list = [amp1, amp2]
         osc = oa.sm_fibre_laser(
             self.g, self.amp_list, self.round_trips, name="FP",
-            verbose=True)
+            verbose=False)
         self.p = osc.simulate(self.p)
         return self.p
 
@@ -244,7 +244,7 @@ class Yb_fibre_Fabry_Perot:
 
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(100)
+    laser = Yb_fibre_Fabry_Perot(10)
     L_gain = 0.604
     L_wdm = 0.538
     L_oc = 0.225
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     tau = 700e-15
     grating_sep = 0.0919
     grating_angle = 0.4058
-    pump_power = 0.1  # 085
+    pump_power = 0.085
 
     p = laser.simulate(
         L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, mod_depth, Fsat, tau,
