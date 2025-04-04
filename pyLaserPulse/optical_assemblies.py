@@ -19,6 +19,7 @@ from matplotlib.colors import LogNorm, Normalize
 import pyLaserPulse.utils as utils
 import pyLaserPulse.base_components as bc
 import pyLaserPulse.coupling as coupling
+import pyLaserPulse.exceptions as exceptions
 
 
 class assembly(ABC):
@@ -621,13 +622,17 @@ class sm_fibre_laser:
                 # No need for OPPM addition here (unlike other optical assembly
                 # classes) because this is handled by the amplifier objects.
                 # print(amp.name)
-                if rt == 0 and j == 0:
-                    # 0th round trip co_core_ASE from quantum noise only.
-                    pulse = amp.simulate(pulse)
-                else:
-                    amp.add_co_core_ASE(
-                            self.amplifiers[j-1].co_core_ASE_ESD_output)
-                    pulse = amp.simulate(pulse)
+                try:
+                    if rt == 0 and j == 0:
+                        # 0th round trip co_core_ASE from quantum noise only.
+                        pulse = amp.simulate(pulse)
+                    else:
+                        amp.add_co_core_ASE(
+                                self.amplifiers[j-1].co_core_ASE_ESD_output)
+                        pulse = amp.simulate(pulse)
+                except exceptions.PropagationMethodNotConvergingError:
+                    print("I excepted!")
+                    pulse.output.append(np.ones_like(pulse.field) * np.nan)
 
                 # _, psd1 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.pump.propagated_spectrum, pulse.repetition_rate)
                 # _, psd2 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.counter_pump.propagated_spectrum, pulse.repetition_rate)
@@ -675,6 +680,9 @@ class sm_fibre_laser:
         #     pulse.energy_spectral_density)
         # pulse.power_spectral_density = np.asarray(
         #     pulse.power_spectral_density)
+        print("length pulse.output_samples", len(pulse.output_samples))
+        for outs in pulse.output_samples:
+            print("\t", np.asarray(outs).shape)
         pulse.output_samples = np.asarray(pulse.output_samples)
         pulse.pulse_energy = np.asarray(pulse.pulse_energy)
         return pulse

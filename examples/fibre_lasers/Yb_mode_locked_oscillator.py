@@ -245,18 +245,18 @@ class Yb_fibre_Fabry_Perot:
 
 if __name__ == "__main__":
     laser = Yb_fibre_Fabry_Perot(10)
-    L_gain = 0.604
-    L_wdm = 0.538
-    L_oc = 0.225
-    OC = 0.747
-    L_sbr = 0.328
+    L_gain = 0.189089893  # 0.604
+    L_wdm = 0.441642285  # 0.538
+    L_oc = 0.373687809  # 0.225
+    OC = 0.900984911  # 0.747
+    L_sbr = 0.67551384  # 0.328
     sbr_loss = 0.22
     mod_depth = 0.34
     Fsat = 0.7
     tau = 700e-15
-    grating_sep = 0.0919
-    grating_angle = 0.4058
-    pump_power = 0.085
+    grating_sep = 0.133775339  # 0.0919
+    grating_angle = 0.430454328  # 0.4058
+    pump_power = 0.114682906  # 0.085
 
     p = laser.simulate(
         L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, mod_depth, Fsat, tau,
@@ -264,6 +264,8 @@ if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
     import numpy as np
+
+    print(np.asarray(p.output).shape)
 
     fig = plt.figure()
     ax1 = fig.add_subplot(121)
