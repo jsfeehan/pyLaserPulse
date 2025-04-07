@@ -564,95 +564,133 @@ class passive_assembly(assembly):
         pass
 
 
-class sm_fibre_laser:
+class sm_fibre_laser(assembly):
     """
-    Class for use as a single-mode mode-locked fibre laser template.
+    Class for use as a SM fibre laser template.
+    James Feehan, 24/12/2020.
     """
-    def __init__(self, grid, amplifiers, round_trips, name,
-                 round_trip_output_samples=10, verbose=False):
+
+    def __init__(self, grid, components, round_trips, name,
+                 round_trip_output_samples=10, high_res_sampling=False,
+                 high_res_sampling_limits=[0, 1],
+                 high_res_sample_interval=10e-2, plot=False,
+                 data_directory=None, verbose=True):
         """
-        grid : pyLaserPulse.grid.grid object
-        amplifiers : list
-            List of pyLaserPulse.optical_assemblies fibre amplifier objects.
-        round_trips : int
-            Number of round trips to simulate
-        name : str
-            String identifier for the assembly object
-        round_trip_samples : int
-            Number of round trips in which the output field is sampled.
-            Sampling is done from roundtrip number
+        components_list: list of component objects. Must appear in order.
+            Recommended that components_list[0] is gain.
+            Coupling losses between components are added automatically.
+        round_trips: int. Number of cavity round trips to simulate.
+        round_trips: int. Number of round trips to simulate.
+        name : str.
+            String identifier for the assembly object.
+        round_trip_samples: int. Number of round trips in which the output
+            field is sampled. Sampling is done from roundtrip number
             round_trips-round_trip_samples to round_trips. If
             round_trip_samples > round_trips, round_trip_samples = round_trips.
-        verbose : bool
-            Print information about the simulation at runtime
+        high_res_sampling: bool. If True, high-resolution sampling of the
+            intracavity field. This is slow.
+        high_res_sampling_limits: list, int, len=2. Start and stop round trips
+            for the high-resolution field sampling. Ignored if
+            high_res_sampling==False.
+        high_res_sample_interval: float. Distance separating high-resolution
+            field samples. Default is 10 cm.
         """
-        self.name = name
-        self.grid = grid
+        super().__init__(grid, components, name, wrap=True, plot=plot,
+                         data_directory=data_directory, verbose=verbose)
         self.round_trips = round_trips
-        self.amplifiers = amplifiers
-        self.verbose = verbose
         self.round_trip_output_samples = round_trip_output_samples
+        if round_trip_output_samples > self.round_trips:
+            self.round_trip_output_samples = self.round_trips
+        self.high_res_sampling = high_res_sampling
+        self.high_res_sampling_limits = high_res_sampling_limits
+        if self.high_res_sampling_limits[0] < 0:
+            self.high_res_sampling_limits[0] = 0
+        if self.high_res_sampling_limits[1] > self.round_trips:
+            self.high_res_sampling_limits[1] = self.round_trips
+        self.high_res_sample_interval = high_res_sample_interval
 
         # Set active_fibre.oscillator = True -- Replenish pump each round trip
         # Set verbosity of active fibre to verbosity of optical assembly.
-        for amp in amplifiers:
-            for c in amp.components:
-                if (isinstance(c, bc.step_index_active_fibre)
-                        or isinstance(c, bc.photonic_crystal_active_fibre)):
-                    c.oscillator = True
-                    c.verbose = self.verbose
+        for c in self.components:
+            if (isinstance(c, bc.step_index_active_fibre)
+                    or isinstance(c, bc.photonic_crystal_active_fibre)):
+                c.oscillator = True
+                c.verbose = self.verbose
 
+    @assembly._simulate
     def simulate(self, pulse):
         """
         Simulate an SM fibre laser.
 
-        Parameters
-        ----------
-        pulse : pyLaserPulse.pulse.pulse object
+        pulse: pulse class. Starting field used in simulations.
 
-        Returns
-        -------
-        pyLaserPulse.pulse.pulse
+        Returns the pulse class.
         """
-        # import matplotlib.pyplot as plt
-        for rt in range(self.round_trips):
-            # print(rt)
-            pulse.roundtrip_reset()
-            for j, amp in enumerate(self.amplifiers):
-                # No need for OPPM addition here (unlike other optical assembly
-                # classes) because this is handled by the amplifier objects.
-                # print(amp.name)
-                try:
-                    if rt == 0 and j == 0:
-                        # 0th round trip co_core_ASE from quantum noise only.
-                        pulse = amp.simulate(pulse)
-                    else:
-                        amp.add_co_core_ASE(
-                                self.amplifiers[j-1].co_core_ASE_ESD_output)
-                        pulse = amp.simulate(pulse)
-                except exceptions.PropagationMethodNotConvergingError:
-                    print("I excepted!")
-                    pulse.output.append(np.ones_like(pulse.field) * np.nan)
+        # Only used if self.high_res_sampling, but also only needs to be set
+        # once so keep it out of the loop.
+        pulse.high_res_sample_interval = self.high_res_sample_interval
 
-                # _, psd1 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.pump.propagated_spectrum, pulse.repetition_rate)
-                # _, psd2 = amp.gain_fibre.pump.get_ESD_and_PSD(amp.gain_fibre.counter_pump.propagated_spectrum, pulse.repetition_rate)
+        if pulse.save_high_res_samples and pulse.save_dir is None:
+            raise Exception("pulse.save_dir cannot be NoneType if "
+                            "pulse.save_high_res_samples == True")
 
-                # fig = plt.figure()
-                # ax = fig.add_subplot(111)
-                # ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd1.T)
-                # ax.semilogy(amp.gain_fibre.pump.lambda_window*1e9, psd2.T)
-                # plt.show()
+        for i in range(self.round_trips):
+            pulse.roundtrip_reset()  # Reset single-use member variables
+
+            # Handle high-resolution field sampling
+            if (self.high_res_sampling
+                    and i == self.high_res_sampling_limits[0]):  # Turn on
+                pulse.high_res_samples = True
+                component_locations = [0]  # 0 for start of 1st component
+            if (self.high_res_sampling
+                    and i == self.high_res_sampling_limits[1]):  # Turn off
+                pulse.high_res_samples = False
+
+            # Propagate through each component
+            for val in self.components:
+                pulse = val.propagate(pulse)
+
+                # If sampling is active, retrieve component locations and skip
+                # coupling transmission objects inserted into self.components
+                # by make_full_components_list.
+                if (self.high_res_sampling
+                        and i == self.high_res_sampling_limits[0]):
+                    loc = np.sum(pulse.high_res_field_sample_points)
+                    if loc != component_locations[-1]:
+                        component_locations.append(loc)
 
                 # Handle NaN solutions
                 if np.any(np.isnan(pulse.field)):
                     pulse.output.append(np.ones_like(pulse.field) * np.nan)
                     return self.update_pulse_class(pulse, pulse.output)
+                else:
+                    pulse.add_OPPM_noise(self.grid, True)
+                    pulse.get_photon_spectrum(self.grid, pulse.field)
 
             # Handle output field sampling
-            if rt >= self.round_trips - self.round_trip_output_samples:
+            if i >= self.round_trips - self.round_trip_output_samples:
                 pulse.output_samples.append(pulse.output)
 
+            # Save high-resolution field samples if sampling is active and if
+            # pulse.save_high_res_samples == True. This parameter must be set
+            # in the pulse object outside of the sm_fibre_laser class along
+            # with the directory that the data is saved under.
+            if (self.high_res_sampling and pulse.save_high_res_samples
+                    and self.high_res_sampling_limits[0] <= i
+                    <= self.high_res_sampling_limits[1]):
+                pulse.save_field(
+                    str(i), component_locations=component_locations)
+
         self.update_pulse_class(pulse, pulse.output)
+
+        if self.plot:
+            self.plot_spectra(pulse)
+            self.plot_pulse(pulse)
+            if self.sampling:
+                self.plot_B_integral(pulse)
+                self.plot_pulse_samples(pulse)
+                self.plot_energy_and_average_power(pulse)
+
         return pulse
 
     def update_pulse_class(self, pulse, field):
@@ -665,157 +703,25 @@ class sm_fibre_laser:
         field : numpy array.
             Field to use for calculations and plots. This will generally either
             be pulse.field, or pulse.output.
+
+        Notes
+        -----
+        Required functionality of this method is different for sm_fibre_laser
+        objects than for others in optical_assemblies. This method overrides the
+        update_pulse_class inherited from the assembly abstract base.
         """
-        if isinstance(field, list):
-            field = np.asarray(field[0])
-        # pulse.get_ESD_and_PSD(self.grid, field)
-        # pulse.get_energy_and_average_power(self.grid, field)
-        pulse.get_ESD_and_PSD(self.grid, pulse.output)
-        pulse.get_energy_and_average_power(self.grid, pulse.output)
-        print(pulse.energy_spectral_density.shape)
-        print(pulse.power_spectral_density.shape)
+        pulse.get_chirp(self.grid, field)
+        pulse.get_ESD_and_PSD(self.grid, field)
+        pulse.get_energy_and_average_power(self.grid, field)
 
         pulse.output = np.asarray(pulse.output)
-        # pulse.energy_spectral_density = np.asarray(
-        #     pulse.energy_spectral_density)
-        # pulse.power_spectral_density = np.asarray(
-        #     pulse.power_spectral_density)
-        print("length pulse.output_samples", len(pulse.output_samples))
-        for outs in pulse.output_samples:
-            print("\t", np.asarray(outs).shape)
+        pulse.energy_spectral_density = np.asarray(
+            pulse.energy_spectral_density)
+        pulse.power_spectral_density = np.asarray(
+            pulse.power_spectral_density)
         pulse.output_samples = np.asarray(pulse.output_samples)
         pulse.pulse_energy = np.asarray(pulse.pulse_energy)
         return pulse
-
-# class sm_fibre_laser(assembly):
-#     """
-#     Class for use as a SM fibre laser template.
-#     James Feehan, 24/12/2020.
-#     """
-
-#     def __init__(self, grid, components, round_trips, name,
-#                  round_trip_output_samples=10, high_res_sampling=False,
-#                  high_res_sampling_limits=[0, 1],
-#                  high_res_sample_interval=10e-2, plot=False,
-#                  data_directory=None, verbose=True):
-#         """
-#         components_list: list of component objects. Must appear in order.
-#             Recommended that components_list[0] is gain.
-#             Coupling losses between components are added automatically.
-#         round_trips: int. Number of cavity round trips to simulate.
-#         round_trips: int. Number of round trips to simulate.
-#         name : str.
-#             String identifier for the assembly object.
-#         round_trip_samples: int. Number of round trips in which the output
-#             field is sampled. Sampling is done from roundtrip number
-#             round_trips-round_trip_samples to round_trips. If
-#             round_trip_samples > round_trips, round_trip_samples = round_trips.
-#         high_res_sampling: bool. If True, high-resolution sampling of the
-#             intracavity field. This is slow.
-#         high_res_sampling_limits: list, int, len=2. Start and stop round trips
-#             for the high-resolution field sampling. Ignored if
-#             high_res_sampling==False.
-#         high_res_sample_interval: float. Distance separating high-resolution
-#             field samples. Default is 10 cm.
-#         """
-#         super().__init__(grid, components, name, wrap=True, plot=plot,
-#                          data_directory=data_directory, verbose=verbose)
-#         self.round_trips = round_trips
-#         self.round_trip_output_samples = round_trip_output_samples
-#         if round_trip_output_samples > self.round_trips:
-#             self.round_trip_output_samples = self.round_trips
-#         self.high_res_sampling = high_res_sampling
-#         self.high_res_sampling_limits = high_res_sampling_limits
-#         if self.high_res_sampling_limits[0] < 0:
-#             self.high_res_sampling_limits[0] = 0
-#         if self.high_res_sampling_limits[1] > self.round_trips:
-#             self.high_res_sampling_limits[1] = self.round_trips
-#         self.high_res_sample_interval = high_res_sample_interval
-
-#         # Set active_fibre.oscillator = True -- Replenish pump each round trip
-#         # Set verbosity of active fibre to verbosity of optical assembly.
-#         for c in self.components:
-#             if (isinstance(c, bc.step_index_active_fibre)
-#                     or isinstance(c, bc.photonic_crystal_active_fibre)):
-#                 c.oscillator = True
-#                 c.verbose = self.verbose
-
-#     @assembly._simulate
-#     def simulate(self, pulse):
-#         """
-#         Simulate an SM fibre laser.
-
-#         pulse: pulse class. Starting field used in simulations.
-
-#         Returns the pulse class.
-#         """
-#         # Only used if self.high_res_sampling, but also only needs to be set
-#         # once so keep it out of the loop.
-#         pulse.high_res_sample_interval = self.high_res_sample_interval
-
-#         if pulse.save_high_res_samples and pulse.save_dir is None:
-#             raise Exception("pulse.save_dir cannot be NoneType if "
-#                             "pulse.save_high_res_samples == True")
-
-#         for i in range(self.round_trips):
-#             print(i)
-#             pulse.roundtrip_reset()  # Reset single-use member variables
-
-#             # Handle high-resolution field sampling
-#             if (self.high_res_sampling
-#                     and i == self.high_res_sampling_limits[0]):  # Turn on
-#                 pulse.high_res_samples = True
-#                 component_locations = [0]  # 0 for start of 1st component
-#             if (self.high_res_sampling
-#                     and i == self.high_res_sampling_limits[1]):  # Turn off
-#                 pulse.high_res_samples = False
-
-#             # Propagate through each component
-#             for val in self.components:
-#                 pulse = val.propagate(pulse)
-
-#                 # If sampling is active, retrieve component locations and skip
-#                 # coupling transmission objects inserted into self.components
-#                 # by make_full_components_list.
-#                 if (self.high_res_sampling
-#                         and i == self.high_res_sampling_limits[0]):
-#                     loc = np.sum(pulse.high_res_field_sample_points)
-#                     if loc != component_locations[-1]:
-#                         component_locations.append(loc)
-
-#                 # Handle NaN solutions
-#                 if np.any(np.isnan(pulse.field)):
-#                     pulse.output.append(np.ones_like(pulse.field) * np.nan)
-#                     return self.update_pulse_class(pulse, pulse.output)
-#                 else:
-#                     pulse.add_OPPM_noise(self.grid, True)
-#                     pulse.get_photon_spectrum(self.grid, pulse.field)
-
-#             # Handle output field sampling
-#             if i >= self.round_trips - self.round_trip_output_samples:
-#                 pulse.output_samples.append(pulse.output)
-
-#             # Save high-resolution field samples if sampling is active and if
-#             # pulse.save_high_res_samples == True. This parameter must be set
-#             # in the pulse object outside of the sm_fibre_laser class along
-#             # with the directory that the data is saved under.
-#             if (self.high_res_sampling and pulse.save_high_res_samples
-#                     and self.high_res_sampling_limits[0] <= i
-#                     <= self.high_res_sampling_limits[1]):
-#                 pulse.save_field(
-#                     str(i), component_locations=component_locations)
-
-#         self.update_pulse_class(pulse, pulse.output)
-
-#         if self.plot:
-#             self.plot_spectra(pulse)
-#             self.plot_pulse(pulse)
-#             if self.sampling:
-#                 self.plot_B_integral(pulse)
-#                 self.plot_pulse_samples(pulse)
-#                 self.plot_energy_and_average_power(pulse)
-
-#         return pulse
 
 
 class sm_fibre_amplifier(assembly):

@@ -25,8 +25,7 @@ class Yb_fibre_Fabry_Perot:
 
         # 1 fJ start pulse
         self.p = pulse.pulse(
-            # 1.587e-12, [.592e-3, .592e-3], "Gauss", 40e6, self.g)
-            1.587e-12, [1, 1], "Gauss", 40e6, self.g)
+            1.587e-12, [.592e-3, .592e-3], "Gauss", 40e6, self.g)
         self.tol = 1e-5
 
         self.round_trips = round_trips
@@ -34,49 +33,28 @@ class Yb_fibre_Fabry_Perot:
     def simulate(
             self, L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, sbr_mod_depth,
             sbr_Fsat, sbr_tau, grating_separation, grating_angle, pump_power):
-        # The repetition rate will change with the cavity lengths, so it must
-        # be reset for the gain fibre(s) once it is known.
 
-        ########################################
-        # VARIABLES COMMON TO A FEW COMPONENTS #
-        ########################################
+        # GAIN FIBRE
+        # The repetition rate can change with cavity fibre lengths given above.
+        # The repetition rate must be reset for the gain fibre once it is
+        # known.
+        # The pump power is set once the repetition rate is known using the
+        # gain_fibre.add_pump method.
         pump_points = 2**9
-        ASE_wl_lims = [900e-9, 1150e-9]
+        ASE_wl_lims = [975e-9, 977e-9]
         bounds = {
-                'co_pump_power': 0, 'co_pump_wavelength': 976e-9,
-                'co_pump_bandwidth': 1e-9, 'counter_pump_power': 0,
-                'counter_pump_wavelength': 976e-9,
-                'counter_pump_bandwidth': 1e-9
-                }
+            'co_pump_power': 0, 'co_pump_wavelength': 976e-9,
+            'co_pump_bandwidth': 1e-9}
         time_domain_gain = False
-
-        #################################################
-        # AMP 1 -- First pass of gain in the round trip #
-        #################################################
-        # GAIN FIBRE -- Counter-pumped for this design
         gain1 = af.Nufern_PM_YSF_HI_HP(
             self.g, L_gain, self.p.repetition_rate, pump_points, ASE_wl_lims,
             bounds, time_domain_gain=time_domain_gain)
-
-        # DISPERSION COMPENSATION
-        comp = bc.grating_compressor(
-            0.1, 20e-9, paths.materials.reflectivities.gold, self.g.lambda_c,
-            3e-3, 0, 1, 0, grating_separation, grating_angle, 600, self.g,
-            optimize=False, verbose=False, output_coupler=False)
-
-        components_1 = [comp, gain1]
-        amp1 = oa.sm_fibre_amplifier(
-            self.g, components_1, name='amp1', verbose=False)
-
-        ##################################################
-        # AMP 2 -- Second pass of gain in the round trip #
-        ##################################################
-        # GAIN FIBRE -- Co-pumped for this design
         gain2 = af.Nufern_PM_YSF_HI_HP(
             self.g, L_gain, self.p.repetition_rate, pump_points, ASE_wl_lims,
             bounds, time_domain_gain=time_domain_gain)
 
         # WDM
+        # wdm = fc.Opneti_high_power_filter_WDM_1020_1080(self.g, L_wdm, L_wdm)
         wdm_in_fibre = pf.PM980_XP(self.g, L_wdm, self.tol)
         wdm_out_fibre = pf.PM980_XP(self.g, L_wdm, self.tol)
         wdm = bc.fibre_component(
@@ -90,31 +68,32 @@ class Yb_fibre_Fabry_Perot:
             self.g, oc_in_fibre, oc_out_fibre, 0.166, 40e-9, self.g.lambda_c,
             2e-2, 0, OC, 1e-3, output_coupler=True, coupler_type="beamsplitter")
 
-        # SBR
-        sbr_pigtail = pf.PM980_XP(self.g, L_sbr, self.tol)
-        sbr = bc.saturable_Bragg_reflector(
-            sbr_loss, sbr_mod_depth, sbr_tau, sbr_Fsat,
-            sbr_pigtail.signal_mode_area, self.g)
-
         # OUTPUT COUPLER -- second pass
         oc_loss = 1 - (1 - OC)*(1 - 0.166)  # loss without output coupling
         oc2 = bc.fibre_component(
             self.g, oc_in_fibre, oc_out_fibre, oc_loss, 40e-9, self.g.lambda_c,
             2e-2, 0, 1, 1e-3, output_coupler=False)
 
-        components_2 = [
-            wdm, oc1, sbr_pigtail, sbr, sbr_pigtail, oc2, wdm, gain2]
-        amp2 = oa.sm_fibre_amplifier(
-            self.g, components_2, name='amp2', verbose=False)
+        # SBR
+        sbr_pigtail = pf.PM980_XP(self.g, L_sbr, self.tol)
+        sbr = bc.saturable_Bragg_reflector(
+            sbr_loss, sbr_mod_depth, sbr_tau, sbr_Fsat,
+            sbr_pigtail.signal_mode_area, self.g)
 
-        ##################################################################
-        # APPROXIMATE FREE-SPACE PATH LENGTH -- e.g., through compressor #
-        ##################################################################
+        # DISPERSION COMPENSATION
+        comp = bc.grating_compressor(
+            0.1, 200e-9, paths.materials.reflectivities.gold, self.g.lambda_c,
+            3e-3, 0, 1, 0, grating_separation, grating_angle, 600, self.g,
+            optimize=False, verbose=False, output_coupler=False)
+
+        # APPROXIMATE FREE-SPACE PATH LENGTH (e.g., between a fibre collimator
+        # and the dispersion compensation). Say 5cm from the collimator to the
+        # first grating, and 5 cm from the second grating the retroreflector.
         single_pass_compressor = 5e-2 + comp.grating_separation + 5e-2
 
-        ###############################
-        # REPETITION RATE CALCULATION #
-        ###############################
+        # The fibre lengths and free-space distance need converting to a
+        # repetition rate so that the pump power can be converted to pump
+        # energy.
         rep_rate \
             = const.c / (
                 gain1.L * gain1.signal_ref_index[self.g.midpoint]
@@ -127,136 +106,51 @@ class Yb_fibre_Fabry_Perot:
             )
         rep_rate /= 2  # Fabry Perot cavity; full length is 2x calculated
 
-        # Update the pulse class with the new repetition rate
+        # self.p.repetition_rate = rep_rate
         self.p.change_repetition_rate(self.g, rep_rate)
 
-        # Pump energy per HALF round trip (the gain is propagated twice)
-        gain1.add_pump(
-            976e-9, 1e-9, pump_power/2, rep_rate, direction="counter")
+        # Pump energy per HALF round trip (the gain is propagated twice).
+        # It is extremely difficult to find mode-locking solutions when using
+        # a full gain model (i.e., with boundaries solved). This is not due to
+        # a longer simulation time, but instead because if the additional
+        # constraints on possible solutions. Additionally, little benefit to
+        # doing this has been found so far.
+        #
+        # With this in mind, although in this cavity design the gain fibre would
+        # be co-pumped on one pass and counter-pumped on the other, using just
+        # the 'simple' gain model and co-pumping in both propagation directions
+        # is sufficient.
+        gain1.add_pump(976e-9, 1e-9, pump_power/2, rep_rate, direction="co")
         gain1.pump.change_repetition_rate(self.g, self.p.repetition_rate)
-        gain2.add_pump(
-            976e-9, 1e-9, pump_power/2, rep_rate, direction="co")
-        gain2.pump.change_repetition_rate(self.g, self.p.repetition_rate)
+        gain2.add_pump(976e-9, 1e-9, pump_power/2, rep_rate, direction="co")
 
-        self.amp_list = [amp1, amp2]
+        # components list -- symmetrical; linear Fabry Perot cavity. Each
+        # component is passed twice, once per propagation direction per round
+        # trip.
+        self.component_list = [gain1, wdm, oc1, sbr_pigtail, sbr, sbr_pigtail,
+                               oc2, wdm, gain2, comp]
+
         osc = oa.sm_fibre_laser(
-            self.g, self.amp_list, self.round_trips, name="FP",
+            self.g, self.component_list, self.round_trips, name="FP",
             verbose=False)
         self.p = osc.simulate(self.p)
         return self.p
 
-    # def simulate(
-    #         self, L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, sbr_mod_depth,
-    #         sbr_Fsat, sbr_tau, grating_separation, grating_angle, pump_power):
-
-    #     # GAIN FIBRE
-    #     # The repetition rate can change with cavity fibre lengths given above.
-    #     # The repetition rate must be reset for the gain fibre once it is
-    #     # known.
-    #     # The pump power is set once the repetition rate is known using the
-    #     # gain_fibre.add_pump method.
-    #     pump_points = 2**9
-    #     ASE_wl_lims = [975e-9, 977e-9]
-    #     bounds = {
-    #         'co_pump_power': 0, 'co_pump_wavelength': 976e-9,
-    #         'co_pump_bandwidth': 1e-9}
-    #     time_domain_gain = False
-    #     gain1 = af.Nufern_PM_YSF_HI_HP(
-    #         self.g, L_gain, self.p.repetition_rate, pump_points, ASE_wl_lims,
-    #         bounds, time_domain_gain=time_domain_gain)
-    #     gain2 = af.Nufern_PM_YSF_HI_HP(
-    #         self.g, L_gain, self.p.repetition_rate, pump_points, ASE_wl_lims,
-    #         bounds, time_domain_gain=time_domain_gain)
-
-    #     # WDM
-    #     # wdm = fc.Opneti_high_power_filter_WDM_1020_1080(self.g, L_wdm, L_wdm)
-    #     wdm_in_fibre = pf.PM980_XP(self.g, L_wdm, self.tol)
-    #     wdm_out_fibre = pf.PM980_XP(self.g, L_wdm, self.tol)
-    #     wdm = bc.fibre_component(
-    #         self.g, wdm_in_fibre, wdm_out_fibre, 0.166, 20e-9, self.g.lambda_c,
-    #         1, 0, 1, 1e-3, output_coupler=False)
-
-    #     # OUTPUT COUPLER -- first pass
-    #     oc_in_fibre = pf.PM980_XP(self.g, L_oc, self.tol)
-    #     oc_out_fibre = pf.PM980_XP(self.g, L_oc, self.tol)
-    #     oc1 = bc.fibre_component(
-    #         self.g, oc_in_fibre, oc_out_fibre, 0.166, 40e-9, self.g.lambda_c,
-    #         2e-2, 0, OC, 1e-3, output_coupler=True, coupler_type="beamsplitter")
-
-    #     # OUTPUT COUPLER -- second pass
-    #     oc_loss = 1 - (1 - OC)*(1 - 0.166)  # loss without output coupling
-    #     oc2 = bc.fibre_component(
-    #         self.g, oc_in_fibre, oc_out_fibre, oc_loss, 40e-9, self.g.lambda_c,
-    #         2e-2, 0, 1, 1e-3, output_coupler=False)
-
-    #     # SBR
-    #     sbr_pigtail = pf.PM980_XP(self.g, L_sbr, self.tol)
-    #     sbr = bc.saturable_Bragg_reflector(
-    #         sbr_loss, sbr_mod_depth, sbr_tau, sbr_Fsat,
-    #         sbr_pigtail.signal_mode_area, self.g)
-
-    #     # DISPERSION COMPENSATION
-    #     comp = bc.grating_compressor(
-    #         0.1, 200e-9, paths.materials.reflectivities.gold, self.g.lambda_c,
-    #         3e-3, 0, 1, 0, grating_separation, grating_angle, 600, self.g,
-    #         optimize=False, verbose=False, output_coupler=False)
-
-    #     # APPROXIMATE FREE-SPACE PATH LENGTH (e.g., between a fibre collimator
-    #     # and the dispersion compensation). Say 5cm from the collimator to the
-    #     # first grating, and 5 cm from the second grating the retroreflector.
-    #     single_pass_compressor = 5e-2 + comp.grating_separation + 5e-2
-
-    #     # The fibre lengths and free-space distance need converting to a
-    #     # repetition rate so that the pump power can be converted to pump
-    #     # energy.
-    #     rep_rate \
-    #         = const.c / (
-    #             gain1.L * gain1.signal_ref_index[self.g.midpoint]
-    #             + wdm.input_fibre.L * wdm.input_fibre.signal_ref_index[self.g.midpoint]
-    #             + wdm.output_fibre.L * wdm.output_fibre.signal_ref_index[self.g.midpoint]
-    #             + oc1.input_fibre.L * oc1.input_fibre.signal_ref_index[self.g.midpoint]
-    #             + oc1.output_fibre.L * oc1.output_fibre.signal_ref_index[self.g.midpoint]
-    #             + sbr_pigtail.L * sbr_pigtail.signal_ref_index[self.g.midpoint]
-    #             + single_pass_compressor * 1.0003
-    #         )
-    #     rep_rate /= 2  # Fabry Perot cavity; full length is 2x calculated
-
-    #     # self.p.repetition_rate = rep_rate
-    #     self.p.change_repetition_rate(self.g, rep_rate)
-
-    #     # Pump energy per HALF round trip (the gain is propagated twice):
-    #     gain1.add_pump(976e-9, 1e-9, pump_power/2, rep_rate, direction="co")  # Needs swapping if counter propagating pump also added later.
-    #     gain1.pump.change_repetition_rate(self.g, self.p.repetition_rate)
-    #     gain2.add_pump(976e-9, 1e-9, pump_power/2, rep_rate, direction="co")  # Needs swapping if counter propagating pump also added later.
-    #     gain2.pump.change_repetition_rate(self.g, self.p.repetition_rate)
-
-    #     # components list -- symmetrical; linear Fabry Perot cavity. Each
-    #     # component is passed twice, once per propagation direction per round
-    #     # trip.
-    #     self.component_list = [
-    #         gain1, wdm, oc1, sbr_pigtail, sbr, sbr_pigtail, oc2, wdm, gain2, comp]
-
-    #     osc = optical_assemblies.sm_fibre_laser(
-    #         self.g, self.component_list, self.round_trips, name="FP",
-    #         verbose=False)
-    #     self.p = osc.simulate(self.p)
-    #     return self.p
-
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(10)
-    L_gain = 0.189089893  # 0.604
-    L_wdm = 0.441642285  # 0.538
-    L_oc = 0.373687809  # 0.225
-    OC = 0.900984911  # 0.747
-    L_sbr = 0.67551384  # 0.328
+    laser = Yb_fibre_Fabry_Perot(150)
+    L_gain = 1.0190775410752737
+    L_wdm = 0.2755314412187741
+    L_oc = 0.2234381549357133
+    OC = 0.7283209063239757
+    L_sbr = 0.1
     sbr_loss = 0.22
     mod_depth = 0.34
     Fsat = 0.7
     tau = 700e-15
-    grating_sep = 0.133775339  # 0.0919
-    grating_angle = 0.430454328  # 0.4058
-    pump_power = 0.114682906  # 0.085
+    grating_sep = 0.06885070158738031
+    grating_angle = 0.27644718206317215
+    pump_power = 0.09665795416860035
 
     p = laser.simulate(
         L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, mod_depth, Fsat, tau,
