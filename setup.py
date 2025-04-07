@@ -1,3 +1,5 @@
+import os
+
 from setuptools import find_packages
 from setuptools import setup
 
@@ -8,7 +10,8 @@ long_description = '''pyLaserPulse is a comprehensive simulation toolbox for
     nonlinear, dispersive, passive, and active optical fibre assemblies,
     stretchers, and compressors in python.'''
 
-with open('requirements.txt') as f:
+p = os.path.dirname(__file__)
+with open(p + '\\requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(
