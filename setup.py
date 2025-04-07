@@ -11,7 +11,7 @@ long_description = '''pyLaserPulse is a comprehensive simulation toolbox for
     stretchers, and compressors in python.'''
 
 p = os.path.dirname(__file__)
-with open(p + '\\requirements.txt') as f:
+with open(p + '/requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(
