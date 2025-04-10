@@ -297,6 +297,29 @@ class _pulse_base(ABC):
             self.high_res_ESD_samples.T * self.high_res_rep_rate_samples
         self.high_res_PSD_samples = 1e-6 * self.high_res_PSD_samples.T
 
+    def get_ESD_and_PSD_from_output_samples(self, grid):
+        """
+        Calculate the energy spectral density and power spectral density from
+        self.output_samples. The PSD is normalized to dBm/nm.
+
+        Parameters
+        ----------
+        grid : pyLaserPulse.grid.grid object
+
+        Notes
+        -----
+        Creates members output_ESD_samples and output_PSD_samples, which are
+        integrated over polarization.
+        """
+        ops = np.asarray(self.output_samples)
+        spectra = utils.fftshift(utils.fft(ops, axis=-1), axes=-1)
+        spectra *= grid.dt / np.sqrt(2 * np.pi)
+        self.output_ESD_samples = np.abs(spectra)**2 * 2 * np.pi * const.c \
+            / grid.lambda_window**2
+        self.output_ESD_samples = np.sum(self.output_ESD_samples, axis=1)
+        self.output_PSD_samples = self.output_ESD_samples * self.repetition_rate
+        self.output_PSD_samples *= 1e-6
+
     def get_photon_spectrum(self, grid, field):
         """
         Calculate the number of photons in each frequency bin of the spectrum.
@@ -719,6 +742,7 @@ class pulse_from_pyLaserPulse_simulation(_pulse_base):
 
     def make_pulse(self, pulse_data):
         self.field = pulse_data['field']
+        self.output = pulse_data['output']
 
     def load_high_res_sample_data(self):
         """

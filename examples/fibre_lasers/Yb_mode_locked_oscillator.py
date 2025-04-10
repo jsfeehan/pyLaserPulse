@@ -12,7 +12,8 @@ import scipy.constants as const
 
 
 class Yb_fibre_Fabry_Perot:
-    def __init__(self, round_trips):
+    def __init__(self, round_trips, round_trip_output_samples=10,
+                 high_res_sampling=None, high_res_sampling_limits=[0, 1]):
         """
         Class for simulating a Fabry-Perot Yb-doped fibre mode-locked laser.
 
@@ -21,7 +22,7 @@ class Yb_fibre_Fabry_Perot:
 
         A ring cavity can be simulated in a similar way.
         """
-        self.g = grid.grid(2**12, 1040e-9, 1200e-9)
+        self.g = grid.grid(2**12, 1050e-9, 1200e-9)
 
         # 1 fJ start pulse
         self.p = pulse.pulse(
@@ -29,6 +30,9 @@ class Yb_fibre_Fabry_Perot:
         self.tol = 1e-5
 
         self.round_trips = round_trips
+        self.round_trip_output_samples = round_trip_output_samples
+        self.high_res_sampling = high_res_sampling
+        self.high_res_sampling_limits = high_res_sampling_limits
 
     def simulate(
             self, L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, sbr_mod_depth,
@@ -62,10 +66,11 @@ class Yb_fibre_Fabry_Perot:
             1, 0, 1, 1e-3, output_coupler=False)
 
         # OUTPUT COUPLER -- first pass
+        oc_loss = 0.166
         oc_in_fibre = pf.PM980_XP(self.g, L_oc, self.tol)
         oc_out_fibre = pf.PM980_XP(self.g, L_oc, self.tol)
         oc1 = bc.fibre_component(
-            self.g, oc_in_fibre, oc_out_fibre, 0.166, 40e-9, self.g.lambda_c,
+            self.g, oc_in_fibre, oc_out_fibre, oc_loss, 40e-9, self.g.lambda_c,
             2e-2, 0, OC, 1e-3, output_coupler=True, coupler_type="beamsplitter")
 
         # OUTPUT COUPLER -- second pass
@@ -104,9 +109,8 @@ class Yb_fibre_Fabry_Perot:
                 + sbr_pigtail.L * sbr_pigtail.signal_ref_index[self.g.midpoint]
                 + single_pass_compressor * 1.0003
             )
-        rep_rate /= 2  # Fabry Perot cavity; full length is 2x calculated
+        rep_rate /= 2  # Fabry Perot cavity; optical length is 2x calculated
 
-        # self.p.repetition_rate = rep_rate
         self.p.change_repetition_rate(self.g, rep_rate)
 
         # Pump energy per HALF round trip (the gain is propagated twice).
@@ -132,39 +136,89 @@ class Yb_fibre_Fabry_Perot:
 
         osc = oa.sm_fibre_laser(
             self.g, self.component_list, self.round_trips, name="FP",
-            verbose=False)
+            verbose=False,
+            round_trip_output_samples=self.round_trip_output_samples,
+            high_res_sampling=self.high_res_sampling,
+            high_res_sampling_limits=self.high_res_sampling_limits)
         self.p = osc.simulate(self.p)
         return self.p
 
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(150)
-    L_gain = 1.0190775410752737
-    L_wdm = 0.2755314412187741
-    L_oc = 0.2234381549357133
-    OC = 0.7283209063239757
-    L_sbr = 0.1
+    laser = Yb_fibre_Fabry_Perot(15, round_trip_output_samples=1550,
+                                 high_res_sampling=100,
+                                 high_res_sampling_limits=[10, 12])  # 148, 150])
+    L_gain = 5.52243788e-01
+    L_wdm = 6.44047941e-01
+    L_oc = 1.27328382e-01
+    OC = 5.47195973e-01
+    L_sbr = 1.09168186e-01
     sbr_loss = 0.22
     mod_depth = 0.34
     Fsat = 0.7
     tau = 700e-15
-    grating_sep = 0.06885070158738031
-    grating_angle = 0.27644718206317215
-    pump_power = 0.09665795416860035
+    grating_sep = 8.35012194e-02
+    grating_angle = 3.17918086e-01
+    pump_power = 1.21138282e-01
 
     p = laser.simulate(
         L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, mod_depth, Fsat, tau,
         grating_sep, grating_angle, pump_power)
 
+
     import matplotlib.pyplot as plt
     import numpy as np
 
-    print(np.asarray(p.output).shape)
+    p.get_ESD_and_PSD_from_output_samples(laser.g)
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
-    ax1.plot(
-        laser.g.lambda_window*1e9, p.power_spectral_density[0, :].T)
-    ax2.plot(laser.g.time_window*1e12, np.abs(p.field.T)**2)
+    ax = fig.add_subplot(111)
+    # ax.pcolormesh(
+    #     laser.g.lambda_window*1e9,
+    #     np.linspace(0, laser.round_trip_output_samples,
+    #                 laser.round_trip_output_samples),
+    #                 10*np.log10(p.output_PSD_samples[:, 0, :]))
+    # ax.imshow(np.abs(np.asarray(p.high_res_field_samples[:, 0, :])**2))
+    print(np.shape(p.high_res_field_samples))
+    ax.pcolormesh(
+        laser.g.time_window*1e12,
+        p.high_res_field_sample_points,
+        np.abs(p.high_res_field_samples[:, 0, :])**2)
+    # ax.imshow(np.abs(p.high_res_field_samples[:, 0, :])**2)
     plt.show()
+
+
+    # print(np.asarray(p.output).shape)
+    # p.output = np.squeeze(p.output)
+
+    # p.get_chirp(laser.g, p.output)
+
+    # # fig = plt.figure()
+    # # ax = fig.add_subplot(111)
+    # # ax.plot(laser.g.time_window*1e12, np.abs(p.field.T), c='k')
+    # # ax.plot(laser.g.time_window*1e12, np.abs(p.output.T), c='seagreen')
+    # # plt.show()
+
+    # p.field = p.output
+    # input_chirp = p.chirp
+    # gc = bc.grating_compressor(
+    #     0.04, 100e-9, paths.materials.reflectivities.gold, laser.g.lambda_c, 1,
+    #     0, 0, 0, 6e-2, 0.16, 600, laser.g, optimize=True, verbose=True)
+    # p = gc.propagate(p)
+    # p.output = p.field
+    # p.get_chirp(laser.g, p.output)
+    # output_chirp = p.chirp
+
+    # # print(p.output)
+
+
+    # fig = plt.figure()
+    # ax1 = fig.add_subplot(131)
+    # ax2 = fig.add_subplot(132)
+    # ax3 = fig.add_subplot(133)
+    # ax1.plot(
+    #     laser.g.lambda_window*1e9, p.power_spectral_density[0, :].T)
+    # ax2.plot(laser.g.time_window*1e12, np.abs(p.output.T)**2)
+    # ax3.plot(laser.g.time_window*1e12, 1e9*input_chirp[0, :], c='indianred')
+    # ax3.plot(laser.g.time_window*1e12, 1e9*output_chirp[0, :], c='seagreen')
+    # plt.show()

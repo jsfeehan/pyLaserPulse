@@ -12,6 +12,7 @@ used as templates for amplifiers, lasers, etc.
 import os
 import numpy as np
 from scipy.interpolate import interp1d
+import scipy.constants as const
 from abc import ABC
 from matplotlib.figure import Figure
 from matplotlib.colors import LogNorm, Normalize
@@ -572,8 +573,7 @@ class sm_fibre_laser(assembly):
 
     def __init__(self, grid, components, round_trips, name,
                  round_trip_output_samples=10, high_res_sampling=False,
-                 high_res_sampling_limits=[0, 1],
-                 high_res_sample_interval=10e-2, plot=False,
+                 high_res_sampling_limits=[0, 1], plot=False,
                  data_directory=None, verbose=True):
         """
         components_list: list of component objects. Must appear in order.
@@ -592,22 +592,19 @@ class sm_fibre_laser(assembly):
         high_res_sampling_limits: list, int, len=2. Start and stop round trips
             for the high-resolution field sampling. Ignored if
             high_res_sampling==False.
-        high_res_sample_interval: float. Distance separating high-resolution
-            field samples. Default is 10 cm.
         """
         super().__init__(grid, components, name, wrap=True, plot=plot,
-                         data_directory=data_directory, verbose=verbose)
+                         data_directory=data_directory, verbose=verbose,
+                         high_res_sampling=high_res_sampling)
         self.round_trips = round_trips
         self.round_trip_output_samples = round_trip_output_samples
         if round_trip_output_samples > self.round_trips:
             self.round_trip_output_samples = self.round_trips
-        self.high_res_sampling = high_res_sampling
         self.high_res_sampling_limits = high_res_sampling_limits
         if self.high_res_sampling_limits[0] < 0:
             self.high_res_sampling_limits[0] = 0
         if self.high_res_sampling_limits[1] > self.round_trips:
             self.high_res_sampling_limits[1] = self.round_trips
-        self.high_res_sample_interval = high_res_sample_interval
 
         # Set active_fibre.oscillator = True -- Replenish pump each round trip
         # Set verbosity of active fibre to verbosity of optical assembly.
@@ -628,23 +625,31 @@ class sm_fibre_laser(assembly):
         """
         # Only used if self.high_res_sampling, but also only needs to be set
         # once so keep it out of the loop.
-        pulse.high_res_sample_interval = self.high_res_sample_interval
+        # pulse.high_res_sample_interval = self.high_res_sample_interval
 
         if pulse.save_high_res_samples and pulse.save_dir is None:
             raise Exception("pulse.save_dir cannot be NoneType if "
                             "pulse.save_high_res_samples == True")
 
+        if self.sampling:
+            pulse.high_res_sample_interval = \
+                const.c / pulse.repetition_rate
+            pulse.num_samples = self.num_samples
+
         for i in range(self.round_trips):
+            print(i)
             pulse.roundtrip_reset()  # Reset single-use member variables
 
             # Handle high-resolution field sampling
-            if (self.high_res_sampling
-                    and i == self.high_res_sampling_limits[0]):  # Turn on
+            # Turn it on:
+            if (self.sampling and i == self.high_res_sampling_limits[0]):
                 pulse.high_res_samples = True
+                print("turning on")
                 component_locations = [0]  # 0 for start of 1st component
-            if (self.high_res_sampling
-                    and i == self.high_res_sampling_limits[1]):  # Turn off
-                pulse.high_res_samples = False
+            # Turn it off:
+            if (self.sampling and i == self.high_res_sampling_limits[1]-1):
+                print("turning off")
+                # pulse.high_res_samples = False
 
             # Propagate through each component
             for val in self.components:
@@ -653,8 +658,7 @@ class sm_fibre_laser(assembly):
                 # If sampling is active, retrieve component locations and skip
                 # coupling transmission objects inserted into self.components
                 # by make_full_components_list.
-                if (self.high_res_sampling
-                        and i == self.high_res_sampling_limits[0]):
+                if (self.sampling and i == self.high_res_sampling_limits[0]):
                     loc = np.sum(pulse.high_res_field_sample_points)
                     if loc != component_locations[-1]:
                         component_locations.append(loc)
@@ -675,7 +679,7 @@ class sm_fibre_laser(assembly):
             # pulse.save_high_res_samples == True. This parameter must be set
             # in the pulse object outside of the sm_fibre_laser class along
             # with the directory that the data is saved under.
-            if (self.high_res_sampling and pulse.save_high_res_samples
+            if (self.sampling and pulse.save_high_res_samples
                     and self.high_res_sampling_limits[0] <= i
                     <= self.high_res_sampling_limits[1]):
                 pulse.save_field(
@@ -683,13 +687,12 @@ class sm_fibre_laser(assembly):
 
         self.update_pulse_class(pulse, pulse.output)
 
-        if self.plot:
-            self.plot_spectra(pulse)
-            self.plot_pulse(pulse)
-            if self.sampling:
-                self.plot_B_integral(pulse)
-                self.plot_pulse_samples(pulse)
-                self.plot_energy_and_average_power(pulse)
+        # if self.plot:
+        #     self.plot_spectra(pulse)
+        #     self.plot_pulse(pulse)
+        #     if self.sampling:
+        #         self.plot_pulse_samples(pulse)
+        #         self.plot_energy_and_average_power(pulse)
 
         return pulse
 
@@ -721,6 +724,7 @@ class sm_fibre_laser(assembly):
             pulse.power_spectral_density)
         pulse.output_samples = np.asarray(pulse.output_samples)
         pulse.pulse_energy = np.asarray(pulse.pulse_energy)
+        pulse.high_res_field_samples = np.asarray(pulse.high_res_field_samples)
         return pulse
 
 
