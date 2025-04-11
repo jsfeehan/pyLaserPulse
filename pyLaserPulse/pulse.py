@@ -129,7 +129,7 @@ class _pulse_base(ABC):
         # parameters.
         self.field = np.array((), dtype=np.complex128)
         self.high_res_samples = high_res_sampling
-        self.high_res_sample_interval = 10e-2
+        # self.high_res_sample_interval = 10e-2
         self.num_samples = None
         self.high_res_field_samples = []
         self.high_res_rep_rate_samples = []  # Used later for av. power
@@ -425,8 +425,8 @@ class _pulse_base(ABC):
         should be added here.
         """
         self.output = []
-        self.high_res_field_samples = []
-        self.high_res_field_sample_points = []
+        # self.high_res_field_samples = []
+        # self.high_res_field_sample_points = []
 
     def update_high_res_samples(
             self, field_samples, B_samples, sample_points):

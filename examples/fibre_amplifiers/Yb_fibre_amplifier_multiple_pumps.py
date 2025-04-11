@@ -67,7 +67,7 @@ g = grid.grid(points, central_wl, max_wl)
 
 # pulse defined using the pulse module
 p = pulse.pulse(
-    tau, P_peak, shape, f_rep, g, order=order, high_res_sampling=True)
+    tau, P_peak, shape, f_rep, g, order=order)
 
 # Define a custom double-clad, large-mode-area Yb-doped fibre and use the
 # add_pump method to add another pump source.

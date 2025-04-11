@@ -1514,8 +1514,7 @@ class grating_compressor(component):
                     pulse.high_res_B_integral_samples[-1])
             else:
                 pulse.high_res_B_integral_samples.append(0)
-            pulse.high_res_field_sample_points.append(
-                pulse.high_res_sample_interval)
+            pulse.high_res_field_sample_points.append(0.05)
         return pulse
 
     def apply_operators(self, pulse):
@@ -1700,8 +1699,7 @@ class step_index_fibre_compressor(step_index_passive_fibre):
                 pulse.high_res_B_integral_samples.append(0)
             pulse.high_res_field_samples.append(pulse.field)
             pulse.high_res_rep_rate_samples.append(pulse.repetition_rate)
-            pulse.high_res_field_sample_points.append(
-                pulse.high_res_sample_interval)
+            pulse.high_res_field_sample_points.append(0.05)
         return pulse
 
     def apply_operators(self, length, pulse):

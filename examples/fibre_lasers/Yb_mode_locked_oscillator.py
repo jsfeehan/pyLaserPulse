@@ -22,7 +22,7 @@ class Yb_fibre_Fabry_Perot:
 
         A ring cavity can be simulated in a similar way.
         """
-        self.g = grid.grid(2**12, 1050e-9, 1200e-9)
+        self.g = grid.grid(2**11, 1050e-9, 1200e-9)
 
         # 1 fJ start pulse
         self.p = pulse.pulse(
@@ -116,7 +116,7 @@ class Yb_fibre_Fabry_Perot:
         # Pump energy per HALF round trip (the gain is propagated twice).
         # It is extremely difficult to find mode-locking solutions when using
         # a full gain model (i.e., with boundaries solved). This is not due to
-        # a longer simulation time, but instead because if the additional
+        # a longer simulation time, but instead because of the additional
         # constraints on possible solutions. Additionally, little benefit to
         # doing this has been found so far.
         #
@@ -128,9 +128,9 @@ class Yb_fibre_Fabry_Perot:
         gain1.pump.change_repetition_rate(self.g, self.p.repetition_rate)
         gain2.add_pump(976e-9, 1e-9, pump_power/2, rep_rate, direction="co")
 
-        # components list -- symmetrical; linear Fabry Perot cavity. Each
-        # component is passed twice, once per propagation direction per round
-        # trip.
+        # components list -- near symmetrical; linear Fabry Perot cavity. Each
+        # component is passed twice - once per propagation direction per round
+        # trip - with the exception of the cavity ends (SBR and compressor).
         self.component_list = [gain1, wdm, oc1, sbr_pigtail, sbr, sbr_pigtail,
                                oc2, wdm, gain2, comp]
 
@@ -145,9 +145,9 @@ class Yb_fibre_Fabry_Perot:
 
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(15, round_trip_output_samples=1550,
-                                 high_res_sampling=100,
-                                 high_res_sampling_limits=[10, 12])  # 148, 150])
+    laser = Yb_fibre_Fabry_Perot(150, round_trip_output_samples=15)  # ,
+                                #  high_res_sampling=10,
+                                #  high_res_sampling_limits=[0, 150])
     L_gain = 5.52243788e-01
     L_wdm = 6.44047941e-01
     L_oc = 1.27328382e-01
@@ -171,21 +171,30 @@ if __name__ == "__main__":
 
     p.get_ESD_and_PSD_from_output_samples(laser.g)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    print(p.high_res_field_sample_points)
+    print(len(p.high_res_field_sample_points))
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # ax.set_title('field samples in spec domain')
     # ax.pcolormesh(
     #     laser.g.lambda_window*1e9,
-    #     np.linspace(0, laser.round_trip_output_samples,
-    #                 laser.round_trip_output_samples),
-    #                 10*np.log10(p.output_PSD_samples[:, 0, :]))
-    # ax.imshow(np.abs(np.asarray(p.high_res_field_samples[:, 0, :])**2))
-    print(np.shape(p.high_res_field_samples))
-    ax.pcolormesh(
-        laser.g.time_window*1e12,
-        p.high_res_field_sample_points,
-        np.abs(p.high_res_field_samples[:, 0, :])**2)
-    # ax.imshow(np.abs(p.high_res_field_samples[:, 0, :])**2)
-    plt.show()
+    #     np.cumsum(p.high_res_field_sample_points),
+    #     10*np.log10(
+    #     np.abs(
+    #         np.fft.fftshift(np.fft.fft(
+    #             p.high_res_field_samples[:, 0, :], axis=-1), axes=-1))**2))
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # ax.set_title('field samples in time domain')
+    # ax.pcolormesh(
+    #     laser.g.time_window*1e12,
+    #     np.cumsum(p.high_res_field_sample_points),
+    #     10*np.log10(
+    #     np.abs(p.high_res_field_samples[:, 0, :])**2))
+
+    # plt.show()
 
 
     # print(np.asarray(p.output).shape)

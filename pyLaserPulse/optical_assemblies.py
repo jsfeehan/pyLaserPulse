@@ -632,8 +632,8 @@ class sm_fibre_laser(assembly):
                             "pulse.save_high_res_samples == True")
 
         if self.sampling:
-            pulse.high_res_sample_interval = \
-                const.c / pulse.repetition_rate
+        #     pulse.high_res_sample_interval = \
+        #         const.c / pulse.repetition_rate
             pulse.num_samples = self.num_samples
 
         for i in range(self.round_trips):
@@ -649,7 +649,7 @@ class sm_fibre_laser(assembly):
             # Turn it off:
             if (self.sampling and i == self.high_res_sampling_limits[1]-1):
                 print("turning off")
-                # pulse.high_res_samples = False
+                pulse.high_res_samples = False
 
             # Propagate through each component
             for val in self.components:

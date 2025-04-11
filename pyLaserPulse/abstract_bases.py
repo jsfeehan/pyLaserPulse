@@ -494,7 +494,7 @@ class fibre_base(ABC):
                     sample = False
 
             propagated_distance += dz
-            # print(f'{propagated_distance-dz:.10}', end='\r', flush=True)
+
             if dz == 1e-80:  # Reset to sensible value after sample condition.
                 dz = dz_updated
             else:
@@ -2117,7 +2117,7 @@ class active_fibre_base(ABC):
 
     def _propagate_co_signal_field(
             self, field, repetition_rate, dz, sampling=False,
-            sample_interval=1e-2):
+            num_samples=2):
         """
         Apply passive linear and nonlinear operators and gain iteratively
         over the fibre length. Frequency-domain gain only. Partial ASE only.
@@ -2130,26 +2130,34 @@ class active_fibre_base(ABC):
             repetition_rate of the input pulses.
         sampling : bool
             Samples drawn at 10% of the fibre length.
-        sample_interval : float
-            Distance between sampling points.
+        num_samples : int.
+            Number of samples to draw. Default is 2.
 
         Returns
         -------
         if sampling:
-            numpy array
-                Pulse field at the signal output end of the fibre.
+            complex numpy array
+                Field in the time domain
             float
-                Final propagation step size
+                Updated step size, dz (adjusted by conservation quantity error
+                method).
+            complex numpy array
+                Fields sampled along the fibre.
             list
-                Pulse field as a function of propagation distance
-            list
-                Points along the fibre length at which pulse field samples are
-                taken.
+                Positions along the fibre at which the field samples were taken
         else:
-            numpy array
-                Pulse field at teh signal outptu end of the fibre.
+            complex numpy array
+                Field in the time domain
             float
-                Final propagation step size
+                Updated step size, dz (adjusted by conservation quantity error
+                method).
+
+        Notes
+        -----
+        Sampling slows this function down quite a lot. This is because
+        dz_updated remains small -- it is rescaled according to sampling
+        conditions.
+        (dz = propagated_distance % sample_interval results in small dz).
         """
         propagated_distance = 0
         size = self.stacks.spectra.shape[1]
@@ -2161,8 +2169,7 @@ class active_fibre_base(ABC):
             sample_count = 1  # Keep track of number of samples taken.
             field_samples = []
             dz_samples = []
-            if self.L <= sample_interval:
-                sample_interval = self.L / 2.  # Minimum of 2 samples
+            sample_interval = self.L / num_samples
             sample = False
 
         while propagated_distance < self.L:
@@ -2173,6 +2180,8 @@ class active_fibre_base(ABC):
             if sampling:
                 if propagated_distance > sample_count * sample_interval:
                     dz = propagated_distance % sample_interval
+                    if dz == 0:  # Set to tiny value to avoid infinite loop.
+                        dz = 1e-80
                     sample = True
 
             phasematching = self._DFWM_phasematching(propagated_distance)
@@ -2224,7 +2233,10 @@ class active_fibre_base(ABC):
 
             # Apply CQEM adjustment to step size for next iteration.
             propagated_distance += dz
-            dz = (aux_dz_1 + aux_dz_2) / 2.
+            if dz == 1e-80:  # Reset to sensible value after sample condition.
+                dz = dz_updated
+            else:
+                dz = (aux_dz_1 + aux_dz_2) / 2.
 
             if np.any(np.isnan(ufft)):
                 if sampling:
@@ -2239,32 +2251,6 @@ class active_fibre_base(ABC):
                     dz_samples)
         else:
             return utils.ifft(ufft, axis=-1), dz_updated
-
-    def _co_signal_propagation(self, pulse, pulse_field, dz):
-        """
-        Propagation for co-propagating signals only, organise data samples if
-        sampling, and return an updated pulse object.
-
-        Parameters
-        ----------
-        pulse : pyLaserPulse.pulse.pulse
-        pulse_field : numpy array
-            pulse.field
-        dz : float
-            Initial proapgation step size.
-
-        Returns
-        -------
-        pyLaserPulse.pulse.pulse
-        """
-        if pulse.high_res_samples:
-            pass
-        else:
-            pulse_field, dz = self._propagate_co_signal_field(
-                pulse_field, pulse.repetition_rate, dz)
-        pulse.field = pulse_field
-        pulse.dz = dz
-        return pulse
 
     def propagate(self, pulse):
         """
@@ -2457,40 +2443,32 @@ class active_fibre_base(ABC):
             # Get array stacks
             self.stacks = self._stack_propagation_arrays_co_signal(
                 sig_ESD, pulse.ASE_scaling, pulse.repetition_rate)
-            pulse = self._co_signal_propagation(
-                pulse, pulse.field, pulse.dz)
+            if pulse.high_res_samples:
+                pulse.field, pulse.dz, field_samples, self.dz_samples \
+                    = self._propagate_co_signal_field(
+                        pulse.field, pulse.repetition_rate, pulse.dz,
+                        pulse.high_res_samples, pulse.num_samples)
+                tmp_samples = np.sum(np.abs(field_samples)**2, axis=1)
+                self.B_samples = np.cumsum(
+                    self.n2 * np.amax(tmp_samples, axis=-1))
+                self.B_samples *= np.asarray(self.dz_samples) * 2 * np.pi
+                self.B_samples /= (
+                    self.grid.lambda_c
+                    * self.signal_mode_area[self.grid.midpoint])
+
+                if len(pulse.high_res_B_integral_samples) != 0:
+                    cumulative_B = \
+                        self.B_samples + pulse.high_res_B_integral_samples[-1]
+                else:
+                    cumulative_B = self.B_samples
+                pulse.update_high_res_samples(
+                    field_samples, cumulative_B.tolist(), self.dz_samples)
+            else:
+                pulse.field, pulse.dz = self._propagate_co_signal_field(
+                    pulse.field, pulse.repetition_rate, pulse.dz)
             self.pump.propagated_spectrum = \
                 self.stacks.spectra[:, self.stacks.slices['co_pump']]
-
-        # if self.oscillator:  # Redefine pump each call so it is never depleted
-        #     # if self.boundary_value_solver:
-        #     #     raise Exception(
-        #     #         "Full ASE simulations are currently not supported with"
-        #     #         " mixed time and frequency domain gain.")
-        #     # else:
-        #     self.pump = pmp.pump(self.pump.bandwidth, self.pump.lambda_c,
-        #                             self.pump.energy, points=self.pump.points,
-        #                             lambda_lims=self.pump.lambda_lims,
-        #                             ASE_scaling=self.pump.ASE_scaling)
         return pulse
-
-    def _replenish_pump(self):
-        """
-        Used to 'replenish' the pump for each round trip of an oscillator.
-        Not required for amplifier simulations, and handled entirely by
-        the optical_assemblies module.
-        """
-        self.pump = pmp.pump(
-                self.pump.bandwidth, self.pump.lambda_c,
-                self.pump.energy, points=self.pump.points,
-                lambda_lims=self.pump.lambda_lims,
-                ASE_scaling=self.pump.ASE_scaling)
-        if self.boundary_value_solver:
-            self.counter_pump = pmp.pump(
-                self.counter_pump.bandwidth, self.counter_pump.lambda_c,
-                self.counter_pump.energy, points=self.counter_pump.points,
-                lambda_lims=self.counter_pump.lambda_lims,
-                ASE_scaling=self.counter_pump.ASE_scaling)
 
 
 class loss_spectrum_base(ABC):
@@ -2896,7 +2874,7 @@ class component_base(loss_spectrum_base, ABC):
 
             # sample_interval for bulk components doesn't have to be realistic,
             # just useful for plotting afterwards.
-            interval = 0.05 * np.sum(pulse.high_res_field_sample_points)
+            interval = 0.05
             pulse.high_res_field_sample_points.append(interval)
         return pulse
 
