@@ -632,12 +632,9 @@ class sm_fibre_laser(assembly):
                             "pulse.save_high_res_samples == True")
 
         if self.sampling:
-        #     pulse.high_res_sample_interval = \
-        #         const.c / pulse.repetition_rate
             pulse.num_samples = self.num_samples
 
         for i in range(self.round_trips):
-            print(i)
             pulse.roundtrip_reset()  # Reset single-use member variables
 
             # Handle high-resolution field sampling
@@ -687,12 +684,11 @@ class sm_fibre_laser(assembly):
 
         self.update_pulse_class(pulse, pulse.output)
 
-        # if self.plot:
-        #     self.plot_spectra(pulse)
-        #     self.plot_pulse(pulse)
-        #     if self.sampling:
-        #         self.plot_pulse_samples(pulse)
-        #         self.plot_energy_and_average_power(pulse)
+        if self.plot:
+            self.plot_intracavity_spectra(pulse)
+            self.plot_intracavity_pulse(pulse)
+            self.plot_output_pulses(pulse)
+            self.plot_output_spectra(pulse)
 
         return pulse
 
@@ -714,7 +710,6 @@ class sm_fibre_laser(assembly):
         update_pulse_class inherited from the assembly abstract base.
         """
         pulse.get_chirp(self.grid, field)
-        pulse.get_ESD_and_PSD(self.grid, field)
         pulse.get_energy_and_average_power(self.grid, field)
 
         pulse.output = np.asarray(pulse.output)
@@ -727,6 +722,225 @@ class sm_fibre_laser(assembly):
         pulse.high_res_field_samples = np.asarray(pulse.high_res_field_samples)
         return pulse
 
+    def plot_intracavity_pulse(self, pulse):
+        """
+        Plot the pulse time domain intracavity fields.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse.pulse object
+        """
+        handles = []
+        colours = ['mediumpurple', 'seagreen']
+        alphas = [1, 0.55]
+        axis_str = [r'$x$', r'$y$']
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Time domain distributions: intracavity')
+        for i, col in enumerate(colours):
+            h1, = ax.semilogy(
+                self.grid.time_window * 1e12,
+                1e-3 * np.abs(pulse.field[i, :])**2,
+                c=col, lw=2, label='P(T) ' + axis_str[i], alpha=alphas[i])
+            handles.append(h1)
+        ax.set_xlabel(r'$T = t - z/v_{g}$, ps')
+        ax.set_ylabel(r'P(T), kW')
+        ax.set_xlim([1e12 * self.grid.time_window.min(),
+                     1e12 * self.grid.time_window.max()])
+        fmt = []
+        self.plot_dict[
+            self.name + ': time domain distribution: intracavity'] = (
+                ax, fmt)
+
+        # Calculate the chirp for the intracavity field (this is ordinarily done
+        # in the pulse class, but that method is reserved for the output member
+        # variable and used with update_pulse_class method of this class.)
+        phase = np.unwrap(np.angle(pulse.field), axis=1)
+        chirp = 2 * np.pi * const.c / (
+            self.grid.omega_c + np.gradient(phase, self.grid.dt, axis=1))
+
+        linestyles = ['-', '-.']
+        alphas = [1, 0.55]
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Pulse chirps: intracavity field')
+        for i, col in enumerate(colours):
+            h1, = ax.plot(
+                self.grid.time_window * 1e12, 1e9 * chirp[i, :], c=col,
+                lw=2, label=r'$\lambda (T)$ ' + axis_str[i], ls=linestyles[i],
+                alpha=alphas[i])
+            handles.append(h1)
+        ax.set_xlabel(r'$T = t - z/v_{g}$, ps')
+        ax.set_ylabel(r'$\lambda (T)$, nm')
+        ax.set_xlim([1e12 * self.grid.time_window.min(),
+                     1e12 * self.grid.time_window.max()])
+        fmt = []
+        self.plot_dict[self.name + ': pulse chirps'] = (ax, fmt)
+
+    def plot_output_pulses(self, pulse):
+        """
+        Plot the output pulse time domain distributions.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse.pulse object
+        """
+        handles = []
+        colours = ['mediumpurple', 'seagreen']
+        alphas = [1, 0.55]
+        axis_str = [r'$x$', r'$y$']
+
+        for oc in range(len(pulse.output)):
+            fig = Figure()
+            ax = fig.add_subplot(111)
+            ax.set_title(
+                'Time domain distributions: output coupler ' + str(oc))
+            for i, col in enumerate(colours):
+                h1, = ax.semilogy(
+                    self.grid.time_window * 1e12,
+                    1e-3 * np.abs(pulse.output[oc, i, :])**2,
+                    c=col, lw=2, label='P(T) ' + axis_str[i], alpha=alphas[i])
+                handles.append(h1)
+            ax.set_xlabel(r'$T = t - z/v_{g}$, ps')
+            ax.set_ylabel(r'P(T), kW')
+            ax.set_xlim([1e12 * self.grid.time_window.min(),
+                         1e12 * self.grid.time_window.max()])
+            fmt = []
+            self.plot_dict[
+                self.name + ': time domain distribution: output coupler '
+                + str(oc)] = (ax, fmt)
+
+            # Calculate the chirp for the intracavity field (this is ordinarily
+            # done in the pulse class, but that method is reserved for the
+            # output member variable and used with update_pulse_class method of
+            # this class.)
+            phase = np.unwrap(np.angle(pulse.output[oc, :, :]), axis=1)
+            chirp = 2 * np.pi * const.c / (
+                self.grid.omega_c + np.gradient(phase, self.grid.dt, axis=1))
+
+            linestyles = ['-', '-.']
+            alphas = [1, 0.55]
+            fig = Figure()
+            ax = fig.add_subplot(111)
+            ax.set_title('Pulse chirps: output coupler ' + str(oc))
+            for i, col in enumerate(colours):
+                h1, = ax.plot(
+                    self.grid.time_window * 1e12, 1e9 * chirp[i, :], c=col,
+                    lw=2, label=r'$\lambda (T)$ ' + axis_str[i],
+                    ls=linestyles[i], alpha=alphas[i])
+                handles.append(h1)
+            ax.set_xlabel(r'$T = t - z/v_{g}$, ps')
+            ax.set_ylabel(r'$\lambda (T)$, nm')
+            ax.set_xlim([1e12 * self.grid.time_window.min(),
+                         1e12 * self.grid.time_window.max()])
+            fmt = []
+            self.plot_dict[self.name + ': pulse chirps from coupler '
+                + str(oc)] = (ax, fmt)
+
+    def plot_intracavity_spectra(self, pulse):
+        """
+        Plot the pulse power spectral densities for the intracavity field.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse.pulse object
+        """
+        min_y = 1e-6
+        handles = []
+        pulse.get_ESD_and_PSD(self.grid, pulse.field)
+        integrated_PSD = np.sum(pulse.power_spectral_density, axis=0)
+
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Intracavity PSDs')
+        h1, = ax.semilogy(self.grid.lambda_window * 1e9, integrated_PSD, c='k',
+                          ls='--', lw=2, label='Net PSD')
+        h2, = ax.semilogy(
+            self.grid.lambda_window * 1e9, pulse.power_spectral_density[0, :],
+            c='mediumseagreen', ls='-', lw=2, label=r'x')
+        h3, = ax.semilogy(
+            self.grid.lambda_window * 1e9, pulse.power_spectral_density[1, :],
+            c='darkorange', ls='-', lw=2, label=r'y')
+        handles.extend([h1, h2, h3])
+        ax.set_xlabel('Wavelength, nm', fontsize=13)
+        ax.set_ylabel('Power spectral density, mW/nm', fontsize=13)
+        max_y = integrated_PSD.max()
+        ax.set_ylim([min_y, 4 * max_y])
+        ax.set_xlim([1e9 * self.grid.lambda_window.min(),
+                     1e9 * self.grid.lambda_window.max()])
+
+        fmt = []
+        self.plot_dict[self.name + ': intracavity net PSDs'] = (ax, fmt)
+
+    def plot_output_spectra(self, pulse):
+        """
+        Plot the pulse power spectral densities at the output of the assembly.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse.pulse object
+        """
+        min_y = 1e-6
+        handles = []
+        for oc in range(len(pulse.output)):
+            pulse.get_ESD_and_PSD(self.grid, pulse.output[oc, :, :])
+            integrated_PSD = np.sum(pulse.power_spectral_density, axis=0)
+
+            fig = Figure()
+            ax = fig.add_subplot(111)
+            ax.set_title('PSDs: output coupler ' + str(oc))
+            h1, = ax.semilogy(
+                self.grid.lambda_window * 1e9, integrated_PSD, c='k', ls='--',
+                lw=2, label='Net PSD')
+            h2, = ax.semilogy(
+                self.grid.lambda_window * 1e9,
+                pulse.power_spectral_density[0, :],
+                c='mediumseagreen', ls='-', lw=2, label=r'x')
+            h3, = ax.semilogy(
+                self.grid.lambda_window * 1e9,
+                pulse.power_spectral_density[1, :],
+                c='darkorange', ls='-', lw=2, label=r'y')
+            handles.extend([h1, h2, h3])
+            ax.set_xlabel('Wavelength, nm', fontsize=13)
+            ax.set_ylabel('Power spectral density, mW/nm', fontsize=13)
+            max_y = integrated_PSD.max()
+            ax.set_ylim([min_y, 4 * max_y])
+            ax.set_xlim([1e9 * self.grid.lambda_window.min(),
+                        1e9 * self.grid.lambda_window.max()])
+
+            fmt = []
+            self.plot_dict[
+                self.name + ': output net PSDs coupler ' + str(oc)] = (ax, fmt)
+
+            psd_samples = np.zeros((self.round_trip_output_samples,
+                                    2,
+                                    self.grid.points))
+            for samp in range(self.round_trip_output_samples):
+                pulse.get_ESD_and_PSD(
+                    self.grid, pulse.output_samples[samp, oc, :, :])
+                psd_samples[samp, :, :] = pulse.power_spectral_density
+            psd_samples = 10 * np.log10(np.sum(psd_samples, axis=1))
+            vmax = np.round(psd_samples.max())
+            vmin = vmax - 40
+            norm = Normalize(vmin=vmin, vmax=vmax)
+            fig = Figure()
+            ax = fig.add_subplot(111)
+            ax.set_title('Output PSD samples from coupler ' + str(oc))
+            p = ax.pcolormesh(
+                1e9 * self.grid.lambda_window,
+                np.linspace(self.round_trips-self.round_trip_output_samples,
+                            self.round_trip_output_samples-1,
+                            self.round_trip_output_samples),
+                psd_samples,
+                cmap='cubehelix_r', norm=norm)
+            ax.set_xlabel('Wavelength, nm')
+            ax.set_ylabel('Round trip number')
+
+            ax.p = p  # MUST be used for pcolormesh
+            ax.colorbar_label = 'PSD, dBm/nm'
+            fmt = []
+            self.plot_dict[self.name + ': output PSD samples from coupler '
+                + str(oc)] = (ax, fmt)
 
 class sm_fibre_amplifier(assembly):
     """

@@ -129,7 +129,6 @@ class _pulse_base(ABC):
         # parameters.
         self.field = np.array((), dtype=np.complex128)
         self.high_res_samples = high_res_sampling
-        # self.high_res_sample_interval = 10e-2
         self.num_samples = None
         self.high_res_field_samples = []
         self.high_res_rep_rate_samples = []  # Used later for av. power

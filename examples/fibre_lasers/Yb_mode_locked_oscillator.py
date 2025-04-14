@@ -71,6 +71,7 @@ class Yb_fibre_Fabry_Perot:
         oc_out_fibre = pf.PM980_XP(self.g, L_oc, self.tol)
         oc1 = bc.fibre_component(
             self.g, oc_in_fibre, oc_out_fibre, oc_loss, 40e-9, self.g.lambda_c,
+            # 2e-2, 0, 1, 1e-3, output_coupler=False)
             2e-2, 0, OC, 1e-3, output_coupler=True, coupler_type="beamsplitter")
 
         # OUTPUT COUPLER -- second pass
@@ -78,6 +79,7 @@ class Yb_fibre_Fabry_Perot:
         oc2 = bc.fibre_component(
             self.g, oc_in_fibre, oc_out_fibre, oc_loss, 40e-9, self.g.lambda_c,
             2e-2, 0, 1, 1e-3, output_coupler=False)
+            # 2e-2, 0, OC, 1e-3, output_coupler=True, coupler_type="beamsplitter")
 
         # SBR
         sbr_pigtail = pf.PM980_XP(self.g, L_sbr, self.tol)
@@ -134,18 +136,19 @@ class Yb_fibre_Fabry_Perot:
         self.component_list = [gain1, wdm, oc1, sbr_pigtail, sbr, sbr_pigtail,
                                oc2, wdm, gain2, comp]
 
-        osc = oa.sm_fibre_laser(
-            self.g, self.component_list, self.round_trips, name="FP",
-            verbose=False,
+        self.osc = oa.sm_fibre_laser(
+            self.g, self.component_list, self.round_trips,
+            name="Fabry-Perot oscillator",
+            verbose=False, plot=True,
             round_trip_output_samples=self.round_trip_output_samples,
             high_res_sampling=self.high_res_sampling,
             high_res_sampling_limits=self.high_res_sampling_limits)
-        self.p = osc.simulate(self.p)
+        self.p = self.osc.simulate(self.p)
         return self.p
 
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(150, round_trip_output_samples=15)  # ,
+    laser = Yb_fibre_Fabry_Perot(150, round_trip_output_samples=150)  # ,
                                 #  high_res_sampling=10,
                                 #  high_res_sampling_limits=[0, 150])
     L_gain = 5.52243788e-01
@@ -165,69 +168,85 @@ if __name__ == "__main__":
         L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, mod_depth, Fsat, tau,
         grating_sep, grating_angle, pump_power)
 
+    print(p.field.shape)
+    print(p.chirp.shape)
+    print(p.output_samples.shape)
 
-    import matplotlib.pyplot as plt
-    import numpy as np
+    import pyLaserPulse.single_plot_window as spw
+    plot_dicts = [laser.osc.plot_dict]
+    spw.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
 
-    p.get_ESD_and_PSD_from_output_samples(laser.g)
 
-    print(p.high_res_field_sample_points)
-    print(len(p.high_res_field_sample_points))
+    # import matplotlib.pyplot as plt
+    # import numpy as np
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # ax.set_title('field samples in spec domain')
-    # ax.pcolormesh(
-    #     laser.g.lambda_window*1e9,
-    #     np.cumsum(p.high_res_field_sample_points),
-    #     10*np.log10(
-    #     np.abs(
-    #         np.fft.fftshift(np.fft.fft(
-    #             p.high_res_field_samples[:, 0, :], axis=-1), axes=-1))**2))
+    # p.get_ESD_and_PSD_from_output_samples(laser.g)
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # ax.set_title('field samples in time domain')
-    # ax.pcolormesh(
-    #     laser.g.time_window*1e12,
-    #     np.cumsum(p.high_res_field_sample_points),
-    #     10*np.log10(
-    #     np.abs(p.high_res_field_samples[:, 0, :])**2))
+    # print(p.high_res_field_sample_points)
+    # print(len(p.high_res_field_sample_points))
 
-    # plt.show()
+    # # fig = plt.figure()
+    # # ax = fig.add_subplot(111)
+    # # ax.set_title('field samples in spec domain')
+    # # ax.pcolormesh(
+    # #     laser.g.lambda_window*1e9,
+    # #     np.cumsum(p.high_res_field_sample_points),
+    # #     10*np.log10(
+    # #     np.abs(
+    # #         np.fft.fftshift(np.fft.fft(
+    # #             p.high_res_field_samples[:, 0, :], axis=-1), axes=-1))**2))
+
+    # # fig = plt.figure()
+    # # ax = fig.add_subplot(111)
+    # # ax.set_title('field samples in time domain')
+    # # ax.pcolormesh(
+    # #     laser.g.time_window*1e12,
+    # #     np.cumsum(p.high_res_field_sample_points),
+    # #     10*np.log10(
+    # #     np.abs(p.high_res_field_samples[:, 0, :])**2))
+
+    # # plt.show()
 
 
     # print(np.asarray(p.output).shape)
     # p.output = np.squeeze(p.output)
 
-    # p.get_chirp(laser.g, p.output)
+    # fig = plt.figure()
+    # ax1 = fig.add_subplot(121)
+    # ax2 = fig.add_subplot(122)
+    # ax1.plot(laser.g.time_window*1e9, np.abs(p.output.T)**2)
+    # # ax1.plot(laser.g.time_window*1e9, np.abs(p.output[0, :, :].T)**2)
+    # # ax2.plot(laser.g.time_window*1e9, np.abs(p.output[1, :, :].T)**2)
+    # plt.show()
+
+    # # p.get_chirp(laser.g, p.output)
+
+    # # # fig = plt.figure()
+    # # # ax = fig.add_subplot(111)
+    # # # ax.plot(laser.g.time_window*1e12, np.abs(p.field.T), c='k')
+    # # # ax.plot(laser.g.time_window*1e12, np.abs(p.output.T), c='seagreen')
+    # # # plt.show()
+
+    # # p.field = p.output
+    # # input_chirp = p.chirp
+    # # gc = bc.grating_compressor(
+    # #     0.04, 100e-9, paths.materials.reflectivities.gold, laser.g.lambda_c, 1,
+    # #     0, 0, 0, 6e-2, 0.16, 600, laser.g, optimize=True, verbose=True)
+    # # p = gc.propagate(p)
+    # # p.output = p.field
+    # # p.get_chirp(laser.g, p.output)
+    # # output_chirp = p.chirp
+
+    # # # print(p.output)
+
 
     # # fig = plt.figure()
-    # # ax = fig.add_subplot(111)
-    # # ax.plot(laser.g.time_window*1e12, np.abs(p.field.T), c='k')
-    # # ax.plot(laser.g.time_window*1e12, np.abs(p.output.T), c='seagreen')
+    # # ax1 = fig.add_subplot(131)
+    # # ax2 = fig.add_subplot(132)
+    # # ax3 = fig.add_subplot(133)
+    # # ax1.plot(
+    # #     laser.g.lambda_window*1e9, p.power_spectral_density[0, :].T)
+    # # ax2.plot(laser.g.time_window*1e12, np.abs(p.output.T)**2)
+    # # ax3.plot(laser.g.time_window*1e12, 1e9*input_chirp[0, :], c='indianred')
+    # # ax3.plot(laser.g.time_window*1e12, 1e9*output_chirp[0, :], c='seagreen')
     # # plt.show()
-
-    # p.field = p.output
-    # input_chirp = p.chirp
-    # gc = bc.grating_compressor(
-    #     0.04, 100e-9, paths.materials.reflectivities.gold, laser.g.lambda_c, 1,
-    #     0, 0, 0, 6e-2, 0.16, 600, laser.g, optimize=True, verbose=True)
-    # p = gc.propagate(p)
-    # p.output = p.field
-    # p.get_chirp(laser.g, p.output)
-    # output_chirp = p.chirp
-
-    # # print(p.output)
-
-
-    # fig = plt.figure()
-    # ax1 = fig.add_subplot(131)
-    # ax2 = fig.add_subplot(132)
-    # ax3 = fig.add_subplot(133)
-    # ax1.plot(
-    #     laser.g.lambda_window*1e9, p.power_spectral_density[0, :].T)
-    # ax2.plot(laser.g.time_window*1e12, np.abs(p.output.T)**2)
-    # ax3.plot(laser.g.time_window*1e12, 1e9*input_chirp[0, :], c='indianred')
-    # ax3.plot(laser.g.time_window*1e12, 1e9*output_chirp[0, :], c='seagreen')
-    # plt.show()
