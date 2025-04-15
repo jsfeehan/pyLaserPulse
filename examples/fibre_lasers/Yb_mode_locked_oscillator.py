@@ -148,9 +148,9 @@ class Yb_fibre_Fabry_Perot:
 
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(150, round_trip_output_samples=150)  # ,
-                                #  high_res_sampling=10,
-                                #  high_res_sampling_limits=[0, 150])
+    laser = Yb_fibre_Fabry_Perot(15, round_trip_output_samples=15,
+                                 high_res_sampling=10,
+                                 high_res_sampling_limits=[0, 15])
     L_gain = 5.52243788e-01
     L_wdm = 6.44047941e-01
     L_oc = 1.27328382e-01
@@ -171,82 +171,16 @@ if __name__ == "__main__":
     print(p.field.shape)
     print(p.chirp.shape)
     print(p.output_samples.shape)
+    print(p.high_res_field_sample_points)
 
-    import pyLaserPulse.single_plot_window as spw
-    plot_dicts = [laser.osc.plot_dict]
-    spw.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
-
-
-    # import matplotlib.pyplot as plt
-    # import numpy as np
-
-    # p.get_ESD_and_PSD_from_output_samples(laser.g)
-
-    # print(p.high_res_field_sample_points)
-    # print(len(p.high_res_field_sample_points))
-
-    # # fig = plt.figure()
-    # # ax = fig.add_subplot(111)
-    # # ax.set_title('field samples in spec domain')
-    # # ax.pcolormesh(
-    # #     laser.g.lambda_window*1e9,
-    # #     np.cumsum(p.high_res_field_sample_points),
-    # #     10*np.log10(
-    # #     np.abs(
-    # #         np.fft.fftshift(np.fft.fft(
-    # #             p.high_res_field_samples[:, 0, :], axis=-1), axes=-1))**2))
-
-    # # fig = plt.figure()
-    # # ax = fig.add_subplot(111)
-    # # ax.set_title('field samples in time domain')
-    # # ax.pcolormesh(
-    # #     laser.g.time_window*1e12,
-    # #     np.cumsum(p.high_res_field_sample_points),
-    # #     10*np.log10(
-    # #     np.abs(p.high_res_field_samples[:, 0, :])**2))
-
-    # # plt.show()
-
-
-    # print(np.asarray(p.output).shape)
-    # p.output = np.squeeze(p.output)
-
-    # fig = plt.figure()
-    # ax1 = fig.add_subplot(121)
-    # ax2 = fig.add_subplot(122)
-    # ax1.plot(laser.g.time_window*1e9, np.abs(p.output.T)**2)
-    # # ax1.plot(laser.g.time_window*1e9, np.abs(p.output[0, :, :].T)**2)
-    # # ax2.plot(laser.g.time_window*1e9, np.abs(p.output[1, :, :].T)**2)
-    # plt.show()
-
-    # # p.get_chirp(laser.g, p.output)
-
-    # # # fig = plt.figure()
-    # # # ax = fig.add_subplot(111)
-    # # # ax.plot(laser.g.time_window*1e12, np.abs(p.field.T), c='k')
-    # # # ax.plot(laser.g.time_window*1e12, np.abs(p.output.T), c='seagreen')
-    # # # plt.show()
-
-    # # p.field = p.output
-    # # input_chirp = p.chirp
-    # # gc = bc.grating_compressor(
-    # #     0.04, 100e-9, paths.materials.reflectivities.gold, laser.g.lambda_c, 1,
-    # #     0, 0, 0, 6e-2, 0.16, 600, laser.g, optimize=True, verbose=True)
-    # # p = gc.propagate(p)
-    # # p.output = p.field
-    # # p.get_chirp(laser.g, p.output)
-    # # output_chirp = p.chirp
-
-    # # # print(p.output)
-
-
-    # # fig = plt.figure()
-    # # ax1 = fig.add_subplot(131)
-    # # ax2 = fig.add_subplot(132)
-    # # ax3 = fig.add_subplot(133)
-    # # ax1.plot(
-    # #     laser.g.lambda_window*1e9, p.power_spectral_density[0, :].T)
-    # # ax2.plot(laser.g.time_window*1e12, np.abs(p.output.T)**2)
-    # # ax3.plot(laser.g.time_window*1e12, 1e9*input_chirp[0, :], c='indianred')
-    # # ax3.plot(laser.g.time_window*1e12, 1e9*output_chirp[0, :], c='seagreen')
-    # # plt.show()
+    # import pyLaserPulse.single_plot_window as spw
+    # plot_dicts = [laser.osc.plot_dict]
+    # spw.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pyLaserPulse.utils as utils
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.pcolormesh(
+            np.sum(np.abs(np.fft.fftshift(np.fft.fft(p.high_res_field_samples, axis=-1), axes=-1))**2, axis=1))
+    plt.show()

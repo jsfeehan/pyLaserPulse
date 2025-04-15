@@ -1901,6 +1901,17 @@ class saturable_Bragg_reflector:
         self.reflectivity_vs_time = np.roll(self.reflectivity_vs_time, idxmin)
         self.loss_vs_time = np.roll(self.loss_vs_time, idxmin)
         pulse.field = _field
+
+        if pulse.high_res_samples:
+            pulse.high_res_field_samples.append(pulse.field)
+            pulse.high_res_rep_rate_samples.append(pulse.repetition_rate)
+            if len(pulse.high_res_B_integral_samples) > 0:
+                pulse.high_res_B_integral_samples.append(
+                    pulse.high_res_B_integral_samples[-1])
+            else:
+                pulse.high_res_B_integral_samples.append(0)
+            pulse.high_res_field_sample_points.append(0.05)
+
         return pulse
 
     def propagate_spectrum(self, spectrum, omega_axis):

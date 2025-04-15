@@ -424,8 +424,8 @@ class _pulse_base(ABC):
         should be added here.
         """
         self.output = []
-        # self.high_res_field_samples = []
-        # self.high_res_field_sample_points = []
+        self.high_res_field_samples = []
+        self.high_res_field_sample_points = []
 
     def update_high_res_samples(
             self, field_samples, B_samples, sample_points):

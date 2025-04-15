@@ -644,7 +644,7 @@ class sm_fibre_laser(assembly):
                 print("turning on")
                 component_locations = [0]  # 0 for start of 1st component
             # Turn it off:
-            if (self.sampling and i == self.high_res_sampling_limits[1]-1):
+            if (self.sampling and i == self.high_res_sampling_limits[1]):
                 print("turning off")
                 pulse.high_res_samples = False
 
