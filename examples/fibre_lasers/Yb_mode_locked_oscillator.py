@@ -13,7 +13,8 @@ import scipy.constants as const
 
 class Yb_fibre_Fabry_Perot:
     def __init__(self, round_trips, round_trip_output_samples=10,
-                 high_res_sampling=None, high_res_sampling_limits=[0, 1]):
+                 high_res_sampling=None, high_res_sampling_limits=[0, 1],
+                 data_directory=None):
         """
         Class for simulating a Fabry-Perot Yb-doped fibre mode-locked laser.
 
@@ -33,6 +34,7 @@ class Yb_fibre_Fabry_Perot:
         self.round_trip_output_samples = round_trip_output_samples
         self.high_res_sampling = high_res_sampling
         self.high_res_sampling_limits = high_res_sampling_limits
+        self.data_directory = data_directory
 
     def simulate(
             self, L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, sbr_mod_depth,
@@ -142,15 +144,17 @@ class Yb_fibre_Fabry_Perot:
             verbose=False, plot=True,
             round_trip_output_samples=self.round_trip_output_samples,
             high_res_sampling=self.high_res_sampling,
-            high_res_sampling_limits=self.high_res_sampling_limits)
+            high_res_sampling_limits=self.high_res_sampling_limits,
+            data_directory=self.data_directory)
         self.p = self.osc.simulate(self.p)
         return self.p
 
 
 if __name__ == "__main__":
-    laser = Yb_fibre_Fabry_Perot(15, round_trip_output_samples=15,
+    laser = Yb_fibre_Fabry_Perot(150, round_trip_output_samples=150,
                                  high_res_sampling=10,
-                                 high_res_sampling_limits=[0, 15])
+                                 high_res_sampling_limits=[10, 15],
+                                 data_directory='/home/james/Desktop/TEST')
     L_gain = 5.52243788e-01
     L_wdm = 6.44047941e-01
     L_oc = 1.27328382e-01
@@ -171,16 +175,17 @@ if __name__ == "__main__":
     print(p.field.shape)
     print(p.chirp.shape)
     print(p.output_samples.shape)
-    print(p.high_res_field_sample_points)
+    print(p.high_res_field_samples.shape)
 
-    # import pyLaserPulse.single_plot_window as spw
-    # plot_dicts = [laser.osc.plot_dict]
-    # spw.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import pyLaserPulse.utils as utils
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.pcolormesh(
-            np.sum(np.abs(np.fft.fftshift(np.fft.fft(p.high_res_field_samples, axis=-1), axes=-1))**2, axis=1))
-    plt.show()
+    import pyLaserPulse.single_plot_window as spw
+    plot_dicts = [laser.osc.plot_dict]
+    spw.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
+
+    # import matplotlib.pyplot as plt
+    # import numpy as np
+    # import pyLaserPulse.utils as utils
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # ax.pcolormesh(
+    #         np.sum(np.abs(np.fft.fftshift(np.fft.fft(p.high_res_field_samples, axis=-1), axes=-1))**2, axis=1))
+    # plt.show()

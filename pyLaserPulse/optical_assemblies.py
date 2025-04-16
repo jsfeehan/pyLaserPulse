@@ -573,7 +573,7 @@ class sm_fibre_laser(assembly):
 
     def __init__(self, grid, components, round_trips, name,
                  round_trip_output_samples=10, high_res_sampling=False,
-                 high_res_sampling_limits=[0, 1], plot=False,
+                 high_res_sampling_limits=None, plot=False,
                  data_directory=None, verbose=True):
         """
         components_list: list of component objects. Must appear in order.
@@ -583,10 +583,11 @@ class sm_fibre_laser(assembly):
         round_trips: int. Number of round trips to simulate.
         name : str.
             String identifier for the assembly object.
-        round_trip_samples: int. Number of round trips in which the output
+        round_trip_output_samples: int. Number of round trips in which the output
             field is sampled. Sampling is done from roundtrip number
-            round_trips-round_trip_samples to round_trips. If
-            round_trip_samples > round_trips, round_trip_samples = round_trips.
+            round_trips-round_trip_output_samples to round_trips. If
+            round_trip_output_samples > round_trips, round_trip_output_samples = round_trips.
+            if round_trip_output_samples == 0, round_trip_output_samples = 10.
         high_res_sampling: bool. If True, high-resolution sampling of the
             intracavity field. This is slow.
         high_res_sampling_limits: list, int, len=2. Start and stop round trips
@@ -600,11 +601,20 @@ class sm_fibre_laser(assembly):
         self.round_trip_output_samples = round_trip_output_samples
         if round_trip_output_samples > self.round_trips:
             self.round_trip_output_samples = self.round_trips
+        elif round_trip_output_samples == 0:
+            self.round_trip_output_samples = 10
         self.high_res_sampling_limits = high_res_sampling_limits
         if self.high_res_sampling_limits[0] < 0:
             self.high_res_sampling_limits[0] = 0
         if self.high_res_sampling_limits[1] > self.round_trips:
             self.high_res_sampling_limits[1] = self.round_trips
+
+        if (self.high_res_sampling_limits is not None
+                and self.data_directory is None):
+            raise ValueError(
+                "data_directory cannot be None if high_res_sampling_limits "
+                "are not None.")
+
 
         # Set active_fibre.oscillator = True -- Replenish pump each round trip
         # Set verbosity of active fibre to verbosity of optical assembly.
@@ -641,12 +651,15 @@ class sm_fibre_laser(assembly):
             # Turn it on:
             if (self.sampling and i == self.high_res_sampling_limits[0]):
                 pulse.high_res_samples = True
-                print("turning on")
                 component_locations = [0]  # 0 for start of 1st component
             # Turn it off:
             if (self.sampling and i == self.high_res_sampling_limits[1]):
-                print("turning off")
                 pulse.high_res_samples = False
+            # Turn on high-res sampling if plotting and final round trip;
+            if self.plot and i == self.round_trips-1:
+                pulse.high_res_samples = True
+                component_locations = [0]
+                pulse.num_samples = 10  # default value
 
             # Propagate through each component
             for val in self.components:
@@ -689,7 +702,9 @@ class sm_fibre_laser(assembly):
             self.plot_intracavity_pulse(pulse)
             self.plot_output_pulses(pulse)
             self.plot_output_spectra(pulse)
-
+            self.plot_high_res_samples(pulse)
+            pulse.num_samples = self.num_samples  # return to original rate
+            pulse.high_res_samples = False
         return pulse
 
     def update_pulse_class(self, pulse, field):
@@ -835,7 +850,7 @@ class sm_fibre_laser(assembly):
                          1e12 * self.grid.time_window.max()])
             fmt = []
             self.plot_dict[self.name + ': pulse chirps from coupler '
-                + str(oc)] = (ax, fmt)
+                           + str(oc)] = (ax, fmt)
 
     def plot_intracavity_spectra(self, pulse):
         """
@@ -929,7 +944,7 @@ class sm_fibre_laser(assembly):
             p = ax.pcolormesh(
                 1e9 * self.grid.lambda_window,
                 np.linspace(self.round_trips-self.round_trip_output_samples,
-                            self.round_trip_output_samples-1,
+                            self.round_trips,
                             self.round_trip_output_samples),
                 psd_samples,
                 cmap='cubehelix_r', norm=norm)
@@ -940,7 +955,45 @@ class sm_fibre_laser(assembly):
             ax.colorbar_label = 'PSD, dBm/nm'
             fmt = []
             self.plot_dict[self.name + ': output PSD samples from coupler '
-                + str(oc)] = (ax, fmt)
+                           + str(oc)] = (ax, fmt)
+
+    def plot_high_res_samples(self, pulse):
+        """
+        Plot the high-resolution intracavity field samples for the final round
+        trip.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object.
+        """
+        num = len(pulse.high_res_field_sample_points)
+        psd_samples = np.zeros((num, 2, self.grid.points))
+        for samp in range(num):
+            pulse.get_ESD_and_PSD(
+                self.grid, pulse.high_res_field_samples[samp, :, :])
+            psd_samples[samp, :, :] = pulse.power_spectral_density
+        psd_samples = 10 * np.log10(np.sum(psd_samples, axis=1))
+        vmax = np.round(psd_samples.max())
+        vmin = vmax - 40
+        norm = Normalize(vmin=vmin, vmax=vmax)
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('High-res intracavity PSD sampled\n' + 
+                     'over the final round trip')
+        p = ax.pcolormesh(
+            1e9 * self.grid.lambda_window,
+            np.cumsum(pulse.high_res_field_sample_points),
+            psd_samples,
+            cmap='cubehelix_r', norm=norm)
+        ax.set_xlabel('Wavelength, nm')
+        ax.set_ylabel('Position in the cavity, m')
+
+        ax.p = p  # MUST be used for pcolormesh
+        ax.colorbar_label = 'PSD, dBm/nm'
+        fmt = []
+        self.plot_dict[
+                self.name + ': High-res intracavity PSD samples'] = (ax, fmt)
+
 
 class sm_fibre_amplifier(assembly):
     """
