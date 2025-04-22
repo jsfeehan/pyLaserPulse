@@ -665,6 +665,8 @@ class sm_fibre_laser(assembly):
 
             # Propagate through each component
             for val in self.components:
+                if self.verbose:
+                    print('\n' + val.__class__.__name__)
                 pulse = val.propagate(pulse)
 
                 # If sampling is active, retrieve component locations and skip

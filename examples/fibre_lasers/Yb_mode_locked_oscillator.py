@@ -13,7 +13,7 @@ import scipy.constants as const
 class Yb_fibre_Fabry_Perot:
     def __init__(self, round_trips, round_trip_output_samples=10,
                  high_res_sampling=None, high_res_sampling_limits=None,
-                 data_directory=None, plot=False):
+                 data_directory=None, plot=False, verbose=False):
         """
         Class for simulating a Fabry-Perot Yb-doped fibre mode-locked laser.
 
@@ -35,6 +35,7 @@ class Yb_fibre_Fabry_Perot:
         self.high_res_sampling_limits = high_res_sampling_limits
         self.data_directory = data_directory
         self.plot = plot
+        self.verbose = verbose
 
     def simulate(
             self, L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, sbr_mod_depth,
@@ -141,7 +142,7 @@ class Yb_fibre_Fabry_Perot:
         self.osc = oa.sm_fibre_laser(
             self.g, self.component_list, self.round_trips,
             name="Fabry-Perot oscillator",
-            verbose=False, plot=self.plot,
+            verbose=self.verbose, plot=self.plot,
             round_trip_output_samples=self.round_trip_output_samples,
             high_res_sampling=self.high_res_sampling,
             high_res_sampling_limits=self.high_res_sampling_limits,
@@ -152,10 +153,10 @@ class Yb_fibre_Fabry_Perot:
 
 if __name__ == "__main__":
     laser = Yb_fibre_Fabry_Perot(150, round_trip_output_samples=150,
-                                 high_res_sampling=10,
-                                 high_res_sampling_limits=[0, 150],
-                                 data_directory='/home/james/Desktop/TEST',
-                                 plot=False)
+                                 # high_res_sampling=10,
+                                 # high_res_sampling_limits=[0, 150],
+                                 # data_directory='/home/james/Desktop/TEST',
+                                 plot=True, verbose=True)
     L_gain = 0.55
     L_wdm = 0.64
     L_oc = 0.13
