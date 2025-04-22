@@ -604,17 +604,15 @@ class sm_fibre_laser(assembly):
         elif round_trip_output_samples == 0:
             self.round_trip_output_samples = 10
         self.high_res_sampling_limits = high_res_sampling_limits
-        if self.high_res_sampling_limits[0] < 0:
-            self.high_res_sampling_limits[0] = 0
-        if self.high_res_sampling_limits[1] > self.round_trips:
-            self.high_res_sampling_limits[1] = self.round_trips
-
-        if (self.high_res_sampling_limits is not None
-                and self.data_directory is None):
-            raise ValueError(
-                "data_directory cannot be None if high_res_sampling_limits "
-                "are not None.")
-
+        if self.high_res_sampling_limits is not None:
+            if self.data_directory is None:
+                raise ValueError(
+                    "data_directory cannot be None if "
+                    "high_res_sampling_limits are not None.")
+            if self.high_res_sampling_limits[0] < 0:
+                self.high_res_sampling_limits[0] = 0
+            if self.high_res_sampling_limits[1] > self.round_trips:
+                self.high_res_sampling_limits[1] = self.round_trips
 
         # Set active_fibre.oscillator = True -- Replenish pump each round trip
         # Set verbosity of active fibre to verbosity of optical assembly.
@@ -685,17 +683,20 @@ class sm_fibre_laser(assembly):
             if i >= self.round_trips - self.round_trip_output_samples:
                 pulse.output_samples.append(pulse.output)
 
-            # Save high-resolution field samples if sampling is active and if
-            # pulse.save_high_res_samples == True. This parameter must be set
-            # in the pulse object outside of the sm_fibre_laser class along
-            # with the directory that the data is saved under.
-            if (self.sampling and pulse.save_high_res_samples
-                    and self.high_res_sampling_limits[0] <= i
-                    <= self.high_res_sampling_limits[1]):
-                pulse.save_field(
-                    str(i), component_locations=component_locations)
+            # # Save high-resolution field samples if sampling is active and if
+            # # pulse.save_high_res_samples == True. This parameter must be set
+            # # in the pulse object outside of the sm_fibre_laser class along
+            # # with the directory that the data is saved under.
+            # if (self.sampling and pulse.save_high_res_samples
+            #         and self.high_res_sampling_limits[0] <= i
+            #         <= self.high_res_sampling_limits[1]):
+            #     pulse.save_field(
+            #         str(i), component_locations=component_locations)
 
         self.update_pulse_class(pulse, pulse.output)
+
+        if self.save_data:
+            self.save(pulse, self.grid)
 
         if self.plot:
             self.plot_intracavity_spectra(pulse)
@@ -706,6 +707,13 @@ class sm_fibre_laser(assembly):
             pulse.num_samples = self.num_samples  # return to original rate
             pulse.high_res_samples = False
         return pulse
+
+    @assembly.saver
+    def save(self):
+        """
+        Save all data to self.directory.
+        """
+        return
 
     def update_pulse_class(self, pulse, field):
         """
@@ -735,6 +743,8 @@ class sm_fibre_laser(assembly):
         pulse.output_samples = np.asarray(pulse.output_samples)
         pulse.pulse_energy = np.asarray(pulse.pulse_energy)
         pulse.high_res_field_samples = np.asarray(pulse.high_res_field_samples)
+        pulse.high_res_B_integral_samples = np.asarray(
+                pulse.high_res_B_integral_samples)
         return pulse
 
     def plot_intracavity_pulse(self, pulse):
