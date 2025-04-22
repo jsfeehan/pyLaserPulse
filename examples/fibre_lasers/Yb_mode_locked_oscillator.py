@@ -1,11 +1,10 @@
 from pyLaserPulse import grid
 from pyLaserPulse import pulse
 from pyLaserPulse import optical_assemblies as oa
-from pyLaserPulse import single_plot_window
+import pyLaserPulse.single_plot_window as spw
 import pyLaserPulse.base_components as bc
 import pyLaserPulse.data.paths as paths
 import pyLaserPulse.catalogue_components.active_fibres as af
-import pyLaserPulse.catalogue_components.fibre_components as fc
 import pyLaserPulse.catalogue_components.passive_fibres as pf
 
 import scipy.constants as const
@@ -174,7 +173,6 @@ if __name__ == "__main__":
         L_gain, L_wdm, L_oc, OC, L_sbr, sbr_loss, mod_depth, Fsat, tau,
         grating_sep, grating_angle, pump_power)
 
-    import pyLaserPulse.single_plot_window as spw
     if laser.plot:
         plot_dicts = [laser.osc.plot_dict]
         spw.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)

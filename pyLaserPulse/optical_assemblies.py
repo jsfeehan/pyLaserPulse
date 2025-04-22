@@ -486,11 +486,15 @@ class passive_assembly(assembly):
     @assembly._simulate
     def simulate(self, pulse):
         """
-        Simulate an SM fibre amplifier.
+        Simulate an SM passive assembly.
 
-        pulse: pulse class. Starting field used in simulations.
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object.
 
-        Returns the pulse class.
+        Returns
+        -------
+        pyLaserPulse.pulse object
         """
         pulse.get_ESD_and_PSD(self.grid, pulse.field)
         self.input_pulse_PSD = pulse.power_spectral_density
@@ -555,32 +559,47 @@ class passive_assembly(assembly):
 
 class sm_fibre_laser(assembly):
     """
-    Class for use as a SM fibre laser template.
-    James Feehan, 24/12/2020.
-    """
+    Class for use as a template for other SM fibre amplifiers.
 
+    James Feehan, 24/12/2020.
+    Updated for pyLaserPulse early 2025.
+    """
     def __init__(self, grid, components, round_trips, name,
                  round_trip_output_samples=10, high_res_sampling=False,
                  high_res_sampling_limits=None, plot=False,
                  data_directory=None, verbose=True):
         """
-        components_list: list of component objects. Must appear in order.
-            Recommended that components_list[0] is gain.
-            Coupling losses between components are added automatically.
-        round_trips: int. Number of cavity round trips to simulate.
-        round_trips: int. Number of round trips to simulate.
+        Parameters
+        ----------
+        grid : pyLaserPulse.grid object
+        components : list of component objects.
+        round_trips : int
+            Number of cavity round trips to simulate.
         name : str.
             String identifier for the assembly object.
-        round_trip_output_samples: int. Number of round trips in which the output
-            field is sampled. Sampling is done from roundtrip number
+        round_trip_output_samples : int
+            Number of round trips in which the output field is sampled.
+            Sampling is done from roundtrip number
             round_trips-round_trip_output_samples to round_trips. If
-            round_trip_output_samples > round_trips, round_trip_output_samples = round_trips.
+            round_trip_output_samples > round_trips, then
+            round_trip_output_samples = round_trips.
             if round_trip_output_samples == 0, round_trip_output_samples = 10.
-        high_res_sampling: bool. If True, high-resolution sampling of the
-            intracavity field. This is slow.
-        high_res_sampling_limits: list, int, len=2. Start and stop round trips
-            for the high-resolution field sampling. Ignored if
-            high_res_sampling==False.
+        high_res_sampling : int
+            If not False (default), the simulation will include high-resolution
+            sampling of the intracavity field. This is slow.
+            The integer value is the (approximate) number of samples per
+            component.
+        high_res_sampling_limits : list, int, len=2.
+            Start and stop round trips for the high-resolution field sampling.
+            Ignored if high_res_sampling==False.
+        plot : bool.
+            Create plot information.
+        data_directory : Nonetype or string
+            if saving data : string
+                Directory to which data will be saved
+            if not saving data : None
+        verbose : bool
+            Print information about the simulation at runtime
         """
         super().__init__(grid, components, name, wrap=True, plot=plot,
                          data_directory=data_directory, verbose=verbose,
@@ -615,9 +634,14 @@ class sm_fibre_laser(assembly):
         """
         Simulate an SM fibre laser.
 
-        pulse: pulse class. Starting field used in simulations.
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object.
+            Starting pulse for the simulation.
 
-        Returns the pulse class.
+        Returns
+        -------
+        pyLaserPulse.pulse object
         """
         if self.sampling:
             pulse.num_samples = self.num_samples
@@ -733,8 +757,8 @@ class sm_fibre_laser(assembly):
         Notes
         -----
         Required functionality of this method is different for sm_fibre_laser
-        objects than for others in optical_assemblies. This method overrides the
-        update_pulse_class inherited from the assembly abstract base.
+        objects than for others in optical_assemblies. This method overrides
+        the update_pulse_class inherited from the assembly abstract base.
         """
         pulse.get_chirp(self.grid, field)
         pulse.get_energy_and_average_power(self.grid, field)
@@ -781,9 +805,10 @@ class sm_fibre_laser(assembly):
             self.name + ': time domain distribution: intracavity'] = (
                 ax, fmt)
 
-        # Calculate the chirp for the intracavity field (this is ordinarily done
-        # in the pulse class, but that method is reserved for the output member
-        # variable and used with update_pulse_class method of this class.)
+        # Calculate the chirp for the intracavity field (this is ordinarily
+        # done in the pulse class, but that method is reserved for the output
+        # member variable and used with update_pulse_class method of this
+        # class.)
         phase = np.unwrap(np.angle(pulse.field), axis=1)
         chirp = 2 * np.pi * const.c / (
             self.grid.omega_c + np.gradient(phase, self.grid.dt, axis=1))
@@ -1011,7 +1036,7 @@ class sm_fibre_laser(assembly):
 
 class sm_fibre_amplifier(assembly):
     """
-    Class for use as a template for other SM fibre amplifiers.
+    Class for use as a template for SM fibre amplifiers.
 
     Only supports simulations where the boundary value conditions for the
     active fibre are solved.
@@ -1022,23 +1047,21 @@ class sm_fibre_amplifier(assembly):
     def __init__(self, grid, components, co_ASE=None, high_res_sampling=None,
                  plot=False, name=None, data_directory=None, verbose=True):
         """
-        grid: grid class.
-        components: list of component objects. Must appear in order.
-            Recommended that components_list[0] is gain.
-            Coupling losses between components are added automatically.
-            An active fibre must be present in components and
-            boundary_value_solver needs to be enabled.
-        co_ASE: numpy array (or None).
+        Parameters
+        ----------
+        grid : pyLaserPulae.grid object.
+        components : list of component objects. Must appear in order.
+        co_ASE : numpy array (or None).
             ASE from a previous amplifier that co-propagates in the core with
             the signal.
         high_res_sampling : Nonetype or int
             if sampling : int
                 Number of samples to take along the propagation axis
             if not sampling : None (default)
-        plot: bool.
+        plot : bool.
             Create plot information.
             True if high_res_sampling.
-        name: str.
+        name : str.
             String identifier for the amplifier object. Cannot be None if
             plot == True
         data_directory : str or Nonetype
@@ -1076,7 +1099,7 @@ class sm_fibre_amplifier(assembly):
 
         Parameters
         ----------
-        co_ASE: numpy array (or None).
+        co_ASE : numpy array (or None).
             ASE from a previous amplifier that co-propagates in the core with
             the signal.
         """
@@ -1098,11 +1121,14 @@ class sm_fibre_amplifier(assembly):
         Only required if co_ASE is not None at constructor.
         Input analogue to self.make_co_core_ASE_output_spectra.
 
-        spectrum: numpy array. Either self.gain_fibre.co_core_ASE.spectrum OR
+        Parameters
+        ----------
+        spectrum : numpy array.
+            Either self.gain_fibre.co_core_ASE.spectrum OR
             self.gain_fibre.pump.spectrum AFTER co_ASE has been added. Which
             spectrum is used depends on self.gain_fibre.cladding_pumping
             (former if True).
-        original_omega_window. numpy array.
+        original_omega_window : numpy array.
             Either self.gain_fibre.co_core_ASE.omega_window OR
             self.gain_fibre.pump.omega_window, depending on whether
             self.gain_fibre.cladding_pumping is True (former) or
@@ -1130,9 +1156,13 @@ class sm_fibre_amplifier(assembly):
         """
         Simulate an SM fibre amplifier.
 
-        pulse: pulse class. Starting field used in simulations.
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object.
 
-        Returns the pulse class.
+        Returns
+        -------
+        pyLaserPulse.pulse object
         """
         pulse.get_ESD_and_PSD(self.grid, pulse.field)
         self.input_pulse_PSD = pulse.power_spectral_density
@@ -1240,7 +1270,9 @@ class sm_fibre_amplifier(assembly):
         """
         Organise spectra for plots.
 
-        pulse: pulse class. Starting field used in simulations.
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object
 
         James Feehan, 12/5/2022
         """
@@ -1317,6 +1349,10 @@ class sm_fibre_amplifier(assembly):
     def plot_spectra(self, pulse):
         """
         Make the spectral plots and display them
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object
         """
         # summed spectra -- gain fibre only
         min_y = 1e-6
@@ -1325,10 +1361,12 @@ class sm_fibre_amplifier(assembly):
         ax = fig.add_subplot(111)
         ax.set_title('Gain fibre: net PSDs')
         h1, = ax.semilogy(
-            self.grid.lambda_window * 1e9, np.sum(self.input_pulse_PSD, axis=0),
+            self.grid.lambda_window * 1e9,
+            np.sum(self.input_pulse_PSD, axis=0),
             c='mediumseagreen', alpha=0.75, label='Input')
         h2, = ax.semilogy(
-            self.grid.lambda_window * 1e9, np.sum(self.net_forwards_PSD, axis=0),
+            self.grid.lambda_window * 1e9,
+            np.sum(self.net_forwards_PSD, axis=0),
             c='darkorange', alpha=0.75, label='Co')
         h3, = ax.semilogy(
             self.grid.lambda_window * 1e9,
@@ -1433,19 +1471,22 @@ class sm_fibre_amplifier(assembly):
         ax.set_title('Net amplifier output')
         for i, ls in enumerate(linestyles):
             ax.semilogy(
-                self.grid.lambda_window * 1e9, pulse.power_spectral_density[i, :],
+                self.grid.lambda_window * 1e9,
+                pulse.power_spectral_density[i, :],
                 ls=ls, c='mediumseagreen', alpha=alphas[i], lw=2,
                 label='Pulse, ' + axis_str[i])
             if self.gain_fibre.cladding_pumping:
                 ax.semilogy(
                     self.gain_fibre.co_core_ASE.lambda_window * 1e9,
-                    self.co_core_ASE_PSD_output[i, :], ls=ls, c='darkslateblue',
-                    alpha=alphas[i], lw=2, label='Co core, ' + axis_str[i])
+                    self.co_core_ASE_PSD_output[i, :], ls=ls,
+                    c='darkslateblue', alpha=alphas[i], lw=2,
+                    label='Co core, ' + axis_str[i])
             else:
                 ax.semilogy(
                     self.gain_fibre.pump.lambda_window * 1e9,
-                    self.co_core_ASE_PSD_output[i, :], ls=ls, c='darkslateblue',
-                    alpha=alphas[i], lw=2, label='Co core, ' + axis_str[i])
+                    self.co_core_ASE_PSD_output[i, :], ls=ls,
+                    c='darkslateblue', alpha=alphas[i], lw=2,
+                    label='Co core, ' + axis_str[i])
             ax.semilogy(
                 self.grid.lambda_window * 1e9, self.net_amplifier_output[i, :],
                 ls=ls, c='darkorange', alpha=alphas[i], lw=2,
@@ -1545,6 +1586,11 @@ class sm_fibre_amplifier(assembly):
     def plot_gain_fibre_spectral_samples(self, rep_rate):
         """
         Plot self.gain_fibre.spectral_samples as heatmaps.
+
+        Parameters
+        ----------
+        rep_rate : float
+            Pulse repetition rate
         """
         samples = np.sum(self.gain_fibre.spectral_samples, axis=1)
         self.net_co_PSD_samples = np.zeros((len(self.gain_fibre.dz_samples),
@@ -1617,6 +1663,10 @@ class sm_fibre_amplifier(assembly):
     def plot_change_in_B_over_gain_fibre(self, pulse):
         """
         Same as assembly but just for the gain fibre.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object
         """
         B = np.asarray(self.gain_fibre.B_samples).T
 
