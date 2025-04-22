@@ -593,7 +593,7 @@ class sm_fibre_laser(assembly):
             self.round_trip_output_samples = 10
         self.high_res_sampling_limits = high_res_sampling_limits
         if self.high_res_sampling_limits is not None:
-            if self.data_directory is None:
+            if self.directory is None:
                 raise ValueError(
                     "data_directory cannot be None if "
                     "high_res_sampling_limits are not None.")
@@ -662,6 +662,7 @@ class sm_fibre_laser(assembly):
             # Handle output field sampling
             if i >= self.round_trips - self.round_trip_output_samples:
                 pulse.output_samples.append(pulse.output)
+                self.save_high_res_samples(pulse, component_locations, i)
 
         self.update_pulse_class(pulse, pulse.output)
 
@@ -684,6 +685,34 @@ class sm_fibre_laser(assembly):
         Save all data to self.directory.
         """
         return
+
+    def save_high_res_samples(self, pulse, component_locations, roundtrip):
+        """
+        Save the high-resolution intracavity field samples.
+
+        Parameters
+        ----------
+        pulse : pyLaserPulse.pulse object
+        component_locations : list
+            Locations of the components in the cavity
+        roundtrip : int
+            The current laser round trip
+
+        Notes
+        -----
+        This method is unique to class sm_fibre_laser because when used here
+        the high-resolution field sampling can produce very large data sets.
+        """
+        subdir = self.directory + 'high_res_field_samples/'
+        print(subdir)
+        if not os.path.isdir(subdir):
+            os.mkdir(subdir)
+        np.savez(
+            subdir + str(roundtrip) + '.npz',
+            high_res_field_samples=np.asarray(pulse.high_res_field_samples),
+            high_res_field_sample_points=np.asarray(
+                pulse.high_res_field_sample_points),
+            component_locations=np.asarray(component_locations))
 
     def update_pulse_class(self, pulse, field):
         """

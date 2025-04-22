@@ -178,4 +178,3 @@ if __name__ == "__main__":
     if laser.plot:
         plot_dicts = [laser.osc.plot_dict]
         spw.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
-
