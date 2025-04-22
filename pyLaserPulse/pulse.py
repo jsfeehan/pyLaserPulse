@@ -76,7 +76,7 @@ class _pulse_base(ABC):
     """
 
     def __init__(self, grid, repetition_rate, high_res_sampling=False,
-                 save_high_res_samples=False, save_dir=None, initial_delay=0):
+                 save_dir=None, initial_delay=0):
         """
         Parameters
         ----------
@@ -86,8 +86,6 @@ class _pulse_base(ABC):
         high_res_sampling : bool
             If True, propagation information is saved at intervals throughout
             the propagation.
-        save_high_res_samples : bool
-            If True, high_res_sampling is saved.
         save_dir : NoneType or string
             Directory to which data will be saved.
         initial_delay : float
@@ -133,7 +131,6 @@ class _pulse_base(ABC):
         self.high_res_field_samples = []
         self.high_res_rep_rate_samples = []  # Used later for av. power
         self.high_res_field_sample_points = []
-        self.save_high_res_samples = save_high_res_samples
         self.high_res_B_integral_samples = []
         self.save_dir = save_dir
         self.autocorrelation = None
@@ -426,6 +423,7 @@ class _pulse_base(ABC):
         self.output = []
         self.high_res_field_samples = []
         self.high_res_field_sample_points = []
+        self.high_res_B_integral_samples = []
 
     def update_high_res_samples(
             self, field_samples, B_samples, sample_points):
@@ -496,8 +494,7 @@ class pulse(_pulse_base):
 
     def __init__(self, duration, P_0, pulse_shape, repetition_rate, grid,
                  order=2, chirp=0, quantum_noise_seed=None,
-                 high_res_sampling=False, save_high_res_samples=False,
-                 save_dir=None, initial_delay=0):
+                 high_res_sampling=False, save_dir=None, initial_delay=0):
         """
         Parameters
         ----------
@@ -525,8 +522,6 @@ class pulse(_pulse_base):
         high_res_sampling : bool
             If True, propagation information is saved at intervals throughout
             the propagation.
-        save_high_res_samples : bool
-            If True, high_res_sampling is saved.
         save_dir : NoneType or string
             Directory to which data will be saved.
         initial_delay : float
@@ -540,7 +535,6 @@ class pulse(_pulse_base):
         """
         super().__init__(
             grid, repetition_rate, high_res_sampling=high_res_sampling,
-            save_high_res_samples=save_high_res_samples,
             save_dir=save_dir, initial_delay=initial_delay)
         self.make_pulse(
             grid, pulse_shape, P_0, duration, order=order, chirp=chirp)
@@ -614,8 +608,7 @@ class pulse_from_measured_PSD(_pulse_base):
 
     def __init__(self, grid, spectrum_file, beta_2, repetition_rate,
                  spec_threshold, P_0, quantum_noise_seed=None,
-                 high_res_sampling=False, save_high_res_samples=False,
-                 save_dir=None, initial_delay=0):
+                 high_res_sampling=False, save_dir=None, initial_delay=0):
         """
         Parameters
         ----------
@@ -643,8 +636,6 @@ class pulse_from_measured_PSD(_pulse_base):
         high_res_sampling : bool
             If True, propagation information is saved at intervals throughout
             the propagation.
-        save_high_res_samples : bool
-            If True, high_res_sampling is saved.
         save_dir : NoneType or string
             Directory to which data will be saved.
         initial_delay : float
@@ -658,7 +649,6 @@ class pulse_from_measured_PSD(_pulse_base):
         """
         super().__init__(
             grid, repetition_rate, high_res_sampling=high_res_sampling,
-            save_high_res_samples=save_high_res_samples,
             save_dir=save_dir, initial_delay=initial_delay)
         self.make_pulse(grid, spectrum_file, spec_threshold, beta_2, P_0)
         self.add_OPPM_noise(grid, noise_seed=quantum_noise_seed)
@@ -695,8 +685,7 @@ class pulse_from_pyLaserPulse_simulation(_pulse_base):
     """
 
     def __init__(self, grid, data_directory, high_res_sampling=False,
-                 save_high_res_samples=False, save_dir=None,
-                 initial_delay=0):
+                 save_dir=None, initial_delay=0):
         """
         Parameters
         ----------
@@ -707,8 +696,6 @@ class pulse_from_pyLaserPulse_simulation(_pulse_base):
         high_res_sampling : bool
             If True, propagation information is saved at intervals throughout
             the propagation.
-        save_high_res_samples : bool
-            If True, high_res_sampling is saved.
         save_dir : NoneType or string
             Directory to which data will be saved.
         initial_delay : float
@@ -730,7 +717,6 @@ class pulse_from_pyLaserPulse_simulation(_pulse_base):
             self.pulse_data = np.load(self.filename)
         rr = float(self.pulse_data['repetition_rate'])  # otherwise numpy array
         super().__init__(grid, rr, high_res_sampling=high_res_sampling,
-                         save_high_res_samples=save_high_res_samples,
                          save_dir=save_dir, initial_delay=initial_delay)
         self.make_pulse(self.pulse_data)
         self.get_ESD_and_PSD(grid, self.field)
@@ -784,7 +770,7 @@ class pulse_from_text_data(_pulse_base):
 
     def __init__(self, grid, file, P_0, repetition_rate,
                  quantum_noise_seed=None, high_res_sampling=False,
-                 save_high_res_samples=False, save_dir=None, initial_delay=0):
+                 save_dir=None, initial_delay=0):
         """
         Parameters
         ----------
@@ -804,8 +790,6 @@ class pulse_from_text_data(_pulse_base):
         high_res_sampling : bool
             If True, propagation information is saved at intervals throughout
             the propagation.
-        save_high_res_samples : bool
-            If True, high_res_sampling is saved.
         save_dir : NoneType or string
             Directory to which data will be saved.
         initial_delay : float
@@ -819,8 +803,7 @@ class pulse_from_text_data(_pulse_base):
         """
         super().__init__(
             grid, repetition_rate, high_res_sampling=high_res_sampling,
-            save_high_res_samples=save_high_res_samples, save_dir=save_dir,
-            initial_delay=initial_delay)
+            save_dir=save_dir, initial_delay=initial_delay)
         self.make_pulse(grid, file, P_0)
         self.add_OPPM_noise(grid, noise_seed=quantum_noise_seed)
         self.get_ESD_and_PSD(grid, self.field)
@@ -849,7 +832,7 @@ class pulse_from_numpy_array(_pulse_base):
     """
     def __init__(self, grid, pulse_array, P_0, repetition_rate,
                  quantum_noise_seed=None, high_res_sampling=False,
-                 save_high_res_samples=False, save_dir=None, initial_delay=0):
+                 save_dir=None, initial_delay=0):
         """
         Parameters
         ----------
@@ -867,8 +850,6 @@ class pulse_from_numpy_array(_pulse_base):
         high_res_sampling : bool
             If True, propagation information is saved at intervals throughout
             the propagation.
-        save_high_res_samples : bool
-            If True, high_res_sampling is saved.
         save_dir : NoneType or string
             Directory to which data will be saved.
         initial_delay : float
@@ -882,8 +863,7 @@ class pulse_from_numpy_array(_pulse_base):
         """
         super().__init__(
             grid, repetition_rate, high_res_sampling=high_res_sampling,
-            save_high_res_samples=save_high_res_samples, save_dir=save_dir,
-            initial_delay=initial_delay)
+            save_dir=save_dir, initial_delay=initial_delay)
         self.make_pulse(grid, pulse_array, P_0)
         self.add_OPPM_noise(grid, noise_seed=quantum_noise_seed)
         self.get_ESD_and_PSD(grid, self.field)

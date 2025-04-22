@@ -500,10 +500,6 @@ class passive_assembly(assembly):
         if self.sampling:
             pulse.num_samples = self.num_samples
 
-        if pulse.save_high_res_samples and pulse.save_dir is None:
-            raise Exception("pulse.save_dir cannot be NoneType if "
-                            "pulse.save_high_res_samples == True")
-
         # Handle high-resolution field sampling
         if self.sampling:  # Turn on
             pulse.high_res_samples = True
@@ -530,14 +526,6 @@ class passive_assembly(assembly):
             else:
                 pulse.add_OPPM_noise(self.grid, True)
                 pulse.get_photon_spectrum(self.grid, pulse.field)
-
-        # # Save high-resolution field samples if sampling is active and if
-        # # pulse.save_high_res_samples == True. This parameter must be set
-        # # in the pulse object outside of the sm_fibre_amplifier class along
-        # # with the directory that the data is saved under.
-        # if self.sampling and pulse.save_high_res_samples:
-        #     pulse.save_field(self.filename,
-        #                      component_locations=component_locations)
 
         if self.sampling:  # Turn off
             pulse.high_res_samples = False
@@ -631,14 +619,6 @@ class sm_fibre_laser(assembly):
 
         Returns the pulse class.
         """
-        # Only used if self.high_res_sampling, but also only needs to be set
-        # once so keep it out of the loop.
-        # pulse.high_res_sample_interval = self.high_res_sample_interval
-
-        if pulse.save_high_res_samples and pulse.save_dir is None:
-            raise Exception("pulse.save_dir cannot be NoneType if "
-                            "pulse.save_high_res_samples == True")
-
         if self.sampling:
             pulse.num_samples = self.num_samples
 
@@ -682,16 +662,6 @@ class sm_fibre_laser(assembly):
             # Handle output field sampling
             if i >= self.round_trips - self.round_trip_output_samples:
                 pulse.output_samples.append(pulse.output)
-
-            # # Save high-resolution field samples if sampling is active and if
-            # # pulse.save_high_res_samples == True. This parameter must be set
-            # # in the pulse object outside of the sm_fibre_laser class along
-            # # with the directory that the data is saved under.
-            # if (self.sampling and pulse.save_high_res_samples
-            #         and self.high_res_sampling_limits[0] <= i
-            #         <= self.high_res_sampling_limits[1]):
-            #     pulse.save_field(
-            #         str(i), component_locations=component_locations)
 
         self.update_pulse_class(pulse, pulse.output)
 
@@ -1140,10 +1110,6 @@ class sm_fibre_amplifier(assembly):
                 self.gain_fibre.L / self.num_samples
             pulse.num_samples = self.num_samples
 
-        if pulse.save_high_res_samples and pulse.save_dir is None:
-            raise Exception("pulse.save_dir cannot be NoneType if "
-                            "pulse.save_high_res_samples == True")
-
         # Handle high-resolution field sampling
         if self.sampling:  # Turn on
             pulse.high_res_samples = True
@@ -1176,14 +1142,6 @@ class sm_fibre_amplifier(assembly):
             else:
                 pulse.add_OPPM_noise(self.grid, True)
                 pulse.get_photon_spectrum(self.grid, pulse.field)
-
-        # Save high-resolution field samples if sampling is active and if
-        # pulse.save_high_res_samples == True. This parameter must be set
-        # in the pulse object outside of the sm_fibre_amplifier class along
-        # with the directory that the data is saved under.
-        if self.sampling and pulse.save_high_res_samples:
-            pulse.save_field(self.filename,
-                             component_locations=component_locations)
 
         if self.sampling:  # Turn off
             pulse.high_res_samples = False
