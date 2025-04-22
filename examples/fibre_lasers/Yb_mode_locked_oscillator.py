@@ -156,7 +156,7 @@ if __name__ == "__main__":
                                  high_res_sampling=10,
                                  high_res_sampling_limits=[0, 150],
                                  data_directory='/home/james/Desktop/TEST',
-                                 plot=True)
+                                 plot=False)
     L_gain = 0.55
     L_wdm = 0.64
     L_oc = 0.13

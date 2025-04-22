@@ -662,8 +662,14 @@ class sm_fibre_laser(assembly):
             # Handle output field sampling
             if i >= self.round_trips - self.round_trip_output_samples:
                 pulse.output_samples.append(pulse.output)
-                self.save_high_res_samples(pulse, component_locations, i)
 
+            if self.sampling:
+                if (self.high_res_sampling_limits[0]
+                        <= i
+                        <= self.high_res_sampling_limits[1]):
+                    if self.save_data:
+                        self.save_high_res_samples(
+                                pulse, component_locations, i)
         self.update_pulse_class(pulse, pulse.output)
 
         if self.save_data:
@@ -704,7 +710,6 @@ class sm_fibre_laser(assembly):
         the high-resolution field sampling can produce very large data sets.
         """
         subdir = self.directory + 'high_res_field_samples/'
-        print(subdir)
         if not os.path.isdir(subdir):
             os.mkdir(subdir)
         np.savez(
