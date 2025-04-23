@@ -415,14 +415,25 @@ class _pulse_base(ABC):
         self.chirp = 2 * np.pi * const.c / (
             grid.omega_c + np.gradient(phase, grid.dt, axis=1))
 
-    def roundtrip_reset(self):
+    def roundtrip_reset(self, clear_output=False):
         """
-        Any member variables which need to be reset with each round trip
-        should be added here.
+        Clear member variables which need to be reset with each round trip.
+
+        Parameters
+        ----------
+        clear_output : bool
+            If True, sets self.output = [].
+
+        Notes
+        -----
+        This method is mostly inteded for oscillator simulations.
         """
-        self.output = []
+        if clear_output:
+            self.output = []
         self.high_res_field_samples = []
         self.high_res_field_sample_points = []
+        self.high_res_PSD_samples = []
+        self.high_res_rep_rate_samples = []
         self.high_res_B_integral_samples = []
 
     def update_high_res_samples(

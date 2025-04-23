@@ -2254,16 +2254,16 @@ class active_fibre_base(ABC):
 
     def propagate(self, pulse):
         """
-        Apply passive linear and nonlinear operators and gain over iteratively
-        over the fibre length.
+        Apply passive linear, nonlinear, and active operators over the fibre
+        length.
 
         Parameters
         ----------
-        pulse : pyLaserPulse.pulse.pulse
+        pulse : pyLaserPulse.pulse object
 
         Returns
         -------
-        pyLaserPulse.pulse.pulse
+        pyLaserPulse.pulse object
 
         Raises
         ------

@@ -280,19 +280,29 @@ class assembly(ABC):
         fmt = []
         self.plot_dict[self.name + ': pulse chirps'] = (ax, fmt)
 
-    def plot_B_integral(self, pulse):
+    def plot_B_integral(self, pulse, laser=False):
         """
         Convert pulse.high_res_field_samples into the B-integral and plot.
 
         Parameters
         ----------
         pulse : pyLaserPulse.pulse.pulse object
+        laser : bool
+            Flag for determining the appropriate plot title. If laser (i.e.,
+            an oscillator simulation using sm_fibre_laser), then the title is
+            changed accordingly.
         """
         B = np.asarray(pulse.high_res_B_integral_samples).T
 
+        title_chunk = ''
+        if laser:
+            title_chunk = 'for the final round trip'
+        else:
+            title_chunk = 'up to the output'
+
         fig = Figure()
         ax = fig.add_subplot(111)
-        ax.set_title('Net B integral up to the output of %s' % self.name)
+        ax.set_title('Net B integral ' + title_chunk + ' of %s' % self.name)
         ax.semilogy(
             np.cumsum(pulse.high_res_field_sample_points), B,
             c='mediumpurple', lw=2)
@@ -306,7 +316,7 @@ class assembly(ABC):
         self.plot_dict[
             self.name + ': B integral'] = (ax, fmt)
 
-    def plot_energy_and_average_power(self, pulse):
+    def plot_energy_and_average_power(self, pulse, laser=False):
         """
         Calculate the pulse energy and average power at each propagation step
         using pulse.high_res_field_samples.
@@ -314,15 +324,25 @@ class assembly(ABC):
         Parameters
         ----------
         pulse : pyLaserPulse.pulse.pulse object
+        laser : bool
+            Flag for determining the appropriate plot title. If laser (i.e.,
+            an oscillator simulation using sm_fibre_laser), then the title is
+            changed accordingly.
         """
         energy_samples = np.asarray(np.abs(pulse.high_res_field_samples)**2).T
         energy_samples = np.sum(energy_samples, axis=1)
         energy_samples = np.sum(energy_samples, axis=0) * self.grid.dt
         power_samples = energy_samples * pulse.high_res_rep_rate_samples
 
+        title_chunk = ''
+        if laser:
+            title_chunk = 'for the final round trip'
+        else:
+            title_chunk = 'up to the output'
+
         fig = Figure()
         ax = fig.add_subplot(111)
-        ax.set_title('Signal energy up to the output of %s' % self.name)
+        ax.set_title('Signal energy ' + title_chunk + ' of %s' % self.name)
         ax.semilogy(np.cumsum(pulse.high_res_field_sample_points),
                     1e9 * energy_samples, c='slategray', lw=2)
         ax.set_xlabel('z, m', fontsize=13)
@@ -337,7 +357,7 @@ class assembly(ABC):
 
         fig = Figure()
         ax = fig.add_subplot(111)
-        ax.set_title('Signal power up to the output of %s' % self.name)
+        ax.set_title('Signal power ' + title_chunk + ' of %s' % self.name)
         ax.semilogy(np.cumsum(pulse.high_res_field_sample_points),
                     power_samples, c='cornflowerblue', lw=2)
         ax.set_xlabel('z, m', fontsize=13)
@@ -647,7 +667,8 @@ class sm_fibre_laser(assembly):
             pulse.num_samples = self.num_samples
 
         for i in range(self.round_trips):
-            pulse.roundtrip_reset()  # Reset single-use member variables
+            # Reset single-use member variables
+            pulse.roundtrip_reset(clear_output=True)
 
             # Handle high-resolution field sampling
             # Turn it on:
@@ -707,8 +728,17 @@ class sm_fibre_laser(assembly):
             self.plot_output_pulses(pulse)
             self.plot_output_spectra(pulse)
             self.plot_high_res_samples(pulse)
+            self.plot_B_integral(pulse, laser=True)
+            self.plot_energy_and_average_power(pulse, laser=True)
             pulse.num_samples = self.num_samples  # return to original rate
             pulse.high_res_samples = False
+
+        # Clear single-use member variables so that intra-cavity field of the
+        # sm fibre laser is not plotted alongside extra-cavity field of any
+        # subsequent optical assembly.
+        # Do not clear pulse.output list.
+        pulse.roundtrip_reset()
+
         return pulse
 
     @assembly.saver
@@ -764,17 +794,14 @@ class sm_fibre_laser(assembly):
         """
         pulse.get_chirp(self.grid, field)
         pulse.get_energy_and_average_power(self.grid, field)
+        pulse.get_ESD_and_PSD(self.grid, field)
 
-        pulse.output = np.asarray(pulse.output)
         pulse.energy_spectral_density = np.asarray(
             pulse.energy_spectral_density)
         pulse.power_spectral_density = np.asarray(
             pulse.power_spectral_density)
         pulse.output_samples = np.asarray(pulse.output_samples)
         pulse.pulse_energy = np.asarray(pulse.pulse_energy)
-        pulse.high_res_field_samples = np.asarray(pulse.high_res_field_samples)
-        pulse.high_res_B_integral_samples = np.asarray(
-                pulse.high_res_B_integral_samples)
         return pulse
 
     def plot_intracavity_pulse(self, pulse):
@@ -846,15 +873,15 @@ class sm_fibre_laser(assembly):
         alphas = [1, 0.55]
         axis_str = [r'$x$', r'$y$']
 
-        for oc in range(len(pulse.output)):
+        for j, oc in enumerate(pulse.output):
             fig = Figure()
             ax = fig.add_subplot(111)
             ax.set_title(
-                'Time domain distributions: output coupler ' + str(oc))
+                'Time domain distributions: output coupler ' + str(j))
             for i, col in enumerate(colours):
                 h1, = ax.semilogy(
                     self.grid.time_window * 1e12,
-                    1e-3 * np.abs(pulse.output[oc, i, :])**2,
+                    1e-3 * np.abs(oc[i, :])**2,
                     c=col, lw=2, label='P(T) ' + axis_str[i], alpha=alphas[i])
                 handles.append(h1)
             ax.set_xlabel(r'$T = t - z/v_{g}$, ps')
@@ -864,13 +891,13 @@ class sm_fibre_laser(assembly):
             fmt = []
             self.plot_dict[
                 self.name + ': time domain distribution: output coupler '
-                + str(oc)] = (ax, fmt)
+                + str(j)] = (ax, fmt)
 
             # Calculate the chirp for the intracavity field (this is ordinarily
             # done in the pulse class, but that method is reserved for the
             # output member variable and used with update_pulse_class method of
             # this class.)
-            phase = np.unwrap(np.angle(pulse.output[oc, :, :]), axis=1)
+            phase = np.unwrap(np.angle(oc), axis=1)
             chirp = 2 * np.pi * const.c / (
                 self.grid.omega_c + np.gradient(phase, self.grid.dt, axis=1))
 
@@ -878,7 +905,7 @@ class sm_fibre_laser(assembly):
             alphas = [1, 0.55]
             fig = Figure()
             ax = fig.add_subplot(111)
-            ax.set_title('Pulse chirps: output coupler ' + str(oc))
+            ax.set_title('Pulse chirps: output coupler ' + str(j))
             for i, col in enumerate(colours):
                 h1, = ax.plot(
                     self.grid.time_window * 1e12, 1e9 * chirp[i, :], c=col,
@@ -891,7 +918,7 @@ class sm_fibre_laser(assembly):
                          1e12 * self.grid.time_window.max()])
             fmt = []
             self.plot_dict[self.name + ': pulse chirps from coupler '
-                           + str(oc)] = (ax, fmt)
+                           + str(j)] = (ax, fmt)
 
     def plot_intracavity_spectra(self, pulse):
         """
@@ -938,13 +965,13 @@ class sm_fibre_laser(assembly):
         """
         min_y = 1e-6
         handles = []
-        for oc in range(len(pulse.output)):
-            pulse.get_ESD_and_PSD(self.grid, pulse.output[oc, :, :])
+        for j, oc in enumerate(pulse.output):
+            pulse.get_ESD_and_PSD(self.grid, oc)
             integrated_PSD = np.sum(pulse.power_spectral_density, axis=0)
 
             fig = Figure()
             ax = fig.add_subplot(111)
-            ax.set_title('PSDs: output coupler ' + str(oc))
+            ax.set_title('PSDs: output coupler ' + str(j))
             h1, = ax.semilogy(
                 self.grid.lambda_window * 1e9, integrated_PSD, c='k', ls='--',
                 lw=2, label='Net PSD')
@@ -966,14 +993,14 @@ class sm_fibre_laser(assembly):
 
             fmt = []
             self.plot_dict[
-                self.name + ': output net PSDs coupler ' + str(oc)] = (ax, fmt)
+                self.name + ': output net PSDs coupler ' + str(j)] = (ax, fmt)
 
             psd_samples = np.zeros((self.round_trip_output_samples,
                                     2,
                                     self.grid.points))
             for samp in range(self.round_trip_output_samples):
                 pulse.get_ESD_and_PSD(
-                    self.grid, pulse.output_samples[samp, oc, :, :])
+                    self.grid, pulse.output_samples[samp, j, :, :])
                 psd_samples[samp, :, :] = pulse.power_spectral_density
             psd_samples = 10 * np.log10(np.sum(psd_samples, axis=1))
             vmax = np.round(psd_samples.max())
@@ -981,7 +1008,7 @@ class sm_fibre_laser(assembly):
             norm = Normalize(vmin=vmin, vmax=vmax)
             fig = Figure()
             ax = fig.add_subplot(111)
-            ax.set_title('Output PSD samples from coupler ' + str(oc))
+            ax.set_title('Output PSD samples from coupler ' + str(j))
             p = ax.pcolormesh(
                 1e9 * self.grid.lambda_window,
                 np.linspace(self.round_trips-self.round_trip_output_samples,
@@ -996,7 +1023,7 @@ class sm_fibre_laser(assembly):
             ax.colorbar_label = 'PSD, dBm/nm'
             fmt = []
             self.plot_dict[self.name + ': output PSD samples from coupler '
-                           + str(oc)] = (ax, fmt)
+                           + str(j)] = (ax, fmt)
 
     def plot_high_res_samples(self, pulse):
         """
@@ -1011,7 +1038,7 @@ class sm_fibre_laser(assembly):
         psd_samples = np.zeros((num, 2, self.grid.points))
         for samp in range(num):
             pulse.get_ESD_and_PSD(
-                self.grid, pulse.high_res_field_samples[samp, :, :])
+                self.grid, pulse.high_res_field_samples[samp])
             psd_samples[samp, :, :] = pulse.power_spectral_density
         psd_samples = 10 * np.log10(np.sum(psd_samples, axis=1))
         vmax = np.round(psd_samples.max())
@@ -1359,7 +1386,7 @@ class sm_fibre_amplifier(assembly):
         # summed spectra -- gain fibre only
         min_y = 1e-6
         handles = []
-        fig = Figure()  # figsize=(6, 5))
+        fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Gain fibre: net PSDs')
         h1, = ax.semilogy(
@@ -1404,7 +1431,7 @@ class sm_fibre_amplifier(assembly):
         axis_str = [r'$x$', r'$y$']
         linestyles = ['-', '-.']  # for polarization axes
         alphas = [0.55, 1]
-        fig = Figure()  # figsize=(6, 5))
+        fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Gain fibre: individual PSDs')
         for i, ls in enumerate(linestyles):
@@ -1468,7 +1495,7 @@ class sm_fibre_amplifier(assembly):
         self.plot_dict[self.name + ': gain fibre, individual PSDs'] = (ax, fmt)
 
         # Net amplifier output -- co-propagating only
-        fig = Figure()  # figsize=(6, 5))
+        fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Net amplifier output')
         for i, ls in enumerate(linestyles):
@@ -1722,7 +1749,8 @@ class sm_fibre_amplifier(assembly):
                     self.gain_fibre.counter_pump.high_res_samples[i, :, :]
                     * self.gain_fibre.counter_pump.d_wl * 1e6))
             counter_power = np.asarray(counter_power)
-            ax.plot(np.cumsum(self.gain_fibre.dz_samples), counter_power, c='darkorchid')
+            ax.plot(np.cumsum(self.gain_fibre.dz_samples), counter_power,
+                    c='darkorchid')
             legend_fmt += ", 'Counter'"
             fmt.append('axes.fill_between(ax.lines[1].get_data()[0], 0, '
                + 'ax.lines[1].get_data()[1], color="darkorchid", '
