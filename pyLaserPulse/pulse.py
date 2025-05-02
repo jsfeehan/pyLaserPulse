@@ -229,7 +229,7 @@ class _pulse_base(ABC):
             New repetition rate
         """
         self.repetition_rate = new_rep_rate
-        self.ASM_scaling = grid.t_range * new_rep_rate
+        self.ASE_scaling = grid.t_range * new_rep_rate
 
     def get_ESD_and_PSD(self, grid, field):
         """
