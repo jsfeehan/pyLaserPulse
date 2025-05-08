@@ -726,3 +726,51 @@ class NKT_DC_200_40_PZ_SI(bc.photonic_crystal_passive_fibre):
         self.core_diam = core_diam
         self.core_radius = core_radius
         self.get_GNLSE_and_birefringence_parameters()  # effective MFD, etc.
+
+
+class exail_IXF_SUP_5_125_1050_PM(bc.photonic_crystal_passive_fibre):
+    """
+    photonic_crystal_passive_fibre with default parameters which provide
+    fibre properties matching Exail (Photonic Bretagne) IXD-SUP-5-125-1050-PM
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    tol : float
+        Tolerance for propagation integration error
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
+        which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
+
+    Notes
+    -----
+    PM, ~0.01 -- 0.011 1 / (W m) nonlinear coefficient, ZDW ~1050 nm.
+    """
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
+        # Combination of hole pitch and relative diameter gives gamma ~0.01 W/m,
+        # matching the specification sheet.
+        # Loss taken to be standard silica Rayleigh scattering.
+        hole_pitch = 3.2e-6
+        hole_diam_over_pitch = 0.5
+        fR = 0.18
+        beat_length = 4.62e-3  # dn = 2.3e-4 is given on spec. sheet.
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, hole_pitch,
+            hole_diam_over_pitch, beat_length, n2, fR, tol,
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
+
+        # Taylor coefficients: found by curve fitting to data digitized from the
+        # specification sheet. beta_0 and beta_1 omitted.
+        T = [
+            -2.1917239348038675e-27, 6.74037456981993e-41,
+            -5.723254114718194e-56, 5.1904873586045684e-71,
+            6.290787739109935e-86, 1.0874592863788497e-100,
+            -5.3137028061790745e-115, -2.473403424245199e-130,
+            8.186846622556787e-145, 1.3418999788736455e-161
+        ]
+        self.override_dispersion_using_Taylor_coefficients(T)
