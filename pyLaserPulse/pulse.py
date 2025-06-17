@@ -160,7 +160,7 @@ class _pulse_base(ABC):
         """
         roll_idx, _ = utils.find_nearest(self.initial_delay, grid.time_window)
         roll_idx -= grid.midpoint
-        self.field = np.roll(self.field, roll_idx)
+        self.field = np.roll(self.field, roll_idx, axis=1)
 
     def add_OPPM_noise(self, grid, topup=False, noise_seed=None):
         """
