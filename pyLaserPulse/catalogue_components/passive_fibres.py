@@ -346,6 +346,37 @@ class Nufern_PLMA_GDF_25_250(bc.step_index_passive_fibre):
             verbose=verbose)
 
 
+class Nufern_PLMA_GDF_25_400(bc.step_index_passive_fibre):
+    """
+    step_index_passive_fibre with default parameters which provide fibre
+    properties matching those of Nufern PLMA-GDF-25/400-M.
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    tol : float
+        Tolerance for propagation integration error
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
+        which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
+    """
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
+        core_diam = 25e-6
+        NA = 0.065
+        fR = 0.18
+        tol = 1e-5
+        beat_length = 4.12e-3  # dn = 2.4e-3 given on spec. sheet
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
+            n2, fR, tol, paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
+
+
 class Nufern_PLMA_GDF_30_250(bc.step_index_passive_fibre):
     """
     step_index_passive_fibre with default parameters which provide fibre
