@@ -797,6 +797,69 @@ class Nufern_PLMA_YDF_25_250(bc.step_index_active_fibre):
             cladding_pumping=self.cladding_pumping, verbose=verbose)
 
 
+class Nufern_PLMA_YDF_25_400(bc.step_index_active_fibre):
+    """
+    step_index_active_fibre with default parameters which provide fibre
+    properties matching those of Nufern PLMA-YDF-25/400-M.
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    seed_repetition_rate : float
+        Repetition rate of the seed laser pulses
+    pump_points : int
+        Number of points in the pump light grid.
+    ASE_wl_lims : list
+        Wavelength limits of the pump and ASE grid, [min_wl, max_wl] in m.
+    boundary_conditions : dict
+        Set the boundary conditions for resolving the evolution of the pump,
+        signal, and ASE light in both directions through the fibre.
+        The type of simulation -- i.e., single-pass or full boundary value
+        solver -- is determined by this dictionary.
+        See pyLaserPulse.base_components.step_index_active_fibre
+    time_domain_gain : Boolean
+        Time domain gain included if True.
+    cladding_pumping : bool
+        Pump light is propagated in the cladding if true.
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
+        which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
+
+    Notes
+    -----
+    This fibre can be used for cladding or core pumping.
+    """
+    def __init__(self, grid, length, seed_repetition_rate,
+                 pump_points, ASE_wl_lims, boundary_conditions,
+                 time_domain_gain=False, cladding_pumping=False,
+                 n2=2.19e-20, verbose=False):
+        core_diam = 25e-6
+        NA = 0.065
+        fR = 0.18
+        tol = 1e-5
+        beat_length = 4.12e-3  # dn = 2.4e-4 given on spec. sheet
+        if cladding_pumping:
+            self.cladding_pumping = {
+                'pump_core_diam': 250e-6, 'pump_delta_n': 1.45 - 1.375,
+                'pump_cladding_n': 1.375}
+        else:
+            self.cladding_pumping = {}
+        doping_concentration = 1.3e25  # Gives nominal 0.73 dB/m at 915 nm
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, core_diam, NA, beat_length,
+            n2, fR, tol, doping_concentration,
+            paths.fibres.cross_sections.Yb_Al_silica, seed_repetition_rate,
+            pump_points, ASE_wl_lims,
+            paths.materials.Sellmeier_coefficients.silica, boundary_conditions,
+            lifetime=1.5e-3, time_domain_gain=time_domain_gain,
+            cladding_pumping=self.cladding_pumping, verbose=verbose)
+
+
 class Nufern_PLMA_YDF_30_250(bc.step_index_active_fibre):
     """
     step_index_active_fibre with default parameters which provide fibre
