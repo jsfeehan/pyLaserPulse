@@ -355,8 +355,8 @@ References
 .. _pyFiberAmp: https://github.com/Jomiri/pyfiberamp/
 .. [#third] D Gloge, "Weakly guiding fibers", Applied Optics 10(10), pp 2252-2258 (1971)
 .. [#fourth] K Saitoh and M Koshiba, "Empirical relations for simple design of photonic crystal fibers", Optics Express 13(1), pp 267-274 (2005)
-.. [#fifth] J Hult, "A fourth-order Runge-Kutta in the interaction picture method for simulating supercontinuum generation in optical fibers", Journal of Lightwave Technology 25(12), pp. 3770-3775 (2007) and https://freeopticsproject.org (unfortunately, this project doesn't seem to be active anymore).
-.. [#sixth] A M Heidt, "Efficient adaptive step size method for the simulation of supercontinuum generation in optical fibers", Journal of Lightwave Technology 27(18), pp. 3984-3991 (2009) and https://freeopticsproject.org (unfortunately, this project doesn't seem to be active anymore).
+.. [#fifth] J Hult, "A fourth-order Runge-Kutta in the interaction picture method for simulating supercontinuum generation in optical fibers", Journal of Lightwave Technology 25(12), pp. 3770-3775 (2007).
+.. [#sixth] A M Heidt, "Efficient adaptive step size method for the simulation of supercontinuum generation in optical fibers", Journal of Lightwave Technology 27(18), pp. 3984-3991 (2009).
 .. [#seventh] S Trillo and S Wabnitz, "Parametric and Raman amplification in birefringent fibers", Journal of the Optical Society of America B 9(7), pp. 1061-1082 (1992)
 .. [#eigth] R L Fork, C H Brito Cruz, P C Becker, C V Shank, "Compression of optical pulses to six femtoseconds by using cubic phase compensation", Optics Letters 12(7), pp 483-485 (1987)
 .. [#ninth] F Kienle, "Advanced high-power optical parametric oscillators synchronously pumped by ultrafast fibre-based sources", PhD Thesis, University of Southampton, 2012 (see page 37)
