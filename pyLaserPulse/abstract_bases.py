@@ -724,6 +724,13 @@ class active_fibre_base(ABC):
              wl_lims[1] if wl_lims[1] < self.grid.lambda_window.max()
              else self.grid.lambda_window.max()]
 
+        self.wl_lims_idx = [
+                utils.find_nearest(self.wl_lims[1],
+                                   self.grid.lambda_window)[0],
+                utils.find_nearest(self.wl_lims[0],
+                                   self.grid.lambda_window)[0]
+                ]
+
         # Sort out pump(s) for appropriate geometry (determined by contents of
         # boundary_conditions).
         ASE_scaling = 1 - self.grid.t_range / seed_rep_rate
@@ -1836,7 +1843,8 @@ class active_fibre_base(ABC):
         spec_field = self._Euler_frequency_domain_gain_field(
             spec_field, dz, g, direction=direction)
         spec = np.sum(spec_field.real**2 + spec_field.imag**2, axis=0)
-        av_Esat = np.average(self.Esat, weights=spec)
+        mask = np.where(spec >= 1e-6 * np.amax(spec))
+        av_Esat = np.average(self.Esat[mask], weights=spec[mask])
         f = utils.ifft(spec_field)
         P = np.sum(f.real**2 + f.imag**2, axis=0)
         f *= np.exp(-1 * np.cumsum(P * self.grid.dt / av_Esat) * dz / 2)
