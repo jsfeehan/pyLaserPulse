@@ -724,13 +724,6 @@ class active_fibre_base(ABC):
              wl_lims[1] if wl_lims[1] < self.grid.lambda_window.max()
              else self.grid.lambda_window.max()]
 
-        self.wl_lims_idx = [
-                utils.find_nearest(self.wl_lims[1],
-                                   self.grid.lambda_window)[0],
-                utils.find_nearest(self.wl_lims[0],
-                                   self.grid.lambda_window)[0]
-                ]
-
         # Sort out pump(s) for appropriate geometry (determined by contents of
         # boundary_conditions).
         ASE_scaling = 1 - self.grid.t_range / seed_rep_rate
