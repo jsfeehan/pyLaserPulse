@@ -1835,13 +1835,40 @@ class active_fibre_base(ABC):
         """
         spec_field = self._Euler_frequency_domain_gain_field(
             spec_field, dz, g, direction=direction)
-        spec = np.sum(spec_field.real**2 + spec_field.imag**2, axis=0)
-        mask = np.where(spec >= 1e-6 * np.amax(spec))
-        av_Esat = np.average(self.Esat[mask], weights=spec[mask])
+        # spec = np.sum(spec_field.real**2 + spec_field.imag**2, axis=0)
+        # mask = np.where(spec >= 1e-6 * np.amax(spec))
+        # av_Esat = np.average(self.Esat[mask], weights=spec[mask])
+        # f = utils.ifft(spec_field)
+        # P = np.sum(f.real**2 + f.imag**2, axis=0)
+        # f *= np.exp(-1 * np.cumsum(P * self.grid.dt / av_Esat) * dz / 2)
+        # spec_field = utils.fft(f)
+
+        num_windows = 21
+        T = 2 * self.grid.t_range / (num_windows - 1)
+        t_start = self.grid.time_window.min() - T / 2
         f = utils.ifft(spec_field)
         P = np.sum(f.real**2 + f.imag**2, axis=0)
-        f *= np.exp(-1 * np.cumsum(P * self.grid.dt / av_Esat) * dz / 2)
-        spec_field = utils.fft(f)
+        mod_f = np.zeros_like(f)
+        cumulative_energy = np.cumsum(P * self.grid.dt)
+        for i in range(num_windows):
+            window = np.zeros((self.grid.points), dtype=np.complex128)
+            mask = np.where(
+                    (self.grid.time_window >= t_start)
+                    & (self.grid.time_window <= t_start + T))
+            window[mask] = np.sin(
+                    np.pi * (self.grid.time_window[mask] - t_start) / T)**2
+            chunk = f * window
+            chunk = utils.fft(chunk)
+            spec_P = np.sum(chunk.real**2 + chunk.imag**2, axis=0)
+            chunk = utils.ifft(chunk)
+            amp_mask = np.where(spec_P >= 1e-5 * spec_P.max())
+            av_Esat = np.average(self.Esat[amp_mask], weights=spec_P[amp_mask])
+            mod = np.zeros((self.grid.points))
+            mod[mask] = np.exp(-1 * dz * cumulative_energy[mask] / (2*av_Esat))
+            chunk *= mod
+            mod_f += chunk
+            t_start += T / 2
+        spec_field = utils.fft(mod_f)
         return spec_field
 
     def _add_ASE_field(self, spec_field, ase, dz, direction=1):
