@@ -1843,12 +1843,31 @@ class active_fibre_base(ABC):
         # f *= np.exp(-1 * np.cumsum(P * self.grid.dt / av_Esat) * dz / 2)
         # spec_field = utils.fft(f)
 
-        num_windows = 21
-        T = 2 * self.grid.t_range / (num_windows - 1)
-        t_start = self.grid.time_window.min() - T / 2
+        # num_windows = 17  # 21
+        # T = 2 * self.grid.t_range / (num_windows - 1)
+
         f = utils.ifft(spec_field)
         P = np.sum(f.real**2 + f.imag**2, axis=0)
-        mod_f = np.zeros_like(f)
+
+        # Window shape is sin**2(pi * (time_window - t_start) / T) defined over
+        # time_window >= t_start and time_window <= t_start + T.
+        # The integral over the window t_start to t_start + T is T / 2.
+        # Calculate an appropriate window width using the energy under this
+        # curve and restrict the energy per window to 20% of Esat at the
+        # central wavelength.
+        num_windows = 3  # minimum acceptable value
+        T = 2 * self.grid.t_range / (num_windows - 1)
+        energy_ratio = T * P.max() / (2 * self.Esat[0])
+        print("window size: ", T)
+        print(energy_ratio)
+        while energy_ratio >= 0.1:
+            print("window size in the conditional:", T, "\tenergy_ratio:", energy_ratio, "\tnum_windows:", num_windows)
+            num_windows += 2
+            T = 2 * self.grid.t_range / (num_windows - 1)
+            energy_ratio = (T / 2) * P.max() / self.Esat[0]
+        t_start = self.grid.time_window.min() - T / 2
+
+        mod_f = np.zeros_like(f)  # field modulated by gain saturation
         cumulative_energy = np.cumsum(P * self.grid.dt)
         for i in range(num_windows):
             window = np.zeros((self.grid.points), dtype=np.complex128)
