@@ -52,9 +52,9 @@ directory = None
 ############################################################
 
 # Time-frequency grid parameters
-points = 2**15        # Number of grid points
+points = 2**16        # Number of grid points
 central_wl = 1083e-9  # Central wavelength, m
-max_wl = 1150e-9      # Maximum wavelength, m
+max_wl = 1200e-9      # Maximum wavelength, m
 
 # Laser pulse parameters
 tau = 3e-12             # Pulse duration, s
