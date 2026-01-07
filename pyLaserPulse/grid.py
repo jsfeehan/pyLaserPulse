@@ -165,10 +165,11 @@ class grid:
 
         self.lambda_lims = lambda_lims
         self.lambda_max = max(lambda_lims)
+        self.lambda_min = min(lambda_lims)
         self.t_range = t_range
 
         fmin = const.c / self.lambda_max
-        fmax = const.c / min(lambda_lims)
+        fmax = const.c / self.lambda_min
 
         fmax_window = 1.1 * fmax  # make 10% larger for windowing
 

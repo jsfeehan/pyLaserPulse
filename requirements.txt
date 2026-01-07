@@ -1,11 +1,3 @@
-<<<<<<< Updated upstream
-matplotlib==3.10.8
-numpy==2.4.0
-psutil==7.2.1
-PyQt5==5.15.9
-scipy==1.16.3
-setuptools==80.9.0
-=======
 matplotlib==3.7.1
 numpy==1.26.4
 psutil
@@ -13,4 +5,3 @@ PyQt5
 PyQt5_sip
 scipy
 setuptools==75.1.0
->>>>>>> Stashed changes

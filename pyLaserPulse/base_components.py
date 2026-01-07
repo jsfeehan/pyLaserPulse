@@ -90,7 +90,7 @@ class step_index_passive_fibre(bases.fibre_base):
         D. Gloge, "Weakly guiding fibres", Applied Optics 10(10),
         pp 2252--2258 (1971)
         """
-        k = 2 * np.pi / self.grid.lambda_window
+        k = 2 * np.pi / self.grid.lambda_window_crop
         self.NA = np.sqrt(self.signal_ref_index**2
                           - self.cladding_ref_index**2)
         self.V = k * self.core_diam * self.NA / 2
@@ -127,7 +127,8 @@ class step_index_passive_fibre(bases.fibre_base):
                          kind='linear', fill_value='extrapolate')
             self.beta_2 = f(self.grid.lambda_window)
 
-        self.D = -2 * np.pi * const.c * self.beta_2 / self.grid.lambda_window**2
+        self.D = -2 * np.pi * const.c * self.beta_2 / \
+            self.grid.lambda_window**2
 
 
 class photonic_crystal_passive_fibre(bases.fibre_base):
@@ -220,22 +221,23 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
             (10, 24.8, 15, 6)))
 
         self.get_propagation_parameters(
-            g.lambda_window, g.midpoint, g.omega_window)
+            g.lambda_window_crop, g.sim_idx_midpoint, g.omega_window_crop)
         self.get_GNLSE_and_birefringence_parameters()
 
     def get_propagation_parameters(
-            self, lambda_window, grid_midpoint, omega_window):
+            self, lambda_window_crop, sim_idx_midpoint, omega_window):
         """
         Calculate signal_ref_index, D, beta_2, effective_MFD,
         signal_mode_area, gamma
 
         Parameters
         ----------
-        lambda_window : numpy array
+        lambda_window_crop : numpy array
             Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window
-        grid_midpoint : int
-            Middle index of the time-frequency grid.
-            See pyLaserPulse.grid.grid.midpoint
+        sim_idx_midpoint : int
+            Index of the time frequency grid corrsesponding to the central
+            wavelength in the range set by grid.lambda_lims.
+            See pyLaserPulse.grid.grid.sim_idx_midpoint
         omega_window : numpy array
             Angular frequency grid in rad Hz.
             See pyLaserPulse.grid.grid.omega_window
@@ -251,10 +253,13 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
         numpy array
             Fibre dispersion in s^2 / m
         """
-        self.V, self.signal_ref_index, self.D, self.beta_2 = \
-            utils.PCF_propagation_parameters_K_Saitoh(
-                lambda_window, grid_midpoint, omega_window, self.a, self.b,
-                self.c, self.d, self.hole_pitch, self.hole_diam,
+        self.signal_ref_index = np.zeros((self.grid.points))
+        self.beta_2 = np.zeros((self.grid.points))
+        self.V, self.signal_ref_index[self.grid.sim_idx], self.D, \
+            self.beta_2[self.grid.sim_idx] \
+            = utils.PCF_propagation_parameters_K_Saitoh(
+                lambda_window_crop, sim_idx_midpoint, omega_window, self.a,
+                self.b, self.c, self.d, self.hole_pitch, self.hole_diam,
                 self.core_radius, self.Sellmeier_file)
 
 

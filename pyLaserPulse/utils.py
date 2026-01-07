@@ -390,7 +390,7 @@ def Sellmeier(lambda_window_crop, f):
         Refractive index as a function of wavelength.
     """
     lw = 1e6 * lambda_window_crop
-    print(lambda_window_crop)
+    print(lw)
     coeffs = np.loadtxt(f, skiprows=1)
     n_sq = 1
     for B, C in iter(coeffs):

@@ -182,9 +182,11 @@ class fibre_base(ABC):
         """
         Defined self.beta_1, the polarization group velocity mismatch.
         """
-        vg_x = const.c / self.signal_ref_index
-        vg_y = const.c / (self.signal_ref_index - self.birefringence)
-        self.beta_1 = (1 / vg_y) - (1 / vg_x)
+        self.beta_1 = np.zeros((self.grid.points))
+        vg_x = const.c / self.signal_ref_index[self.grid.sim_idx]
+        vg_y = const.c / (self.signal_ref_index[self.grid.sim_idx]
+                          - self.birefringence[self.grid.sim_idx])
+        self.beta_1[self.grid.sim_idx] = (1 / vg_y) - (1 / vg_x)
 
     def _make_self_steepening_term(self):
         """
@@ -205,11 +207,12 @@ class fibre_base(ABC):
         Can only be called after get_signal_propagation_parameters.
         """
         p_II = self.Petermann_II(self.V)
-        self.effective_MFD = self.core_diam * p_II
+        self.effective_MFD = np.zeros((self.grid.points))
+        self.effective_MFD[self.grid.sim_idx] = self.core_diam * p_II
         self.signal_mode_area = np.pi * (self.effective_MFD / 2)**2
         self.gamma = self.n2 * (2 * np.pi / self.grid.lambda_c) \
-            / self.signal_mode_area
-        self.gamma = self.gamma[self.grid.midpoint]
+            / self.signal_mode_area[self.grid.sim_idx]
+        self.gamma = self.gamma[self.grid.sim_idx_midpoint]
         self._get_birefringence()
         self._get_polarization_group_velocity_mismatch()
         self._make_linear_operator()
