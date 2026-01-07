@@ -201,7 +201,9 @@ class _pulse_base(ABC):
         phase = np.exp(-2j * np.pi * uniform_random)  # [0; 2*pi)
 
         # Shot noise
-        A_OPPM = np.sqrt(const.hbar * grid.omega_window / (4 * grid.df))
+        A_OPPM = np.zeros((2, grid.points), dtype=np.complex128)
+        A_OPPM[:, grid.sim_idx] = np.sqrt(
+                const.hbar * grid.omega_window_crop / (4 * grid.df))
         A_OPPM = A_OPPM * phase
 
         # Need to account for the size of the time window with respect to the

@@ -22,9 +22,12 @@ directory = None
 ############################################################
 
 # Time-frequency grid parameters
-points = 2**14        # Number of grid points
-central_wl = 1050e-9  # Central wavelength, m
-max_wl = 8000e-9      # Maximum wavelength, m
+central_wl = 1050e-9
+wl_lims = (700e-9, 1200e-9)
+t_range = 10e-12
+# points = 2**14        # Number of grid points
+# central_wl = 1050e-9  # Central wavelength, m
+# max_wl = 8000e-9      # Maximum wavelength, m
 
 # Laser pulse parameters
 tau = 100e-15         # Pulse duration, s
@@ -34,26 +37,27 @@ shape = 'Gauss'       # Can also take 'sech'
 
 # ANDi photonic crystal fibre parameters
 L_beat = 1e-2  # polarization beat length (m)
-L = .25          # length, m
+L = 0.025  # .25          # length, m
 
-# grating compressor parameters
-loss = 0.04            # percent loss per grating reflection
-transmission = 700e-9  # transmission bandwidth
-coating = data.paths.materials.reflectivities.gold
+# # grating compressor parameters
+# loss = 0.04            # percent loss per grating reflection
+# transmission = 700e-9  # transmission bandwidth
+# coating = data.paths.materials.reflectivities.gold
 epsilon = 1e-1         # Jones parameter for polarization mixing and phase
 theta = 0              # Jones parameter for angle subtended by x-axis
 crosstalk = 1e-3       # polarization crosstalk
 beamsplitting = 0      # Useful for output couplers, etc.
-l_mm = 600             # grating lines per mm
-sep_initial = 1e-2     # initial guess for grating separation
-angle_initial = 0.31   # initial guess for incidence angle, rad
+# l_mm = 600             # grating lines per mm
+# sep_initial = 1e-2     # initial guess for grating separation
+# angle_initial = 0.31   # initial guess for incidence angle, rad
 
 ##############################################################
 # Instantiate the time-frequency grid, pulse, and components #
 ##############################################################
 
 # Time-frequency grid defined using the grid module
-g = grid.grid(points, central_wl, max_wl)
+g = grid.grid(central_wl, wl_lims, t_range)
+# g = grid.grid(points, central_wl, max_wl)
 
 # pulse defined using the pulse module
 p = pulse.pulse(tau, P_peak, shape, f_rep, g)
@@ -65,10 +69,10 @@ iso = base_components.component(
 # ANDi photonic crystal fibre - NKT NL-1050-NEG-1 - from catalogue_components
 pcf = pf.NKT_NL_1050_NEG_1(g, L, 1e-6, L_beat)
 
-# grating compressor defined using the base_components module
-gc = base_components.grating_compressor(
-    loss, transmission, coating, g.lambda_c, epsilon, theta, beamsplitting,
-    crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True)
+# # grating compressor defined using the base_components module
+# gc = base_components.grating_compressor(
+#     loss, transmission, coating, g.lambda_c, epsilon, theta, beamsplitting,
+#     crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True)
 
 ################################################################
 # Use the optical_assemblies module for automatic inclusion of #
@@ -80,20 +84,20 @@ scg = optical_assemblies.passive_assembly(
     g, scg_components, 'scg', high_res_sampling=100,
     plot=True, data_directory=directory, verbose=True)
 
-compressor_components = [gc]
-compression = optical_assemblies.passive_assembly(
-    g, compressor_components, 'compressor', plot=True,
-    data_directory=directory, verbose=True)
+# compressor_components = [gc]
+# compression = optical_assemblies.passive_assembly(
+#     g, compressor_components, 'compressor', plot=True,
+#     data_directory=directory, verbose=True)
 
 ######################
 # Run the simulation #
 ######################
 p = scg.simulate(p)
-p = compression.simulate(p)
+# p = compression.simulate(p)
 
-##########################################################
-# Use the matplotlib_gallery module to display the plots #
-##########################################################
-if scg.plot or compression.plot:
-    plot_dicts = [scg.plot_dict, compression.plot_dict]
-    single_plot_window.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
+###########################################################
+## Use the matplotlib_gallery module to display the plots #
+###########################################################
+#if scg.plot:  # or compression.plot:
+#    plot_dicts = [scg.plot_dict]  # , compression.plot_dict]
+#    single_plot_window.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)

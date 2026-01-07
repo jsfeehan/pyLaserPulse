@@ -70,9 +70,12 @@ class step_index_passive_fibre(bases.fibre_base):
             verbose=verbose)
         self.core_diam = core_diam
         self.NA = NA
-        self.cladding_ref_index = utils.Sellmeier(
-            self.grid.lambda_window, Sellmeier_file)
-        self.signal_ref_index = (NA**2 + self.cladding_ref_index**2)**0.5
+        self.cladding_ref_index = np.zeros((g.points))
+        self.cladding_ref_index[g.sim_idx] = utils.Sellmeier(
+            self.grid.lambda_window_crop, Sellmeier_file)
+        self.signal_ref_index = np.zeros((g.points))
+        self.signal_ref_index[g.sim_idx] = \
+            (NA**2 + self.cladding_ref_index[g.sim_idx]**2)**0.5
         self.delta_n = self.signal_ref_index[g.midpoint] \
             - self.cladding_ref_index[g.midpoint]
         self.get_propagation_parameters()
@@ -192,8 +195,9 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
             self.core_diam = 2 * self.hole_pitch / np.sqrt(3)
         self.core_radius = self.core_diam / 2
         self.Sellmeier_file = Sellmeier_file
-        self.material_ref_index = utils.Sellmeier(
-            g.lambda_window, self.Sellmeier_file)
+        self.material_ref_index = np.zeros((g.points))
+        self.material_ref_index[g.sim_idx] = utils.Sellmeier(
+            g.lambda_window_crop, self.Sellmeier_file)
 
         # Matrices required for propagation parameter calculations
         self.a = np.array((

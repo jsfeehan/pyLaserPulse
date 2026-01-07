@@ -373,14 +373,14 @@ def get_ESD_and_PSD(lambda_window, spectrum, repetition_rate):
     return energy_spectral_density, power_spectral_density
 
 
-def Sellmeier(lambda_window, f):
+def Sellmeier(lambda_window_crop, f):
     """
     Calculate the refractive index as a function of wavelength for fused silica
 
     Parameters
     ----------
-    lambda_window : numpy array
-        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window
+    lambda_window_crop : numpy array
+        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window_crop
     f : string
         Absolute path to file containing Sellmeier coefficients.
 
@@ -389,7 +389,8 @@ def Sellmeier(lambda_window, f):
     numpy array
         Refractive index as a function of wavelength.
     """
-    lw = 1e6 * lambda_window
+    lw = 1e6 * lambda_window_crop
+    print(lambda_window_crop)
     coeffs = np.loadtxt(f, skiprows=1)
     n_sq = 1
     for B, C in iter(coeffs):
@@ -422,18 +423,18 @@ def fft_convolve(arr1, arr2):
 
 
 def PCF_propagation_parameters_K_Saitoh(
-        lambda_window, grid_midpoint, omega_window, a, b, c, d, hole_pitch,
-        hole_diam_over_pitch, core_radius, Sellmeier_file):
+        lambda_window_crop, grid_midpoint_crop, omega_window, a, b, c, d,
+        hole_pitch, hole_diam_over_pitch, core_radius, Sellmeier_file):
     """
     Calculate V, mode_ref_index, D, beta_2 for hexagonal-lattice PCF.
 
     Parameters
     ----------
-    lambda_window : numpy array
-        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window
-    grid_midpoint : int
-        Middle index of the time-frequency grid.
-        See pyLaserPulse.grid.grid.midpoint
+    lambda_window_crop : numpy array
+        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window_crop
+    grid_midpoint_crop : int
+        Index of the cropped frequency grid corresponding to the central
+        wavelength. See pyLaserPulse.grid.sim_idx_midpoint
     omega_window : numpy array
         Angular frequency grid in rad Hz.
         See pyLaserPulse.grid.grid.omega_window
@@ -473,8 +474,8 @@ def PCF_propagation_parameters_K_Saitoh(
     photonic crystal fibres",Opt. Express 13(1), 267--274 (2005).
     """
     material_ref_index = Sellmeier(
-        lambda_window, Sellmeier_file)
-    n_central = material_ref_index[grid_midpoint]
+        lambda_window_crop, Sellmeier_file)
+    n_central = material_ref_index[grid_midpoint_crop]
 
     A = np.zeros((4), dtype=float)
     B = np.zeros((4), dtype=float)
@@ -490,46 +491,46 @@ def PCF_propagation_parameters_K_Saitoh(
 
     V = A[0] + A[1] / (
         1 + A[2] * np.exp(
-            A[3] * lambda_window / hole_pitch))
+            A[3] * lambda_window_crop / hole_pitch))
     W = B[0] + B[1] / (
         1 + B[2] * np.exp(
-            B[3] * lambda_window / hole_pitch))
+            B[3] * lambda_window_crop / hole_pitch))
 
     n_FSM = np.sqrt(n_central**2
-                    - (lambda_window * V
+                    - (lambda_window_crop * V
                         / (2 * np.pi * core_radius))**2)
-    ref_index = np.sqrt((lambda_window * W
+    ref_index = np.sqrt((lambda_window_crop * W
                          / (2 * np.pi * core_radius))**2 + n_FSM**2)
 
-    k = 2 * np.pi * material_ref_index / lambda_window
+    k = 2 * np.pi * material_ref_index / lambda_window_crop
     v_group = np.gradient(omega_window, k, edge_order=2)
     beta = 1 / v_group
     beta2_MAT = np.gradient(beta, omega_window, edge_order=2)
-    D_MAT = -2 * np.pi * const.c * beta2_MAT / lambda_window**2
+    D_MAT = -2 * np.pi * const.c * beta2_MAT / lambda_window_crop**2
 
     decimate = 1
     max_points = 512
-    if grid_midpoint > max_points:  # i.e., grid size is > 1024
+    if grid_midpoint_crop > max_points:  # i.e., grid size is > 1024
         # Required because very fine grids can result in noisy gradient
         # calculations
-        decimate = int(grid_midpoint / max_points)
+        decimate = int(grid_midpoint_crop / max_points)
 
-    tmp = np.gradient(ref_index[::decimate], lambda_window[::decimate],
+    tmp = np.gradient(ref_index[::decimate], lambda_window_crop[::decimate],
                       edge_order=2)
-    tmp = np.gradient(tmp, lambda_window[::decimate], edge_order=2)
-    D_WG = -1 * (lambda_window[::decimate] / const.c) * tmp
+    tmp = np.gradient(tmp, lambda_window_crop[::decimate], edge_order=2)
+    D_WG = -1 * (lambda_window_crop[::decimate] / const.c) * tmp
     D = D_WG + D_MAT[::decimate]
-    beta_2 = -1 * lambda_window[::decimate]**2 * D / (2 * np.pi * const.c)
+    beta_2 = -1 * lambda_window_crop[::decimate]**2 * D / (2 * np.pi * const.c)
 
     if decimate > 1:  # Interpolate D and beta_2 onto original grid
         # kind='linear' produces artefacts. No difference seen between
         # kind='quadratic' and kind='cubic'.
-        f = interp1d(lambda_window[::decimate], D, kind='quadratic',
+        f = interp1d(lambda_window_crop[::decimate], D, kind='quadratic',
                      fill_value='extrapolate')
-        D = f(lambda_window)
-        f = interp1d(lambda_window[::decimate], beta_2, kind='quadratic',
+        D = f(lambda_window_crop)
+        f = interp1d(lambda_window_crop[::decimate], beta_2, kind='quadratic',
                      fill_value='extrapolate')
-        beta_2 = f(lambda_window)
+        beta_2 = f(lambda_window_crop)
     return V, ref_index, D, beta_2
 
 

@@ -25,3 +25,8 @@ class BoundaryConditionError(Exception):
 class NanFieldError(Exception):
     """Raised when the pulse field has NaN values"""
     pass
+
+
+class GridDefinitionIncorrectError(Exception):
+    """Raised when the grid definition is inappropriate"""
+    pass
