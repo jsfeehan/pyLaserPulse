@@ -90,45 +90,53 @@ class step_index_passive_fibre(bases.fibre_base):
         D. Gloge, "Weakly guiding fibres", Applied Optics 10(10),
         pp 2252--2258 (1971)
         """
+        self.beta_2 = np.zeros((self.grid.points))
         k = 2 * np.pi / self.grid.lambda_window_crop
-        self.NA = np.sqrt(self.signal_ref_index**2
-                          - self.cladding_ref_index**2)
+        self.NA = np.sqrt(self.signal_ref_index[self.grid.sim_idx]**2
+                          - self.cladding_ref_index[self.grid.sim_idx]**2)
         self.V = k * self.core_diam * self.NA / 2
 
-        delta = (self.signal_ref_index - self.cladding_ref_index) \
-            / self.cladding_ref_index
+        delta = (self.signal_ref_index[self.grid.sim_idx]
+                 - self.cladding_ref_index[self.grid.sim_idx]) \
+            / self.cladding_ref_index[self.grid.sim_idx]
         u = (1 + np.sqrt(2)) * self.V / (1 + (4 + self.V**4)**0.25)
         beta = k * (1 + delta - delta * (u**2 / self.V**2))
-        b = ((beta / (k / self.cladding_ref_index)) -
-             self.cladding_ref_index) / (self.delta_n)
+        b = ((beta / (k / self.cladding_ref_index[self.grid.sim_idx])) -
+             self.cladding_ref_index[self.grid.sim_idx]) / (self.delta_n)
 
         decimate = 1
-        k_vac = k / self.signal_ref_index
+        k_vac = k / self.signal_ref_index[self.grid.sim_idx]
         if self.grid.points > 1024:  # i.e., grid size is > 1024
             # Required because very fine grids can result in noisy gradient
             # calculations
-            decimate = int(self.grid.points / 1024)
+            step = int(np.floor(self.grid.crop_points / 1024))
+            print("STEP: ", step)
+            if step > 1:
+                decimate = step
 
         part_1 = np.gradient(k[::decimate], k_vac[::decimate], edge_order=2)
         part_2 = np.gradient(
             self.V[::decimate] * b[::decimate], self.V[::decimate],
             edge_order=2)
-        part_2 *= self.cladding_ref_index[::decimate] * delta[::decimate]
+        part_2 *= self.cladding_ref_index[self.grid.sim_idx][::decimate] \
+            * delta[::decimate]
 
         beta_1 = (part_1 + part_2) / const.c
-        self.beta_2 = np.gradient(beta_1, self.grid.omega_window[::decimate],
-                                  edge_order=2)
+        beta_2 = np.gradient(
+                beta_1, self.grid.omega_window_crop[::decimate], edge_order=2)
 
         if decimate > 1:  # Interpolate D and beta_2 onto original grid
             # Some noise still present for *really* fine grids, so do some
             # smoothing as well
-            self.beta_2 = savgol_filter(self.beta_2, 4, 1)
-            f = interp1d(self.grid.lambda_window[::decimate], self.beta_2,
+            beta_2 = savgol_filter(beta_2, 4, 1)
+            f = interp1d(self.grid.lambda_window_crop[::decimate], beta_2,
                          kind='linear', fill_value='extrapolate')
-            self.beta_2 = f(self.grid.lambda_window)
+            self.beta_2[self.grid.sim_idx] = f(self.grid.lambda_window_crop)
+        else:
+            self.beta_2[self.grid.sim_idx] = beta_2
 
-        self.D = -2 * np.pi * const.c * self.beta_2 / \
-            self.grid.lambda_window**2
+        self.D = -2 * np.pi * const.c * self.beta_2[self.grid.sim_idx] / \
+            self.grid.lambda_window_crop**2
 
 
 class photonic_crystal_passive_fibre(bases.fibre_base):

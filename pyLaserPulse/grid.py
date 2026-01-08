@@ -201,6 +201,8 @@ class grid:
         self.sim_idx_shift = np.squeeze(np.where(
                 (self.omega_window_shift > omega_min) &
                 (self.omega_window_shift < omega_max_window)))
+        self.sim_idx_mask = np.zeros((self.points), dtype=bool)
+        self.sim_idx_mask[self.sim_idx] = True
 
         # Define the cropped angular frequency windows
         self.omega_window_crop = self.omega_window[self.sim_idx]
@@ -208,6 +210,7 @@ class grid:
             self.omega_window_shift[self.sim_idx]
         self.omega_crop = self.omega[self.sim_idx]
         self.sim_idx_midpoint = np.argmin(np.abs(self.omega_crop - 0))
+        self.crop_points = len(self.sim_idx)
 
         # Define the full and cropped frequency windows
         self.df = self.dOmega / (2 * np.pi)
@@ -264,8 +267,6 @@ class grid:
                            % (2e9 * np.pi * const.c / omega_max_window,
                               2e9 * np.pi * const.c / omega_min))
             print(infostring)
-        
-
 
 
 class grid_from_pyLaserPulse_simulation(grid):
