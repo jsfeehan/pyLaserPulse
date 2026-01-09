@@ -494,6 +494,7 @@ class fibre_base(ABC):
             else:
                 dz, propagated_distance, ufft = self._CQEM(
                     error, dz, propagated_distance, aux_ufft, ufft)
+                ufft *= self.grid.gobbler
             if np.any(np.isnan(ufft)):
                 if sampling:
                     return (np.ones_like(ufft) * np.nan, dz_updated,

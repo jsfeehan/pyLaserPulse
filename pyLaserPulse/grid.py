@@ -175,7 +175,8 @@ class grid:
 
         f_lims = [fmin, fmax_window]
         omega_min = 2 * np.pi * fmin
-        omega_max_window = 2 * np.pi * fmax
+        omega_max = 2 * np.pi * fmax
+        omega_max_window = 2 * np.pi * fmax_window
 
         f_lims = [f_lim - const.c / self.lambda_c for f_lim in f_lims]
         self.f_range = max(f_lims) - min(f_lims)  # CHECK THIS AGAINST F_WINDOW
@@ -232,6 +233,11 @@ class grid:
         self.energy_window_shift_crop = np.fft.fftshift(
                 self.energy_window_crop)
 
+        self.gobbler = self._planck(
+                self.omega_window, omega_min/2, omega_min, omega_max,
+                omega_max_window)
+        self.gobbler = np.fft.fftshift(self.gobbler)
+
         if self.verbose:
             infostring = '\nGrid parameters:'
             infostring += '\n' + '-' * len(infostring)
@@ -267,6 +273,68 @@ class grid:
                            % (2e9 * np.pi * const.c / omega_max_window,
                               2e9 * np.pi * const.c / omega_min))
             print(infostring)
+
+    def _planck(self, x, l0, l1, r1, r0):
+        """
+        Define a Planck window for apodization.
+
+        Parameters
+        ----------
+        x : numpy array
+            Axis over which the window is defined.
+        l0 : float
+            The window hits zero to the left at this x value. Must be in x.
+        l1 : float
+            The window hits one to the left at this x value. Must be in x.
+        r1 : float
+            The window is one up to this x value. Must be in x.
+        r0 : float
+            The window hits zero to the right at this x value. Must be in x.
+
+        Returns
+        -------
+        numpy array
+
+        Notes
+        -----
+        Followed example in Luna software by LupoLab.
+        """
+        x0 = (r0 + l0) / 2
+        xc = x - x0
+        X = r0 - l0
+        epsl = np.abs(l1 - l0) / X
+        epsr = np.abs(r0 - r1) / X
+        x1 = -X / 2
+        x2 = -X / 2 * (1 - 2*epsl)
+        x3 = X / 2 * (1 - 2*epsr)
+        x4 = X / 2
+        return self._taper(xc, x1, x2, x3, x4)
+
+    def _taper(self, xc, x1, x2, x3, x4):
+        """
+        Creates a tapered function. Parameters are to be defined using
+        grid._planck.
+
+        Returns
+        -------
+        numpy array
+
+        Notes
+        -----
+        Followed example in Luna software by LupoLab.
+        """
+        z12 = (x2 - x1) / (xc - x1) + (x2 - x1) / (xc - x2)
+        z34 = (x3 - x4) / (xc - x3) + (x3 - x4) / (xc - x4)
+
+        taper = np.ones((self.points))
+
+        taper[np.where(xc < x2)] = 1 / (1 + np.exp(z12[xc < x2]))
+        taper[np.where(xc > x3)] = 1 / (1 + np.exp(z34[xc > x3]))
+        taper[np.where(xc < x1)] = 0
+        taper[np.where(xc > x4)] = 0
+
+        return taper
+
 
 
 class grid_from_pyLaserPulse_simulation(grid):
@@ -352,10 +420,9 @@ class grid_from_pyLaserPulse_simulation(grid):
 
 
 if __name__ == "__main__":
-    g = grid(1000e-9, (100e-9, 1200e-9), 12.5e-12)
+    g = grid(1050e-9, (500e-9, 1700e-9), 10e-12)
     import matplotlib.pyplot as plt
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(1e-12 * g.f_window, 1e9 * g.lambda_window)
-    ax.plot(1e-12 * g.f_window_crop, 1e9 * g.lambda_window_crop, ls='--')
+    plt.plot(g.omega, np.fft.ifftshift(g.gobbler))
     plt.show()
