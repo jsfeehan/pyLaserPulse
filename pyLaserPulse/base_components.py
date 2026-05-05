@@ -435,8 +435,8 @@ class step_index_active_fibre(
                     self.core_ASE_ref_index, self.core_ASE_cladding_ref_index,
                     self.core_diam)
             self.core_ASE_overlaps = \
-                self.get_overlaps_core_light(
-                    self.co_core_ASE.points, self.co_core_ASE.lambda_window,
+                self.get_overlaps_pump_core_light(
+                    self.co_core_ASE.lambda_window,
                     self.core_ASE_effective_MFD)
 
     @staticmethod
@@ -664,8 +664,8 @@ class photonic_crystal_active_fibre(
             # self.co_core_ASE.lambda_window, self.core_ASE_ref_index,
             # self.core_ASE_cladding_ref_index, self.core_diam)
             self.core_ASE_overlaps = \
-                self.get_overlaps_core_light(
-                    self.co_core_ASE.points, self.co_core_ASE.lambda_window,
+                self.get_overlaps_pump_core_light(
+                    self.co_core_ASE.lambda_window,
                     self.core_ASE_effective_MFD)
 
     @staticmethod

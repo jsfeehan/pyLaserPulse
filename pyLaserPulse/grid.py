@@ -375,7 +375,7 @@ class grid_from_pyLaserPulse_simulation(grid):
 
 
 if __name__ == "__main__":
-    g = grid(1050e-9, (800e-9, 1200e-9), 10e-12)
+    g = grid(1050e-9, (101e-9, 1760e-9), 15e-12)
     print(g.lambda_min, g.lambda_max)
     import matplotlib.pyplot as plt
     fig = plt.figure()

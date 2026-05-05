@@ -200,6 +200,10 @@ class fibre_base(ABC):
         p_II = self.Petermann_II(self.V)
         self.effective_MFD = np.zeros((self.grid.points))
         self.effective_MFD[self.grid.sim_idx] = self.core_diam * p_II
+        self.effective_MFD[0:self.grid.sim_idx.min()] =\
+                self.effective_MFD[self.grid.sim_idx.min()]
+        self.effective_MFD[self.grid.sim_idx.max()::] =\
+                self.effective_MFD[self.grid.sim_idx.max()]
         self.signal_mode_area = np.pi * (self.effective_MFD / 2)**2
         self.gamma = self.n2 * (2 * np.pi / self.grid.lambda_c) \
             / self.signal_mode_area[self.grid.sim_idx]
@@ -763,11 +767,11 @@ class active_fibre_base(ABC):
 
         # Overridden by optical assemblies, but still required if the optical
         # assemblies module is not used.
-        self.verbose = verbose 
+        self.verbose = verbose
 
         # Determine signal overlaps
-        self.signal_overlaps = self.get_overlaps_core_light(
-            self.grid.points, self.grid.lambda_window, self.effective_MFD)
+        self.signal_overlaps = self.get_overlaps_signal_core_light(
+            self.grid.lambda_window_crop, self.effective_MFD)
         self.signal_overlaps = utils.fftshift(self.signal_overlaps)
 
         # Determine pump overlaps
@@ -792,9 +796,8 @@ class active_fibre_base(ABC):
                 self.core_ASE_ref_index = self.core_ASE_cladding_ref_index \
                     + self.delta_n
         else:
-            self.pump_overlaps = self.get_overlaps_core_light(
-                self.pump.points, self.pump.lambda_window,
-                self.pump_effective_MFD)
+            self.pump_overlaps = self.get_overlaps_pump_core_light(
+                self.pump.lambda_window, self.pump_effective_MFD)
 
         self._precalculate_propagation_values()
 
@@ -945,15 +948,13 @@ class active_fibre_base(ABC):
         """
         raise NotImplementedError()
 
-    def get_overlaps_core_light(self, points, lambda_window, MFD):
+    def get_overlaps_pump_core_light(self, lambda_window, MFD):
         """
-        Calculate the overlap integrals for pump, ASE, or signal with the doped
-        core. Assumes infinite rotational symmetry.
+        Calculate the overlap integrals for pump or ASE with the doped core.
+        Assumes infinite rotational symmetry.
 
         Parameters
         ----------
-        points : int
-            Number of grid points.
         lambda_window : numpy array
             Wavelength window in m. Recommend using grid.lambda_window.
         MFD : numpy array
@@ -972,11 +973,11 @@ class active_fibre_base(ABC):
         x_points = 512  # number of spatial grid points
         w_points = None  # number of frequency grid points
         decimate = False
-        if points > 128:
-            w_points = 128
+        if len(lambda_window) > 2048:
+            w_points = 2048
             decimate = True
         else:
-            w_points = points
+            w_points = len(lambda_window)  # points
         dx = 2 * self.pump_core_diam / x_points
 
         x_axis = dx * np.linspace(0, x_points - 1, x_points)
@@ -989,7 +990,7 @@ class active_fibre_base(ABC):
         overlaps = None
         if decimate:  # Calculate MFD with low resolution and interpolate.
             indices = np.linspace(0, w_points - 1, w_points, dtype=int) \
-                * int(points / w_points)
+                * int(len(lambda_window) / w_points)  # points / w_points)
             decimated_lambda_window = lambda_window[indices]
             decimated_MFD = MFD[indices][None, :].repeat(x_points, axis=0)
             decimated_overlaps = np.zeros((x_points, w_points))
@@ -1007,6 +1008,64 @@ class active_fibre_base(ABC):
             mode_profile = np.exp(-1 * x_axis**2 / (tiled_MFD / 2)**2)
             mode_profile /= np.sum(mode_profile, axis=0)
             overlaps = np.sum(mode_profile * fibre_profile, axis=0)
+        return overlaps
+
+    def get_overlaps_signal_core_light(self, lambda_window_crop, MFD):
+        """
+        Calculate the overlap integrals for signal with the doped core.
+        Assumes infinite rotational symmetry.
+
+        Parameters
+        ----------
+        points : int
+            Number of grid points.
+        lambda_window_crop : numpy array
+            Wavelength window relevant to the simulation in m.
+            Recommend using grid.lambda_window_crop.
+        MFD : numpy array
+            Mode field diameter as a function of lambda_window
+
+        Returns
+        -------
+        numpy array
+            Overlap integral as a function of lambda_window.
+        """
+        # Limit the size of the MFD calculation by decimating if the number of
+        # grid points is >= 512. This is necessary because the mode profile
+        # needs to be calculated for all wavelengths, which is resource heavy
+        # for large grid sizes. Interpolation is accurate because the MFD is
+        # a slowly-varying function of wavelength.
+        x_points = 512  # number of spatial grid points
+        w_points = len(self.grid.sim_idx)  # number of frequency grid points
+        dx = 2 * self.pump_core_diam / x_points
+
+        x_axis = dx * np.linspace(0, x_points - 1, x_points)
+        x_axis = x_axis[:, None].repeat(w_points, axis=1)
+        dx = np.gradient(x_axis, axis=0)
+        fibre_profile = np.zeros((x_points, w_points))
+        fibre_profile[np.abs(x_axis) < (self.core_diam / 2)] = 1
+
+        _MFD = MFD[self.grid.sim_idx][None, :].repeat(x_points, axis=0)
+        _overlaps = np.zeros((x_points, w_points))
+
+        # Field; no factor of 2log(2) required for spatial distribution
+        mode_profile = np.exp(-1 * x_axis**2 / (_MFD / 2)**2)
+        mode_profile /= np.sum(mode_profile, axis=0)
+        _overlaps = np.sum(mode_profile * fibre_profile, axis=0)
+        _overlaps = interp.interp1d(
+                self.grid.lambda_window_crop, _overlaps,
+                fill_value='extrapolate', kind='quadratic')
+        _overlaps = _overlaps(self.grid.lambda_window_crop)
+        overlaps = np.zeros((self.grid.points))
+        overlaps[self.grid.sim_idx] = _overlaps
+        overlaps[0:self.grid.sim_idx.min()] = _overlaps[0]
+        overlaps[self.grid.sim_idx.max()::] = _overlaps[-1]
+
+        #import matplotlib.pyplot as plt
+        #fig = plt.figure()
+        #ax = fig.add_subplot(111)
+        #ax.plot(self.grid.lambda_window, overlaps)
+        #plt.show()
         return overlaps
 
     def _get_cladding_light_overlap_and_effective_area(self, lambda_c, points):
