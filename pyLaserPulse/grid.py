@@ -175,11 +175,10 @@ class grid:
 
         f_lims = [fmin, fmax_window]
         omega_min = 2 * np.pi * fmin
-        omega_max = 2 * np.pi * fmax
         omega_max_window = 2 * np.pi * fmax_window
 
         f_lims = [f_lim - const.c / self.lambda_c for f_lim in f_lims]
-        self.f_range = max(f_lims) - min(f_lims)  # CHECK THIS AGAINST F_WINDOW
+        self.f_range = max(f_lims) - min(f_lims)
         self.dt = 1 / (2 * np.amax(f_lims))
         self.FFT_scale = ((2 * np.pi)**0.5) / self.dt
 

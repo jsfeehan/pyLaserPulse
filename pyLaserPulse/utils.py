@@ -274,6 +274,10 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
 
     Notes
     -----
+    If the emission and absorption data is not zero at the edges of the
+    simulation window, then extrapolation to the edges is exponential with a
+    gradient given by the gradient at the edges of the raw data.
+
     Expects three-column text file of data formatted as follows:
         Wavelength delimiter Emission delimiter Absorption
     """
@@ -284,9 +288,9 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
     min_wl = data[:, 0].min()
     max_wl = data[:, 0].max()
     absorption_func = interp1d(data[:, 0], data[:, 2], kind=interp_kind,
-                               fill_value=0, bounds_error=False)  # 'extrapolate')
+                               fill_value=0, bounds_error=False)
     emission_func = interp1d(data[:, 0], data[:, 1], kind=interp_kind,
-                             fill_value=0, bounds_error=False)  # 'extrapolate')
+                             fill_value=0, bounds_error=False)
     absorption = absorption_func(axis)
     emission = emission_func(axis)
 
@@ -300,17 +304,13 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
     log_abs = np.log(absorption)
     log_ems = np.log(emission)
 
-    #import matplotlib.pyplot as plt
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111)
-    #ax.plot(axis, log_abs)
-    #ax.plot(axis, log_ems)
-
     # Get log raw data
     log_raw_abs = np.log(data[:, 2])
     log_raw_ems = np.log(data[:, 1])
 
     # Get gradient at the extremes (as average over 5 points)
+    # right and left are swapped because the grid is defined for frequency
+    # and not wavelength (i.e., wavelength axis is in reverse).
     dlog_raw_abs_r = np.average(np.gradient(log_raw_abs, data[:, 0])[0:19])
     dlog_raw_abs_l = np.average(np.gradient(log_raw_abs, data[:, 0])[-21:-1])
     dlog_raw_ems_r = np.average(np.gradient(log_raw_ems, data[:, 0])[0:19])
@@ -324,38 +324,28 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
     log_ems_y_l = int(np.amin(indices[emission > 0]))
     log_ems_y_r = int(np.amax(indices[emission > 0]))
 
+    # Define linear function (log scale)
     log_line_abs_l = dlog_raw_abs_l * axis
     log_line_abs_r = dlog_raw_abs_r * axis
     log_line_ems_l = dlog_raw_ems_l * axis
     log_line_ems_r = dlog_raw_ems_r * axis
 
+    # Get the linear function to match the interpolated data at the wings
+    # log scale.
     log_line_abs_l -= log_line_abs_l[log_abs_y_l] - log_abs[log_abs_y_l]
     log_line_abs_r -= log_line_abs_r[log_abs_y_r] - log_abs[log_abs_y_r]
     log_line_ems_l -= log_line_ems_l[log_ems_y_l] - log_ems[log_ems_y_l]
     log_line_ems_r -= log_line_ems_r[log_ems_y_r] - log_ems[log_ems_y_r]
 
+    # Include the linear function in the interpolated (log scale) data.
     log_abs[0:log_abs_y_l] = log_line_abs_l[0:log_abs_y_l]
     log_abs[log_abs_y_r::] = log_line_abs_r[log_abs_y_r::]
     log_ems[0:log_ems_y_l] = log_line_ems_l[0:log_ems_y_l]
     log_ems[log_ems_y_r::] = log_line_ems_r[log_ems_y_r::]
 
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111)
-    #ax.plot(axis, log_line_abs_l, c='k')
-    #ax.plot(axis, log_line_abs_r, c='r')
-    #ax.plot(axis, log_line_ems_l, c='k', ls='--')
-    #ax.plot(axis, log_line_ems_r, c='r', ls='--')
-    #ax.legend(['log_line_abs_l', 'log_line_abs_r', 'log_line_ems_l', 'log_line_ems_r'])
-
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111)
-    #ax.plot(axis, log_abs, c='k')
-    #ax.plot(axis, log_ems, c='r', ls='--')
-    #ax.plot(data[:,0], log_raw_abs, c='darkorange', ls='--')
-    #ax.plot(data[:,0], log_raw_ems, c='k', ls='--')
-    #ax.legend(['log abs', 'log ems', 'log raw abs', 'log raw ems'])
-    #plt.show()
-
+    # Convert back to linear units and neglect exploding data for lambda < 0
+    # (occurs with very large frequency grids or, equivalently, fine temporal
+    # grids).
     absorption[axis > 0] = np.exp(log_abs[axis > 0])
     emission[axis > 0] = np.exp(log_ems[axis > 0])
     absorption[axis < 0] = 0
