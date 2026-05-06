@@ -715,12 +715,14 @@ class active_fibre_base(ABC):
         self.signal_emission_cs \
             = utils.fftshift(self.signal_emission_cs)
 
-        # Sort wavelength limits from grid OR cross-section file.
+        # Sort wavelength limits from total grid OR cropped grid
         # Used for plots.
         self.wl_lims = \
-            [wl_lims[0] if wl_lims[0] > self.grid.lambda_window.min()
+            [self.grid.lambda_window_crop.min() if
+             self.grid.lambda_window_crop.min() > self.grid.lambda_window.min()
              else self.grid.lambda_window.min(),
-             wl_lims[1] if wl_lims[1] < self.grid.lambda_window.max()
+             self.grid.lambda_window_crop.max() if
+             self.grid.lambda_window_crop.max() < self.grid.lambda_window.max()
              else self.grid.lambda_window.max()]
 
         # Sort out pump(s) for appropriate geometry (determined by contents of

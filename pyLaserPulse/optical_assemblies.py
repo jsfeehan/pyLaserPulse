@@ -276,6 +276,8 @@ class assembly(ABC):
         ax.set_ylabel(r'$\lambda (T)$, nm')
         ax.set_xlim([1e12 * self.grid.time_window.min(),
                      1e12 * self.grid.time_window.max()])
+        ax.set_ylim([1e9 * self.grid.lambda_window_crop.min(),
+                     1e9 * self.grid.lambda_window_crop.max()])
         fmt = []
         self.plot_dict[self.name + ': pulse chirps'] = (ax, fmt)
 
@@ -362,8 +364,10 @@ class assembly(ABC):
         pulse.get_ESD_and_PSD_from_high_res_field_samples(self.grid)
 
         Y = np.cumsum(pulse.high_res_field_sample_points)
-        if self.grid.points >= 512:
-            d = int(self.grid.points / 512)
+
+        d = 1
+        if self.grid.points >= 2048:
+            d = int(self.grid.points / 2048)
 
         fig = Figure()
         ax = fig.add_subplot(111)
@@ -372,7 +376,8 @@ class assembly(ABC):
         vmin = np.min(np.max(time_samples, axis=0))
         p = ax.pcolormesh(
             1e12 * self.grid.time_window[::d], Y, time_samples[:, ::d],
-            cmap='cubehelix_r', norm=LogNorm(vmin=vmin, vmax=vmax))
+            cmap='cubehelix_r', norm=LogNorm(vmin=vmin, vmax=vmax),
+            shading='nearest')
         ax.set_xlabel(r'$T = t - z/v_{g}$, ps')
         ax.set_ylabel(r'Propagated distance, m')
 
@@ -388,12 +393,17 @@ class assembly(ABC):
                      + ' (neglects light outside of grid.time_window)')
         vmax = pulse.high_res_PSD_samples.max()
         vmin = np.min(np.max(pulse.high_res_PSD_samples, axis=0))
+        X = 1e9 * self.grid.lambda_window[::d]
+        idx_sort = np.argsort(X)
+        X = X[idx_sort]
+        C = pulse.high_res_PSD_samples[:, ::d][:, idx_sort]
         p = ax.pcolormesh(
-            1e9 * self.grid.lambda_window[::d], Y,
-            pulse.high_res_PSD_samples[:, ::d], cmap='cubehelix_r',
-            norm=LogNorm(vmin=vmin, vmax=vmax))
+            X, Y, C, cmap='cubehelix_r',
+            norm=LogNorm(vmin=vmin, vmax=vmax), shading='nearest')
         ax.set_xlabel(r'$\lambda$, nm')
         ax.set_ylabel(r'Propagated distance, m')
+        ax.set_xlim([self.grid.lambda_window_crop.min() * 1e9,
+                     self.grid.lambda_window_crop.max() * 1e9])
 
         ax.p = p  # MUST be used for pcolormesh
         ax.colorbar_label = 'PSD, dBm/nm'
@@ -1258,8 +1268,8 @@ class sm_fibre_amplifier(assembly):
                     self.grid.lambda_window, s, rep_rate)[1]
 
         d = 1
-        if self.grid.points >= 512:
-            d = int(self.grid.points / 512)
+        if self.grid.points >= 2048:
+            d = int(self.grid.points / 2048)
 
         Y = np.cumsum(self.gain_fibre.dz_samples)
 
@@ -1272,12 +1282,17 @@ class sm_fibre_amplifier(assembly):
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Co light, gain fibre')
+        X = 1e9 * self.grid.lambda_window[::d]
+        idx_sort = np.argsort(X)
+        X = X[idx_sort]
+        C = 10 * np.log10(self.net_co_PSD_samples[:, ::d][:, idx_sort])
         p = ax.pcolormesh(
-            1e9 * self.grid.lambda_window[::d], Y,
-            10 * np.log10(self.net_co_PSD_samples[:, ::d]),
-            cmap='cubehelix_r', norm=norm)
+            X, Y, C, cmap='cubehelix_r',
+            norm=norm, shading='nearest')
         ax.set_xlabel('Wavelength, nm')
         ax.set_ylabel('Position along the gain fibre, m')
+        ax.set_xlim([self.grid.lambda_window_crop.min() * 1e9,
+                     self.grid.lambda_window_crop.max() * 1e9])
 
         ax.p = p  # MUST be used for pcolormesh
         ax.colorbar_label = 'PSD, dBm/nm'
@@ -1289,12 +1304,17 @@ class sm_fibre_amplifier(assembly):
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Counter light, gain fibre')
+        X = 1e9 * self.grid.lambda_window[::d]
+        idx_sort = np.argsort(X)
+        X = X[idx_sort]
+        C = 10 * np.log10(self.net_counter_PSD_samples[:, ::d][:, idx_sort])
         p = ax.pcolormesh(
-            1e9 * self.grid.lambda_window[::d], Y[::-1],
-            10 * np.log10(self.net_counter_PSD_samples[::-1, ::d]),
-            cmap='cubehelix_r', norm=norm)
+            X, Y, C, cmap='cubehelix_r',
+            norm=norm, shading='nearest')
         ax.set_xlabel('Wavelength, nm')
         ax.set_ylabel('Position along the gain fibre, m')
+        ax.set_xlim([self.grid.lambda_window_crop.min() * 1e9,
+                     self.grid.lambda_window_crop.max() * 1e9])
 
         ax.p = p
         ax.colorbar_label = 'PSD, dBm/nm'
