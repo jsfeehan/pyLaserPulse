@@ -52,9 +52,9 @@ directory = None
 ############################################################
 
 # Time-frequency grid parameters
-points = 2**15        # Number of grid points
-central_wl = 1083e-9  # Central wavelength, m
-max_wl = 1150e-9      # Maximum wavelength, m
+central_wl = 1083e-9         # Central wavelength, m
+wl_lims = [900e-9, 1300e-9]  # Wavelength limits, m (for plots, mostly)
+t_span = 500e-12             # Minimum time window width, s
 
 # Laser pulse parameters
 tau = 3e-12             # Pulse duration, s
@@ -68,7 +68,7 @@ shape = 'Gauss'
 #        Instantiate the time-frequency grid and pulse       #
 ##############################################################
 # Time-frequency grid defined using the grid module
-g = grid.grid(points, central_wl, max_wl)
+g = grid.grid(central_wl, wl_lims, t_span)
 
 # pulse defined using the pulse module.
 # Print some useful data to the terminal
@@ -104,7 +104,7 @@ pm_pigtail = pf.PM980_XP(g, 0.3, tol)
 dc_pm_pigtail = pf.Nufern_PM_GDF_5_130(g, 0.3, tol)
 dc_10_125_pm_pigtail = pf.Nufern_PLMA_GDF_10_125_M(g, 0.3, tol)
 dc_25_250_pm_pigtail = pf.Nufern_PLMA_GDF_25_250(g, 0.3, tol)
-num_samples = 10  # num field samples per component
+num_samples = None  # 10  # num field samples per component
 
 
 ######################################################################

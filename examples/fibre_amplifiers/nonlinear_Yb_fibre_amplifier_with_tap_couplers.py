@@ -31,9 +31,9 @@ directory = None
 ############################################################
 
 # Time-frequency grid parameters
-points = 2**9         # Number of grid points
-central_wl = 1030e-9  # Central wavelength, m
-max_wl = 1200e-9      # Maximum wavelength, m
+central_wl = 1030e-9         # Central wavelength, m
+wl_lims = [900e-9, 1300e-9]  # Wavelength limits, m (for plots)
+time_window_size = 5e-12     # Minimum width of the time window, s
 
 # Laser pulse parameters
 tau = 150e-15         # Pulse duration, s
@@ -46,9 +46,9 @@ L_in = 0.2       # input fibre length, m
 L_out = 0.2      # output fibre length, m
 
 # Yb-fibre parameters
-L = 1                                # length, m
-ase_points = 2**8                    # number of points in pump & ASE grid
-ase_wl_lims = [900e-9, max_wl]       # wavelength limits for ASE grid
+L = 1                                 # length, m
+ase_points = 2**8                     # number of points in pump & ASE grid
+ase_wl_lims = [800e-9, max(wl_lims)]  # wavelength limits for ASE grid
 bounds = {'co_pump_power': 1,            # co-pump power, W
           'co_pump_wavelength': 916e-9,  # co-pump wavelength, m
           'co_pump_bandwidth': 1e-9,     # co-pump bandwidth, m
@@ -59,14 +59,14 @@ bounds = {'co_pump_power': 1,            # co-pump power, W
 ##############################################################
 
 # Time-frequency grid defined using the grid module
-g = grid.grid(points, central_wl, max_wl)
+g = grid.grid(central_wl, wl_lims, time_window_size)
 
 # pulse defined using the pulse module
 p = pulse.pulse(tau, P_peak, shape, f_rep, g, high_res_sampling=True)
 
 # 50:50 splitter based on an off-the-shelf component
 tap = fc.Opneti_1x2_PM_filter_coupler_500mW(
-    g, L_in, L_out, g.lambda_c, split_fraction=0.95)
+    g, L_in, L_out, g.lambda_c, split_fraction=0.5)
 
 # Opneti isolator/WDM hybrid component from the catalogue_components module.
 iso_wdm = fc.Opneti_PM_isolator_WDM_hybrid(g, L_in, L_out, g.lambda_c)

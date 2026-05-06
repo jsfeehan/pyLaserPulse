@@ -29,9 +29,9 @@ directory = None
 ############################################################
 
 # Time-frequency grid parameters
-points = 2**14        # Number of grid points
-central_wl = 1080e-9  # Central wavelength, m
-max_wl = 1160e-9      # Maximum wavelength, m
+central_wl = 1080e-9         # Central wavelength, m
+wl_lims = [900e-9, 1260e-9]  # Wavelength limits, m (for plots)
+t_span = 300e-12              # Minimum time window size, s
 
 # Laser pulse parameters
 tau = 100e-12         # Pulse duration, s
@@ -50,7 +50,7 @@ n2 = 2.19e-20                        # nonlinear index in m/W
 fR = 0.18                            # Raman contribution to nonlinear response
 tol = 1e-5                           # Integration error tolerance
 ase_points = 2**8                    # number of points in pump & ASE grid
-ase_wl_lims = [900e-9, max_wl]       # wavelength limits for ASE grid
+ase_wl_lims = wl_lims                # wavelength limits for ASE grid
 bounds = {'counter_pump_power': 150,          # counter-pump power, W
           'counter_pump_wavelength': 976e-9,  # counter-pump wavelength, m
           'counter_pump_bandwidth': 1e-9}     # counter-pump bandwidth, m
@@ -63,7 +63,7 @@ cladding_pumping = {'pump_core_diam': 400e-6,      # pump core diameter, m
 ##############################################################
 
 # Time-frequency grid defined using the grid module
-g = grid.grid(points, central_wl, max_wl)
+g = grid.grid(central_wl, wl_lims, t_span)
 
 # pulse defined using the pulse module
 p = pulse.pulse(

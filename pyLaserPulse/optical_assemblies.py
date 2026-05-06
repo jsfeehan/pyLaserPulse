@@ -366,8 +366,8 @@ class assembly(ABC):
         Y = np.cumsum(pulse.high_res_field_sample_points)
 
         d = 1
-        if self.grid.points >= 2048:
-            d = int(self.grid.points / 2048)
+        if self.grid.points >= 512:
+            d = int(self.grid.points / 512)
 
         fig = Figure()
         ax = fig.add_subplot(111)
@@ -1268,8 +1268,8 @@ class sm_fibre_amplifier(assembly):
                     self.grid.lambda_window, s, rep_rate)[1]
 
         d = 1
-        if self.grid.points >= 2048:
-            d = int(self.grid.points / 2048)
+        if self.grid.points >= 512:
+            d = int(self.grid.points / 512)
 
         Y = np.cumsum(self.gain_fibre.dz_samples)
 
