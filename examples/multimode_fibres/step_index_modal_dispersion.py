@@ -25,13 +25,12 @@ if __name__ == "__main__":
     ###################################################################
     # Choose the wavelength range and maximum number of modes to find #
     ###################################################################
-    g = grid.grid(1025e-9, (1000e-9, 1055e-9), 1e-12)
-    # g = grid.grid(2**7, 1025e-9, 1055e-9)
+    g = grid.grid(1025e-9, (1000e-9, 1055e-9), 5e-12)
     max_modes = 50
 
     beta = []  # propagation constants
 
-    for i, wavelength in enumerate(g.lambda_window):
+    for i, wavelength in enumerate(g.lambda_window_crop):
 
         ######################################################################
         # Use the Sellmeier equation for the fibre core and cladding indices #
@@ -72,14 +71,14 @@ if __name__ == "__main__":
     ################################################
     # Calculate the group velocity and group index #
     ################################################
-    v_group = 1 / np.gradient(beta, g.omega_window, axis=0)
+    v_group = 1 / np.gradient(beta, g.omega_window_crop, axis=0)
     n_group = const.c / v_group
 
     fig1, ax1 = plt.subplots()
     divider = make_axes_locatable(ax1)
     cax = divider.append_axes('right', size='5%', pad=0.05)
     im1 = ax1.pcolormesh(
-        np.linspace(0, max_l - 1, max_l), g.lambda_window * 1e9, n_group)
+        np.linspace(0, max_l - 1, max_l), g.lambda_window_crop * 1e9, n_group)
     ax1.set_xlabel('Mode number')
     ax1.set_ylabel('Wavelength, nm')
     cbar1 = fig1.colorbar(im1, cax=cax, orientation='vertical')
@@ -94,7 +93,7 @@ if __name__ == "__main__":
             0,
             max_l - 1,
             max_l),
-        g.lambda_window * 1e9,
+        g.lambda_window_crop * 1e9,
         1e-6 * v_group)
     ax2.set_xlabel('Mode number')
     ax2.set_ylabel('Wavelength, nm')
