@@ -79,10 +79,10 @@ def ydfa_sim(_g):
 
 if __name__ == "__main__":
     # Time-frequency grid parameters
-    points = 2**9         # Number of grid points
-    central_wl = 1030e-9  # Central wavelength, m
-    max_wl = 1200e-9      # Maximum wavelength, m
-    g = grid.grid(points, central_wl, max_wl)
+    central_wl = 1030e-9         # Central wavelength of the frequency grid, m
+    wl_lims = (800e-9, 1300e-9)  # Limits of the simulation wavelength grid, m
+    time_span = 5e-12            # Span of the time grid, s
+    g = grid.grid(central_wl, wl_lims, time_span)
 
     num_processes = psutil.cpu_count(logical=False)  # only use physical cores
     num_simulations = 4 * num_processes  # no. of simulations in CFODC ensemble

@@ -254,6 +254,16 @@ class grid:
                      self.sim_idx.max() - len(_faller)] = 1
         self.gobbler = np.fft.fftshift(self.gobbler)
 
+        # Sort wavelength limits from total grid OR cropped grid
+        # Used for plots.
+        self.wl_lims = \
+            [self.lambda_window_crop.min() if
+             self.lambda_window_crop.min() > self.lambda_window.min()
+             else self.lambda_window.min(),
+             self.lambda_window_crop.max() if
+             self.lambda_window_crop.max() < self.lambda_window.max()
+             else self.lambda_window.max()]
+
         if self.verbose:
             infostring = '\nGrid parameters:'
             infostring += '\n' + '-' * len(infostring)

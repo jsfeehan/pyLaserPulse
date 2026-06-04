@@ -25,7 +25,8 @@ if __name__ == "__main__":
     ###################################################################
     # Choose the wavelength range and maximum number of modes to find #
     ###################################################################
-    g = grid.grid(2**7, 1025e-9, 1055e-9)
+    g = grid.grid(1025e-9, (1000e-9, 1055e-9), 1e-12)
+    # g = grid.grid(2**7, 1025e-9, 1055e-9)
     max_modes = 50
 
     beta = []  # propagation constants

@@ -717,13 +717,13 @@ class active_fibre_base(ABC):
 
         # Sort wavelength limits from total grid OR cropped grid
         # Used for plots.
-        self.wl_lims = \
-            [self.grid.lambda_window_crop.min() if
-             self.grid.lambda_window_crop.min() > self.grid.lambda_window.min()
-             else self.grid.lambda_window.min(),
-             self.grid.lambda_window_crop.max() if
-             self.grid.lambda_window_crop.max() < self.grid.lambda_window.max()
-             else self.grid.lambda_window.max()]
+        #self.wl_lims = \
+        #    [self.grid.lambda_window_crop.min() if
+        #     self.grid.lambda_window_crop.min() > self.grid.lambda_window.min()
+        #     else self.grid.lambda_window.min(),
+        #     self.grid.lambda_window_crop.max() if
+        #     self.grid.lambda_window_crop.max() < self.grid.lambda_window.max()
+        #     else self.grid.lambda_window.max()]
 
         # Sort out pump(s) for appropriate geometry (determined by contents of
         # boundary_conditions).
