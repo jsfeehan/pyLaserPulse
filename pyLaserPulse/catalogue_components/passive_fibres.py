@@ -588,6 +588,49 @@ class NKT_SC_5_1040_PM(bc.photonic_crystal_passive_fibre):
             verbose=verbose)
 
 
+class exail_IXF_SUP_5_125_1050_PM(bc.photonic_crystal_passive_fibre):
+    """
+    photonic_crystal_passive_fibre with default parameters which provide
+    fibre properties matching Exail IXF SUP 5/125 1050 PM
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    tol : float
+        Tolerance for propagation integration error
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
+        which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
+
+    Notes
+    -----
+    Published specifications (accessed 5/6/2026):
+    Gamma: ~0.009 -- 0.011 1 / (W m)
+    ZDW: 1045 -- 1055 nm
+    effective area at ZDW: 14 -- 18 square microns
+
+    Returned model parameters:
+    Gamma:  9.643132514383034  1/(W km)
+    ZDW:  1051.138776445429 nm
+    effective area at ZDW:  13.917886321052936 square microns
+    """
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
+        hole_pitch = 3.76e-6
+        hole_diam_over_pitch = 0.585
+        fR = 0.18
+        beat_length = 4.565e-3  # dn = 2.3e-4 is given on spec. sheet. 1050 nm
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, hole_pitch,
+            hole_diam_over_pitch, beat_length, n2, fR, tol,
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
+
+
 class NKT_NL_1050_NEG_1(bc.photonic_crystal_passive_fibre):
     """
     photonic_crystal_passive_fibre with default parameters which provide
@@ -726,3 +769,21 @@ class NKT_DC_200_40_PZ_SI(bc.photonic_crystal_passive_fibre):
         self.core_diam = core_diam
         self.core_radius = core_radius
         self.get_GNLSE_and_birefringence_parameters()  # effective MFD, etc.
+
+
+if __name__ == "__main__":
+    import pyLaserPulse.grid as grid
+    g = grid.grid(1050e-9, (800e-9, 1200e-9), 10e-12)
+    pcf = exail_IXF_SUP_5_125_1050_PM(g, 1, 1e-5)
+    print("Gamma: ", pcf.gamma*1e3, " W/km")
+
+    import pyLaserPulse.utils as ut
+    idx, val = ut.find_nearest(0, pcf.D)
+    print("ZDW: ", g.lambda_window_crop[idx]*1e9)
+    print("effective area: ", pcf.signal_mode_area[idx]*1e12)
+
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(g.lambda_window_crop*1e9, pcf.D)
+    plt.show()
