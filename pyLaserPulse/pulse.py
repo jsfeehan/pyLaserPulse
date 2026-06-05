@@ -202,8 +202,12 @@ class _pulse_base(ABC):
 
         # Shot noise
         A_OPPM = np.zeros((2, grid.points), dtype=np.complex128)
-        A_OPPM[:, grid.sim_idx] = np.sqrt(
-                const.hbar * grid.omega_window_crop / (4 * grid.df))
+        try:
+            A_OPPM[:, grid.sim_idx] = np.sqrt(
+                    const.hbar * grid.omega_window_crop / (4 * grid.df))
+        except AttributeError:  # pulse instantiated with legacy grid
+            A_OPPM = np.sqrt(
+                    const.hbar * grid.omega_window / (4 * grid.df))[None, :].repeat(2, axis=0)
         A_OPPM = A_OPPM * phase
 
         # Need to account for the size of the time window with respect to the
