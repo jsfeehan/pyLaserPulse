@@ -769,21 +769,3 @@ class NKT_DC_200_40_PZ_SI(bc.photonic_crystal_passive_fibre):
         self.core_diam = core_diam
         self.core_radius = core_radius
         self.get_GNLSE_and_birefringence_parameters()  # effective MFD, etc.
-
-
-if __name__ == "__main__":
-    import pyLaserPulse.grid as grid
-    g = grid.grid(1050e-9, (800e-9, 1200e-9), 10e-12)
-    pcf = exail_IXF_SUP_5_125_1050_PM(g, 1, 1e-5)
-    print("Gamma: ", pcf.gamma*1e3, " W/km")
-
-    import pyLaserPulse.utils as ut
-    idx, val = ut.find_nearest(0, pcf.D)
-    print("ZDW: ", g.lambda_window_crop[idx]*1e9)
-    print("effective area: ", pcf.signal_mode_area[idx]*1e12)
-
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(g.lambda_window_crop*1e9, pcf.D)
-    plt.show()
