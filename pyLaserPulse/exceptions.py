@@ -30,3 +30,14 @@ class NanFieldError(Exception):
 class GridDefinitionIncorrectError(Exception):
     """Raised when the grid definition is inappropriate"""
     pass
+
+
+class PulseDecimationError(Exception):
+    """Raised when pulse.interpolate_onto_another_grid is used for decimation"""
+
+
+class GridCentresDonNotMatch(Exception):
+    """
+    Raised when pulse.interpolate_onto_another_grid is used, but the
+    grid central wavelengths don't match
+    """

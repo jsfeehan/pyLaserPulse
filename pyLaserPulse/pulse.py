@@ -13,9 +13,11 @@ import os
 from abc import ABC, abstractmethod
 import numpy as np
 import scipy.constants as const
+from scipy.interpolate import RegularGridInterpolator
 from itertools import combinations
 
 import pyLaserPulse.utils as utils
+import pyLaserPulse.exceptions as excpts
 
 
 def complex_first_order_degree_of_coherence(
@@ -421,6 +423,77 @@ class _pulse_base(ABC):
         self.high_res_field_samples += field_samples
         self.high_res_B_integral_samples += B_samples
         self.high_res_field_sample_points += sample_points
+
+    def interpolate_onto_another_grid(
+            self, old_grid, new_grid, initial_delay=0):
+        """
+        Interpolate pulse data onto a larger grid with the same central
+        wavelength.
+
+        Parameters
+        ----------
+        old_grid : pyLaserPulse.grid.grid
+            grid used to define the pulse
+        new_grid : pyLaserPulse.grid.grid
+            grid onto which the pulse should be interpolated.
+        initial_delay : float
+            Reposition the pulse in the time window. Units of seconds. The new
+            pulse position will be the current pulse position minus this value.
+    
+        Notes
+        -----
+        Decimation (i.e., interpolating onto a more coarse grid or one with
+        fewer points) will result in a runtime error.
+
+        This method is intended for the case where a larger grid is needed later
+        on in the simulation. This may be the case, e.g., with supercontinuum
+        seeded by pulses amplified in fibre, where it would be inefficient to
+        simulate the amplification using a broad, high-resolution grid required
+        for the supercontinuum simulation.
+
+        OPPM noise is added to the field in the regions where
+        new_grid.lambda_window extends beyond old_grid.lambda_window.
+
+        old_grid.lambda_window must be the same as new_grid.lambda_window.
+        """
+        if new_grid.points < old_grid.points:
+            raise excpts.PulseDecimationError(
+                "pulse.interpolate_onto_another_grid is not intended for "
+                "decimation. old_grid.points must be less than "
+                "new_grid.points.")
+        new_field = np.zeros((2, new_grid.points), dtype=np.complex128)
+        
+        for i in range(2):  # Iterate over polarization
+            interper = RegularGridInterpolator(
+                (old_grid.time_window, ), np.squeeze(self.field[i, :]),
+                method='cubic', bounds_error=False, fill_value=0)
+            new_field[i, :] = interper(new_grid.time_window)
+        self.field = new_field
+
+        # filter spectrum outside of old low and high wavelength limits to
+        # remove artefacts from the interpolation within this region
+        # window = np.zeros((new_grid.points))
+        mask = np.ones((new_grid.points), dtype=bool)
+        idx_max, _ = utils.find_nearest(old_grid.lambda_window_crop.min(),
+                                        new_grid.lambda_window)
+        idx_min, _ = utils.find_nearest(old_grid.lambda_window_crop.max(),
+                                        new_grid.lambda_window)
+        mask[idx_min:idx_max] = False
+        mask = utils.fftshift(mask)
+        self.field = utils.fft(self.field, axis=1)
+        self.field[:, mask] = 0
+        self.field = utils.ifft(self.field, axis=1)
+
+        # Recalculate all key data
+        self.add_OPPM_noise(new_grid, topup=True)
+        self.get_ESD_and_PSD(new_grid, self.field)
+        self.get_photon_spectrum(new_grid, self.field)
+        self.get_transform_limit(self.field)
+        self.get_energy_and_average_power(new_grid, self.field)
+
+        # Move the pulse to a new position in the grid.
+        self.initial_delay = initial_delay
+        self._roll_along_time_axis(new_grid)
 
     def save(self, directory):
         """
