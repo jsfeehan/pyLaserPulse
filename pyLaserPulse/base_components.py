@@ -13,6 +13,7 @@ import scipy.optimize as opt
 import scipy.constants as const
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
+from math import factorial
 
 import pyLaserPulse.abstract_bases as bases
 import pyLaserPulse.utils as utils
@@ -1465,8 +1466,8 @@ class grating_compressor(component):
         self.phase_argument = np.zeros_like(self.grid.omega,
                                             dtype=np.complex128)
         for idx, val in enumerate(self.Taylors):
-            self.phase_argument += -1j * val * self.grid.omega**idx \
-                / np.math.factorial(idx)
+            self.phase_argument += (-1j * val * self.grid.omega**idx *
+                                    factorial(idx))
 
         self.phase = np.exp(self.phase_argument)
         self.phase = self.phase[None, :].repeat(2, axis=0)

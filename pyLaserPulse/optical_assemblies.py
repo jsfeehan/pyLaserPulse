@@ -1230,9 +1230,9 @@ class sm_fibre_amplifier(assembly):
             + field_err_ax_max_str + "], 0, " + max_str
             + ", color='darkorange', alpha=0.2, edgecolor=None)",
             "self.fb1, = plotWidget.canvas.axes.fill(" +
-            "np.NaN, np.NaN, 'cornflowerblue', alpha=0.2, label='ESD')",
+            "np.nan, np.nan, 'cornflowerblue', alpha=0.2, label='ESD')",
             "self.fb2, = plotWidget.canvas.axes.fill(" +
-            "np.NaN, np.NaN, 'darkorange', alpha=0.2, label='Field')",
+            "np.nan, np.nan, 'darkorange', alpha=0.2, label='Field')",
             "axes.legend([(self.fb1, ax.get_legend_handles_labels()[0][0])," +
             "(self.fb2, ax.get_legend_handles_labels()[0][1])]," +
             " ['ESD', 'Field'])"]
