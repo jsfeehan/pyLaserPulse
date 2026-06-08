@@ -231,7 +231,22 @@ class assembly(ABC):
                 infostring = '\nSimulating    %s' % self.name
                 infostring += '\n' + '-' * len(infostring)
                 print(infostring)
-            return func(self, pulse)
+
+            # 8/6/2026 -- interpolation onto new grid is now possible.
+            # If this is done, it breaks the old heatmap plots showing pulse
+            # samples vs propagated distance.
+            # New method:
+            # 1) Clear the pulse high-res sampling containers
+            # 2) Propagate
+            # 3) Copy the sampling containers to members of the optical assembly
+            # pulse.reset_high_res_sampling()
+            pulse = func(self, pulse)
+            self.high_res_field_samples = pulse.high_res_field_samples
+            self.high_res_rep_rate_samples = pulse.high_res_rep_rate_samples
+            self.high_res_field_sample_points = pulse.high_res_field_sample_points
+            self.high_res_B_integral_samples = pulse.high_res_B_integral_samples
+            return pulse
+
         return wrapper
 
     def plot_pulse(self, pulse):
@@ -373,7 +388,7 @@ class assembly(ABC):
         ax = fig.add_subplot(111)
         ax.set_title(r'$P(T)$ vs z up to the output of %s' % self.name)
         vmax = time_samples.max()
-        vmin = np.min(np.max(time_samples, axis=0))
+        vmin = 1e-6 * vmax  #np.min(np.max(time_samples, axis=0))
         p = ax.pcolormesh(
             1e12 * self.grid.time_window[::d], Y, time_samples[:, ::d],
             cmap='cubehelix_r', norm=LogNorm(vmin=vmin, vmax=vmax),
@@ -1276,7 +1291,7 @@ class sm_fibre_amplifier(assembly):
                 max(self.net_co_PSD_samples.max(),
                     self.net_counter_PSD_samples.max())),
             decimals=1)
-        norm = Normalize(vmin=-40, vmax=vmax)
+        norm = Normalize(vmin=vmax-60, vmax=vmax)
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Co light, gain fibre')

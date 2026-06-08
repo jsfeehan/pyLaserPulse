@@ -143,6 +143,15 @@ class _pulse_base(ABC):
         self.trans_lim_autocorrelation = None
         self.dz = 1e-9  # Starting propagation step size.
 
+    def reset_high_res_sampling(self):
+        """
+        Reset all the containers for high-res field sampling.
+        """
+        self.high_res_field_samples = []
+        self.high_res_rep_rate_samples = []
+        self.high_res_field_sample_points = []
+        self.high_res_B_integral_samples = []
+
     @abstractmethod
     def make_pulse(self):
         """
