@@ -239,7 +239,7 @@ class assembly(ABC):
             # 1) Clear the pulse high-res sampling containers
             # 2) Propagate
             # 3) Copy the sampling containers to members of the optical assembly
-            # pulse.reset_high_res_sampling()
+            pulse.reset_high_res_sampling()
             pulse = func(self, pulse)
             self.high_res_field_samples = pulse.high_res_field_samples
             self.high_res_rep_rate_samples = pulse.high_res_rep_rate_samples
