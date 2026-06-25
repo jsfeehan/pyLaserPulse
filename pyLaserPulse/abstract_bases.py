@@ -21,6 +21,8 @@ import pyLaserPulse.pump as pmp
 import pyLaserPulse.exceptions as exc
 # import pyLaserPulse.sys_info as si
 
+from math import factorial
+
 
 class fibre_base(ABC):
     """
@@ -2774,7 +2776,7 @@ class component_base(loss_spectrum_base, ABC):
             self.beta_list.insert(0, 0)  # GDM included elsewhere
             for i, b in enumerate(self.beta_list):
                 self.dispersion += \
-                    1j * b * self.grid.omega**i / np.math.factorial(i)
+                    1j * b * self.grid.omega**i / factorial(i)
         self.dispersion = utils.fftshift(self.dispersion)
         self.dispersion = self.dispersion[None, :].repeat(2, axis=0)
 
