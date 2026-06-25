@@ -550,14 +550,3 @@ class _legacy_grid_from_pyLaserPulse_simulation(grid):
             grid_data['points'],
             grid_data['lambda_c'],
             grid_data['lambda_max'])
-
-
-if __name__ == "__main__":
-    g = grid(1050e-9, (101e-9, 1760e-9), 15e-12)
-    print(g.lambda_min, g.lambda_max)
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(g.lambda_window, np.fft.ifftshift(g.gobbler))
-    ax.set_xlim([g.lambda_window_crop.min(), g.lambda_window_crop.max()])
-    plt.show()

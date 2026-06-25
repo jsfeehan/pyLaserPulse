@@ -1466,9 +1466,10 @@ class grating_compressor(component):
         self.phase_argument = np.zeros_like(self.grid.omega,
                                             dtype=np.complex128)
         for idx, val in enumerate(self.Taylors):
-            self.phase_argument += (-1j * val * self.grid.omega**idx *
+            self.phase_argument[self.grid.sim_idx] += (-1j * val * self.grid.omega_crop**idx *
                                     factorial(idx))
 
+        self.phase = np.zeros_like(self.grid.omega, dtype=np.complex128)
         self.phase = np.exp(self.phase_argument)
         self.phase = self.phase[None, :].repeat(2, axis=0)
         self.phase = utils.fftshift(self.phase)
