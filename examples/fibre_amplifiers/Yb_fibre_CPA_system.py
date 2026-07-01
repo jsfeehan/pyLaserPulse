@@ -5,24 +5,23 @@ Simulate a 3-amplifier Yb-doped CPA system using pyLaserPulse.
 
 The seed pulses have a central wavelength of 1083 nm, a repetition rate of 40
 MHz, and are chirped to 3 ps (transform limit of 124 fs). The first component
-is a circulator and CFBG setup which stretches the pulses to ~275 ps FWHM.
-Three amplifiers follow, with an AOM to reduce the repetition rate to 1 MHz
-after the first. Each amplifier is cladding pumped to give the quasi-four-level
-dynamics required for high gain at the seed wavelength. The CFBG dispersion
-Taylor coefficients are calculated from the initial compressor dispersion and
-the net fibre dispersion (note that they are unlikely to be optimal for this
-CPA system).
+is a circulator and CFBG setup which stretches the pulses. Three amplifiers
+follow, with an AOM to reduce the repetition rate to 1 MHz after the first. Each
+amplifier is cladding pumped to give the quasi-four-level dynamics required for
+high gain at the seed wavelength. The CFBG dispersion Taylor coefficients are
+calculated from the initial compressor dispersion and the net fibre dispersion
+(note that they are unlikely to be optimal for this CPA system, but provide a
+reasonable level of compression for the purpose of this example).
 
 This example also shows how co-propagating ASE can be passed from one amplifier
-to the next using the optical_assemblies module and the co_ASE keyword
-argument.
+to the next using the optical_assemblies module and the co_ASE keyword argument.
 
-This simulation takes some time to run. This is because both a broad time and
-frequency grid are required for strongly-chirped femtosecond pulses, and this
-requires a lot of grid points. Additionally, cladding-pumped amplifiers take a
-bit longer to simulate than core-pumped amplifiers because the overlap of the
-pump light with the signal core is calculated using a Bessel mode solver and the
-doped fibres tend to be longer than in core-pumped amplifiers.
+This simulation takes some time to run (hours). This is because both a broad
+time and frequency grid are required for strongly-chirped femtosecond pulses,
+and this requires a lot of grid points. Additionally, cladding-pumped amplifiers
+take a bit longer to simulate than core-pumped amplifiers because the overlap of
+the pump light with the signal core is calculated using a Bessel mode solver and
+the doped fibres tend to be longer than in core-pumped amplifiers.
 
 James Feehan, 19/6/2023
 """
@@ -54,7 +53,7 @@ directory = None
 # Time-frequency grid parameters
 central_wl = 1083e-9         # Central wavelength, m
 wl_lims = [900e-9, 1300e-9]  # Wavelength limits, m (for plots, mostly)
-t_span = 500e-12             # Minimum time window width, s
+t_span = 550e-12             # Minimum time window width, s
 
 # Laser pulse parameters
 tau = 3e-12             # Pulse duration, s
@@ -66,7 +65,7 @@ shape = 'Gauss'
 
 ##############################################################
 #        Instantiate the time-frequency grid and pulse       #
-##############################################################
+##############################################################``
 # Time-frequency grid defined using the grid module
 g = grid.grid(central_wl, wl_lims, t_span)
 
@@ -104,7 +103,7 @@ pm_pigtail = pf.PM980_XP(g, 0.3, tol)
 dc_pm_pigtail = pf.Nufern_PM_GDF_5_130(g, 0.3, tol)
 dc_10_125_pm_pigtail = pf.Nufern_PLMA_GDF_10_125_M(g, 0.3, tol)
 dc_25_250_pm_pigtail = pf.Nufern_PLMA_GDF_25_250(g, 0.3, tol)
-num_samples = None  # 10  # num field samples per component
+num_samples = 50  # num field samples per component
 
 
 ######################################################################
@@ -112,19 +111,21 @@ num_samples = None  # 10  # num field samples per component
 ######################################################################
 circulator_1_to_2 = base_components.fibre_component(
     g, pm_pigtail, pm_pigtail, 0.2, 100e-9, g.lambda_c, 0.1, 0, 0, crosstalk)
+
 # CFBG dispersion calculated by adding the compressor dispersion and total fibre
-# dispersion and then multiplying by -1.
+# dispersion and then multiplying by -1. These are NOT optimized, but result in
+# a reasonable compression quality as a demonstration.
 beta_2 = -1 * ps**2 * (
-    0.045 + 0.058 + 0.028 + 0.0043 + 0.12 + 0.047 + 0.072 - 13.53)
+    0.045 + 0.058 + 0.028 + 0.0043 + 0.12 + 0.047 + 0.072 - 6.023)
 beta_3 = -1 * ps**3 * (
     6.26e-5 + 7.02e-5 + 7.8e-5 + 1.43e-5 + 1.46e-4 + 1.3e-4 + 2.39e-4
-    + 0.0582)
+    + 0.01175)
 beta_4 = -1 * ps**4 * (
     -1.48e-5 - 1.338e-5 + 0.995e-6 - 1.526e-6 - 2.788e-5 + 1.659e-6 - 2.54e-5
-    - 3.53e-4)
+    - 1.308e-4)
 beta_5 = -1 * ps**5 * (
     1.283e-8 + 1.16e-8 - 7.8e-10 + 1.33e-9 + 2.419e-8 - 1.3e-9 + 2.217e-8
-    + 3.04e-6)
+    + 1.027e-6)
 cfbg = base_components.fibre_component(
     g, pm_pigtail, pm_pigtail, 0.4, 50e-9, g.lambda_c, 1, 0, 0, crosstalk,
     order=5, beta_list=[beta_2, beta_3, beta_4, beta_5])
@@ -146,7 +147,7 @@ time_gate = 20e-9
 new_rep_rate = 1e6
 reduction = int(p.repetition_rate / new_rep_rate)
 aom_loss = 10**-0.35  # 3.5 dB insertion loss
-aom_bw = 60e-9  # transmission bandwidth
+aom_bw = 60e-9        # transmission bandwidth
 per = 0.1
 theta = 0
 beamsplitting = 0
@@ -180,7 +181,7 @@ ydf2 = af.Nufern_PLMA_YDF_10_125_M(
 bp2 = base_components.fibre_component(
     g, dc_10_125_pm_pigtail, dc_10_125_pm_pigtail, 0.2, 40e-9, g.lambda_c, 1,
     0, 0, crosstalk, order=4)
-components2 = [iso1, combiner2, ydf2, bp2]  # , aom]
+components2 = [iso1, combiner2, ydf2, bp2]
 amp_2 = optical_assemblies.sm_fibre_amplifier(
     g, components2, high_res_sampling=num_samples, plot=True,
     data_directory=directory, name='amp 2',
@@ -225,7 +226,7 @@ theta = 0              # Jones parameter for angle subtended by x-axis
 beamsplitting = 0      # Useful for output couplers, etc.
 l_mm = 1200            # grating lines per mm
 sep_initial = 90e-2    # initial guess for grating separation
-angle_initial = 0.7   # initial guess for incidence angle, rad
+angle_initial = 0.7    # initial guess for incidence angle, rad
 gc = base_components.grating_compressor(
     loss, transmission, coating, g.lambda_c, epsilon, theta, beamsplitting,
     crosstalk, sep_initial, angle_initial, l_mm, g, order=5, optimize=True)
