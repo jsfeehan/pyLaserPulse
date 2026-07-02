@@ -13,7 +13,8 @@ import numpy as np
 import math
 from scipy.interpolate import interp1d
 import scipy.constants as const
-import scipy.optimize as opt
+# import scipy.optimize as opt
+from math import factorial
 
 
 fft = np.fft.fft
@@ -589,6 +590,37 @@ def PCF_propagation_parameters_K_Saitoh(
         beta_2 = f(lambda_window_crop)
     return V, ref_index, D, beta_2
 
+
+def Taylor_coefficients(function, N, pad=0):
+    """
+    Retrieve the first N Taylor coefficients of function.
+
+    Patameters
+    ----------
+    function : a python function or method.
+        Must accept as an argument an array representing the domain over which
+        function is defined. E.g., if function calculates beta_2(omega), then
+        function must accept numpy array omega as its argument.
+    N : int
+        Highest-order coefficient to retrieve.
+    pad : int
+        Number of zeros to prepend to the Taylor coeffients. This should be used
+        if, for example, the Taylor expansion starts from beta_2 (as is usually
+        the case for dispersion approximations), in which case pad should equal
+        2. This would result in [beta_2, beta_3, ..., beta_(n+2)] being
+        transformed to [0, 0, beta_2, beta_3, ..., beta_(n+2)].
+
+    Returns
+    -------
+    Taylor_coefficients : list
+        The Taylor coefficients best representing function.
+    """
+    x = np.arange(N)
+    arg = function(np.exp(2j * np.pi * x / N))
+    TC = fft(arg).real / N
+    TC = np.pad(TC, (pad, 0), 'constant')
+    TC = [tc * factorial(i) for i, tc in enumerate(TC)]
+    return TC
 
 def Taylor_expansion(coeffs, axis, axis_centre=0):
     """
