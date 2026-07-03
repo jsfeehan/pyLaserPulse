@@ -24,34 +24,94 @@ import pyLaserPulse.utils as ut
 import matplotlib.pyplot as plt
 import numpy as np
 from math import factorial
+from scipy.signal import savgol_filter
 
-g = grid.grid(800e-9, (500e-9, 1500e-9), 10e-12)
+
+def FT_grad(axis, arr):  # , order=1):
+    # return ut.fft((-1j * ut.fftshift(axis))**order * ut.ifft(arr)).real
+    return ut.fft(-1j * ut.fftshift(axis) * ut.ifft(arr)).real
+
+
+# g = grid.grid(800e-9, (500e-9, 1500e-9), 10e-12)
+g = grid.grid(1040e-9, (1000e-9, 1300e-9), 10e-12)
 p = pulse.pulse(100e-15, [1, 0], 'Gauss', 40e6, g)
 
 
 smf = pf.PM980_XP(g, 1, 1e-5)
+betas = []
+betas.append(smf.beta_2[g.midpoint])
+# b = FT_grad(g.time_window, smf.beta_2)
+b = savgol_filter(smf.beta_2, window_length=110, polyorder=2, deriv=1, delta=g.dOmega)
+# b = np.gradient(smf.beta_2, g.dOmega, edge_order=2)
+for i in range(10):
+    betas.append(b[int(len(b)/2)])
+    b = savgol_filter(b, window_length=110, polyorder=2, deriv=1, delta=g.dOmega)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(b)
+    plt.show()
+    print(b[int(len(b)/2)])
+    # betas.append(FT_grad(g.time_window, smf.beta_2, order=i)[g.midpoint])
+    # betas.append(FT_grad(g.time_window, smf.beta_2, order=i)[g.midpoint])
 
-# smf.get_Taylors(5)
 
-Taylors = [-11.83 * 1e-12**2 / 1e3,
-           8.1038e-2 * 1e-12**3 / 1e3,
-           -9.5205e-5 * 1e-12**4 / 1e3,
-           2.0737e-7 * 1e-12**5 / 1e3,
-           -5.3943e-10 * 1e-12**6 / 1e3,
-           1.3486e-12 * 1e-12**7 / 1e3,
-           -2.5494e-15 * 1e-12**8 / 1e3,
-           3.0524e-18 * 1e-12**9 / 1e3,
-           -1.714e-21 * 1e-12**10 / 1e3]
 
-beta_2 = ut.Taylor_expansion(Taylors, g.omega_crop)
-import scipy.constants as const
-D = -2 * np.pi * const.c  * beta_2 / g.lambda_window_crop**2
 
+# betas.append(smf.beta_2[g.midpoint])
+# # print(betas)
+# b3 = np.gradient(smf.beta_2, g.dOmega)[g.midpoint]
+# # print(b3)
+# betas.append(b3)
+# b4 = np.gradient(np.gradient(smf.beta_2, g.dOmega), g.dOmega)[g.midpoint]
+# betas.append(b4)
+
+# betas = []
+# betas.append(smf.beta_2[g.midpoint])  # beta 2 added OUT of loop
+# b = FT_grad(g.time_window, smf.beta_2)
+# for i in range(1):
+#     betas.append(np.abs(b[g.midpoint]))
+#     b = FT_grad(g.time_window, b)
+
+
+
+print(betas)
+
+
+beta_2_reconstruction = np.zeros((g.points))
+for i, TC in enumerate(betas):
+    print(i, TC)
+    beta_2_reconstruction += TC * g.omega**(i) / factorial(i)
+
+# beta_2_reconstruction = ut.Taylor_expansion(betas, g.omega)
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
-ax.plot(g.lambda_window_crop, D* 1e6)  # beta_2 / (1e-24 / 1e3))
+ax.plot(g.lambda_window*1e9, smf.beta_2, c='k', lw=2)
+ax.plot(g.lambda_window*1e9, beta_2_reconstruction, c='darkorange', ls='--')
+ax.set_ylim([smf.beta_2.min(), smf.beta_2.max()])
 plt.show()
+
+# # smf.get_Taylors(5)
+
+# Taylors = [-11.83 * 1e-12**2 / 1e3,
+#            8.1038e-2 * 1e-12**3 / 1e3,
+#            -9.5205e-5 * 1e-12**4 / 1e3,
+#            2.0737e-7 * 1e-12**5 / 1e3,
+#            -5.3943e-10 * 1e-12**6 / 1e3,
+#            1.3486e-12 * 1e-12**7 / 1e3,
+#            -2.5494e-15 * 1e-12**8 / 1e3,
+#            3.0524e-18 * 1e-12**9 / 1e3,
+#            -1.714e-21 * 1e-12**10 / 1e3]
+
+# beta_2 = ut.Taylor_expansion(Taylors, g.omega_crop)
+# import scipy.constants as const
+# D = -2 * np.pi * const.c  * beta_2 / g.lambda_window_crop**2
+
+
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# ax.plot(g.lambda_window_crop, D* 1e6)  # beta_2 / (1e-24 / 1e3))
+# plt.show()
 
 
 # COME BACK TO THE COMPRESSOR LATER -- START WITH FIBERS INITIALLY
