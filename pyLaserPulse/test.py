@@ -23,17 +23,19 @@ import numpy as np
 import scipy.constants as const
 
 
-g = grid.grid(1040e-9, (800e-9, 1550e-9), 20e-12)
+g = grid.grid(1030e-9, (700e-9, 1550e-9), 20e-12)
 
-smf = pf.PM980_XP(g, 1, 1e-5)
-# smf = pf.NKT_NL_1050_NEG_1(g, 1, 1e-5, 1e-2)
+# smf = pf.PM980_XP(g, 1, 1e-5)
+smf = pf.NKT_NL_1050_NEG_1(g, 1, 1e-5, 1e-2)
+# smf = pf.NKT_SC_5_1040_PM(g, 1, 1e-5)
 
 print(g.omega_crop.min(), g.omega_crop.max())
 betas = ut.Maclaurin_coefficients(
-    smf.beta_2, g.omega, g.dOmega, g, 11,
+    smf.beta_2, g.omega, g.dOmega, g, 15,
     (g.omega_crop.min(), g.omega_crop.max()), int(g.points / 8), 2) 
 
-print(betas)
+print(betas[0], betas[1])
+betas = betas[0]
 
 beta_2_reconstruction = ut.Taylor_expansion(betas, g.omega)
 
