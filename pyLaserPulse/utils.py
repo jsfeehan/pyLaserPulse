@@ -13,7 +13,9 @@ import numpy as np
 import math
 from scipy.interpolate import interp1d
 import scipy.constants as const
-import scipy.optimize as opt
+from scipy.signal import savgol_filter
+
+import pyLaserPulse.exceptions as exceptions
 
 
 fft = np.fft.fft
@@ -588,6 +590,126 @@ def PCF_propagation_parameters_K_Saitoh(
                      fill_value='extrapolate')
         beta_2 = f(lambda_window_crop)
     return V, ref_index, D, beta_2
+
+
+def savgol_gradient(y, dx, window_length, polyorder):
+    """
+    Use a savgol_filter to obtain a gradient without noise amplification.
+
+    Parameters
+    ----------
+    y : numpy array
+        Dependent variable
+    dx : float
+        Step size for the independent variable (i.e., x[1] - x[0]).
+    window_length : int
+        Number of points in the savgol filter window.
+    polyorder : int
+        Polynomial fit order.
+
+    Returns
+    -------
+    numpy array
+        Gradient dy / dx
+
+    Notes
+    -----
+    window_length = int(grid.points / 8) seems to work well for calculating
+    Taylor coefficients of dispersion curves.
+
+    Specifying derivative as a kwarg here does not help for gradients of
+    higher order than ~3, which are often just returned as zero by the
+    savgol_filter function. Set to 1 instead, and higher-order gradients
+    should be calculated in a loop to avoid this (at the penalty of speed).
+    """
+    dy_dx = savgol_filter(y, window_length=window_length, polyorder=polyorder,
+                          deriv=1, delta=dx)
+    return dy_dx
+
+
+def Maclaurin_coefficients(
+        y, x, dx, g, N, x_lims, window_length, polyorder=2):
+    """
+    Retrieve the first N Taylor coefficients of curve y calculated at x = x0
+    (this can be a grid midpoint).
+
+    Simpler to implement than Taylor series, and serves the same purpose for
+    the dispersion calculations which are by far the largest use case for a
+    function like this in pyLaserPulse.
+
+    Parameters:
+    -----------
+    y : numpy array
+        Dependent variable
+    x : numpy array
+        Independent variable. Must be evenly spaced and in ascending order.
+    dx : float
+        Step size for the independent variable (i.e., x[1] - x[0]).
+        This should be centred at zero (i.e., grid.omega,
+        or grid.omega_window - grid.omega_c, not grid.omega_window by itself).
+    g : pyLaserPulse.grid object
+    N : int
+        Number of coefficients to retrieve.
+    x_lims : list or tuple
+        Range over x for which the coefficients should be calculated.
+        (x_min, x_max), or [x_min, x_max], for example.
+        Must contain the midpoint.
+        If the domain size (x_max - x_min) is larger than that given by the
+        grid crop windows, then the domain given by the grid crop window is
+        used instead (grid.omega_crop, for dispersion calculations, for
+        example).
+    window_length : int
+        Number of points in the savgol filter window.
+        int(grid.points / 8) seems to work well.
+    polyorder : int
+        Polynomial fit order.
+
+    Returns
+    -------
+    numpy array
+        Series coefficients of the data in input array y.
+
+    Notes
+    -----
+    Differentiation is done using a Savitzky-Golay filter to prevent noise
+    amplification seen with diff or gradient methods. Fourier differentiation
+    is not used because input data can in general be non-periodic and non-zero
+    at the grid edges, adding false high-frequency content after the FFT which
+    ruins the gradient calculation.
+
+    Always check that the series coefficients are a good fit before trusting
+    them. This needs to be done whenever different grid parameters or fibre
+    types are used. Checking can be done by doing the expansion and plotting
+    the resulting curve overlaid with the input y data.
+
+    window_length = int(grid.points / 8) and polyorder = 2 seems to work well
+    for Taylor coefficients of dispersion curves, but some experimentation is
+    needed for different grid parameters even for the same fibre type.
+    """
+    idx_min, _ = find_nearest(x_lims[0], x)
+    idx_max, _ = find_nearest(x_lims[1], x)
+    indices = None
+    midpoint = None
+    if (idx_max - idx_min) < (g.sim_idx.max() - g.sim_idx.min()):
+        indices = np.arange(idx_min, idx_max + 1, 1)
+        if g.midpoint not in indices:
+            raise exceptions.GridCentreNotInMaclaurinSeriesDomain(
+                "The specified domain for the Maclaurin series does not "
+                "contain the grid central value. Please adjust the domain.")
+        midpoint = np.argmin(np.abs(indices - g.midpoint))
+    else:
+        indices = g.sim_idx
+        midpoint = g.sim_idx_midpoint
+
+    betas = []
+    betas.append(y[g.midpoint])  # 0th
+    b = savgol_gradient(y[indices], dx, window_length, polyorder)
+    for i in range(N):
+        betas.append(b[midpoint])
+        if i < N-1:
+            b = savgol_gradient(b, dx, window_length, polyorder)
+
+    return betas
 
 
 def Taylor_expansion(coeffs, axis, axis_centre=0):
