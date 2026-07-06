@@ -1445,8 +1445,6 @@ class sm_fibre_amplifier(assembly):
         if self.gain_fibre.cladding_pumping:
             savez_dict = {
                 'sample_points': z,
-                'net_co_PSD_samples': self.net_co_PSD_samples,
-                'net_counter_PSD_samples': self.net_counter_PSD_samples,
                 'boundary_value_solver_ESD_optimization_loss': self.gain_fibre.boundary_value_solver_ESD_optimization_loss,
                 'boundary_value_solver_field_optimization_loss': self.gain_fibre.boundary_value_solver_field_optimization_loss,
                 'inversion_vs_distance': self.gain_fibre.inversion_vs_distance,
@@ -1457,14 +1455,15 @@ class sm_fibre_amplifier(assembly):
                 'co_core_ASE_ESD_output': self.co_core_ASE_ESD_output,
                 'pump_points': self.gain_fibre.pump.points,
                 'pump_wl_lims': self.gain_fibre.pump.lambda_lims,
-                'pump_lambda_window': self.gain_fibre.pump.lambda_window,
-                'co_pump_PSD_samples': np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :],
-                'counter_pump_PSD_samples': np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]}
+                'pump_lambda_window': self.gain_fibre.pump.lambda_window}
+            if self.sampling:
+                savez_dict['net_co_PSD_samples'] = self.net_co_PSD_samples
+                savez_dict['net_counter_PSD_samples'] = self.net_counter_PSD_samples
+                savez_dict['co_pump_PSD_samples'] = np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :]
+                savez_dict['counter_pump_PSD_samples'] = np.sum(self.gain_fibre,counter_pump.high_res_samples, axis=1)[1::, :]
         else:
             savez_dict = {
                 'sample_points': z,
-                'net_co_PSD_samples': self.net_co_PSD_samples,
-                'net_counter_PSD_samples': self.net_counter_PSD_samples,
                 'boundary_value_solver_ESD_optimization_loss': self.gain_fibre.boundary_value_solver_ESD_optimization_loss,
                 'boundary_value_solver_field_optimization_loss': self.gain_fibre.boundary_value_solver_field_optimization_loss,
                 'inversion_vs_distance': self.gain_fibre.inversion_vs_distance,
@@ -1473,7 +1472,10 @@ class sm_fibre_amplifier(assembly):
                 'co_core_ASE_ESD_output': self.co_core_ASE_ESD_output,
                 'pump_points': self.gain_fibre.pump.points,
                 'pump_wl_lims': self.gain_fibre.pump.lambda_lims,
-                'pump_lambda_window': self.gain_fibre.pump.lambda_window,
-                'co_pump_PSD_samples': np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :],
-                'counter_pump_PSD_samples': np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]}
+                'pump_lambda_window': self.gain_fibre.pump.lambda_window}
+            if self.sampling:
+                savez_dict['net_co_PSD_samples'] = self.net_co_PSD_samples
+                savez_dict['net_counter_PSD_samples'] = self.net_counter_PSD_samples
+                savez_dict['co_pump_PSD_samples'] = np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :]
+                savez_dict['counter_pump_PSD_samples'] = np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]
         np.savez(self.directory + "optical_assembly.npz", **savez_dict)
