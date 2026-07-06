@@ -14,16 +14,12 @@ James Feehan, 2/7/2026
 
 
 import pyLaserPulse.grid as grid
-import pyLaserPulse.pulse as pulse
-import pyLaserPulse.base_components as bc
 import pyLaserPulse.catalogue_components.passive_fibres as pf
-import pyLaserPulse.data as data
 import pyLaserPulse.utils as ut
 
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import savgol_filter
 import scipy.constants as const
 
 
@@ -31,31 +27,21 @@ def FT_grad(axis, arr):  # , order=1):
     return ut.fft(-1j * ut.fftshift(axis) * ut.ifft(arr)).real
 
 
-g = grid.grid(1040e-9, (300e-9, 2550e-9), 50e-12)
-p = pulse.pulse(100e-15, [1, 0], 'Gauss', 40e6, g)
+g = grid.grid(1040e-9, (800e-9, 1550e-9), 20e-12)
 
-# GIVE USERS THE CHOICE OVER POLYORDER -- SOMETIMES 4 IS BETTER THAN 2, etc.
-# ALSO, CARE SHOULD BE TAKEN -- VERY BROAD WAVELENGTH GRIDS ALWAYS PRODUCE
-# POOR RESULTS. PERHAPS BEST TO CALCULATE THE COEFFICIENTS FOR NARROW GRIDS
-# FIRST.
+smf = pf.PM980_XP(g, 1, 1e-5)
+# smf = pf.NKT_NL_1050_NEG_1(g, 1, 1e-5, 1e-2)
 
-# smf = pf.PM980_XP(g, 1, 1e-5)
-smf = pf.NKT_NL_1050_NEG_1(g, 1, 1e-5, 1e-2)
-betas = []
-betas.append(smf.beta_2[g.midpoint])
-b = savgol_filter(
-        smf.beta_2[g.sim_idx], window_length=int(g.points/8), polyorder=2,
-        deriv=1, delta=g.dOmega)
-for i in range(12):
-    betas.append(b[g.sim_idx_midpoint])
-    b = savgol_filter(b, window_length=int(g.points/8), polyorder=2, deriv=1, delta=g.dOmega)
+print(g.omega_crop.min(), g.omega_crop.max())
+betas = ut.Maclaurin_coefficients(
+    smf.beta_2, g.omega, g.dOmega, g, 11,
+    (g.omega_crop.min(), g.omega_crop.max()), int(g.points / 8), 2) 
 
 print(betas)
 
 beta_2_reconstruction = ut.Taylor_expansion(betas, g.omega)
 
 D_reconstruction = -2 * np.pi * const.c * beta_2_reconstruction / g.lambda_window**2
-
 
 err = np.mean(np.abs(D_reconstruction[g.sim_idx] - smf.D) / smf.D)
 print("ERROR: ", err)
