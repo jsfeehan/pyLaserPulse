@@ -23,10 +23,6 @@ import numpy as np
 import scipy.constants as const
 
 
-def FT_grad(axis, arr):  # , order=1):
-    return ut.fft(-1j * ut.fftshift(axis) * ut.ifft(arr)).real
-
-
 g = grid.grid(1040e-9, (800e-9, 1550e-9), 20e-12)
 
 smf = pf.PM980_XP(g, 1, 1e-5)

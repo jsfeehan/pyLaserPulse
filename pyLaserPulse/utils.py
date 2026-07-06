@@ -628,7 +628,7 @@ def savgol_gradient(y, dx, window_length, polyorder):
 
 
 def Maclaurin_coefficients(
-        y, x, dx, g, N, x_lims, window_length, polyorder):
+        y, x, dx, g, N, x_lims, window_length, polyorder=2):
     """
     Retrieve the first N Taylor coefficients of curve y calculated at x = x0
     (this can be a grid midpoint).
@@ -649,9 +649,9 @@ def Maclaurin_coefficients(
         or grid.omega_window - grid.omega_c, not grid.omega_window by itself).
     g : pyLaserPulse.grid object
     N : int
-        Number of Taylor coefficients to retrieve.
+        Number of coefficients to retrieve.
     x_lims : list or tuple
-        Range over x for which the Taylor coefficients should be calculated.
+        Range over x for which the coefficients should be calculated.
         (x_min, x_max), or [x_min, x_max], for example.
         Must contain the midpoint.
         If the domain size (x_max - x_min) is larger than that given by the
@@ -667,19 +667,20 @@ def Maclaurin_coefficients(
     Returns
     -------
     numpy array
-        Taylor coefficients of the data in input array y.
+        Series coefficients of the data in input array y.
 
     Notes
     -----
-    Differentiation is done using a Savitsky-Golay filter to prevent noise
+    Differentiation is done using a Savitzky-Golay filter to prevent noise
     amplification seen with diff or gradient methods. Fourier differentiation
     is not used because input data can in general be non-periodic and non-zero
-    at the grid edges.
+    at the grid edges, adding false high-frequency content after the FFT which
+    ruins the gradient calculation.
 
-    Always check that the Taylor coefficients are a good fit before trusting
+    Always check that the series coefficients are a good fit before trusting
     them. This needs to be done whenever different grid parameters or fibre
-    types are used. Checking can be done by doing the Taylor expansion and
-    plotting the resulting curve overlaid with the input y data.
+    types are used. Checking can be done by doing the expansion and plotting
+    the resulting curve overlaid with the input y data.
 
     window_length = int(grid.points / 8) and polyorder = 2 seems to work well
     for Taylor coefficients of dispersion curves, but some experimentation is
