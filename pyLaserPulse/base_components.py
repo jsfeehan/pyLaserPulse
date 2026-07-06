@@ -13,7 +13,6 @@ import scipy.optimize as opt
 import scipy.constants as const
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
-from math import factorial
 
 import pyLaserPulse.abstract_bases as bases
 import pyLaserPulse.utils as utils
@@ -698,7 +697,7 @@ class photonic_crystal_active_fibre(
             self.pump_ref_index = \
                 self.pump_cladding_ref_index + self.pump_delta_n
         else:
-            V, self.pump_ref_index, _, _= \
+            V, self.pump_ref_index, _, _ = \
                 utils.PCF_propagation_parameters_K_Saitoh(
                     self.pump.lambda_window, self.pump.midpoint,
                     self.pump.omega_window, self.a, self.b, self.c, self.d,
@@ -1068,7 +1067,8 @@ class pulse_picker(bases.component_base):
         -------
         pyLaserPulse.pulse.pulse object
         """
-        pulse.repetition_rate = pulse.repetition_rate / self.rate_reduction_factor
+        pulse.repetition_rate = pulse.repetition_rate \
+            / self.rate_reduction_factor
         pulse.field = self.apply_temporal_transmission_window(pulse.field)
         return pulse
 
@@ -1425,11 +1425,8 @@ class grating_compressor(component):
 
     def get_Taylors(self):
         """
-        Calculate the 2nd, 3rd, 4th, and 5th compressor Taylor coefficients.
+        Calculate the 2nd order dispersion as a function of frequency.
         """
-        # Note: Better results obtained with the manual Taylor coeff calculation
-        # using the formulae given in Fork & Shank and F. Kienle's PhD thesis,
-        # rather than the utils.get_Taylor_coeffs_from_beta2 function.
         self.beta_2 = np.zeros((self.grid.points))
         factor_1 = -8 * np.pi**2 * const.c / (self.grid.omega_window_crop**3
                                               * self.groove_spacing**2)
@@ -1438,32 +1435,8 @@ class grating_compressor(component):
         factor_4 = 2 * np.pi * const.c
         factor_5 = self.grid.omega_window_crop * self.groove_spacing
         factor_6 = np.sin(self.input_angle)
-        self.beta_2[self.grid.sim_idx] = factor_1 * factor_2 / (factor_3
-                                             - ((factor_4 / factor_5)
-                                                - factor_6)**2)
-
-        # factor_1 = -(3 / self.grid.omega_window)
-        # factor_2 = (1 + (2 * np.pi * const.c
-        #                  / (self.grid.omega_window * self.groove_spacing))
-        #             * np.sin(self.input_angle)
-        #             - np.sin(self.input_angle)**2)
-        # factor_3 = 1 / (1 - (((2 * np.pi * const.c)
-        #                       / (self.grid.omega_window * self.groove_spacing))
-        #                      - np.sin(self.input_angle))**2)
-        # self.beta_3 = factor_1 * factor_2 * factor_3 * self.beta_2
-
-        # self.beta_4 = np.gradient(self.beta_3, self.grid.omega, edge_order=2)
-        # self.beta_5 = np.gradient(self.beta_4, self.grid.omega, edge_order=2)
-
-        # self.beta_2 = self.beta_2[self.grid.midpoint]
-        # self.beta_3 = self.beta_3[self.grid.midpoint]
-        # self.beta_4 = self.beta_4[self.grid.midpoint]
-        # self.beta_5 = self.beta_5[self.grid.midpoint]
-
-        # print(self.beta_2, self.beta_3, self.beta_4, self.beta_5)
-
-        # self.Taylors = np.array((0, 0, self.beta_2, self.beta_3, self.beta_4,
-        #                          self.beta_5))
+        self.beta_2[self.grid.sim_idx] = factor_1 * factor_2 \
+            / (factor_3 - ((factor_4 / factor_5) - factor_6)**2)
 
     def make_phase(self):
         """
@@ -1472,16 +1445,6 @@ class grating_compressor(component):
         self.phase = utils.fftshift(
             np.exp(-1j * self.beta_2 * self.grid.omega**2))
         self.phase = self.phase[None, :].repeat(2, axis=0)
-        # self.phase_argument = np.zeros_like(self.grid.omega,
-        #                                     dtype=np.complex128)
-        # for idx, val in enumerate(self.Taylors):
-        #     self.phase_argument[self.grid.sim_idx] += (-1j * val * self.grid.omega_crop**idx *
-        #                             factorial(idx))
-
-        # self.phase = np.zeros_like(self.grid.omega, dtype=np.complex128)
-        # self.phase = np.exp(self.phase_argument)
-        # self.phase = self.phase[None, :].repeat(2, axis=0)
-        # self.phase = utils.fftshift(self.phase)
 
     def propagate(self, pulse):
         """

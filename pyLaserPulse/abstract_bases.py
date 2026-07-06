@@ -203,9 +203,9 @@ class fibre_base(ABC):
         self.effective_MFD = np.zeros((self.grid.points))
         self.effective_MFD[self.grid.sim_idx] = self.core_diam * p_II
         self.effective_MFD[0:self.grid.sim_idx.min()] =\
-                self.effective_MFD[self.grid.sim_idx.min()]
+            self.effective_MFD[self.grid.sim_idx.min()]
         self.effective_MFD[self.grid.sim_idx.max()::] =\
-                self.effective_MFD[self.grid.sim_idx.max()]
+            self.effective_MFD[self.grid.sim_idx.max()]
         self.signal_mode_area = np.pi * (self.effective_MFD / 2)**2
         self.gamma = self.n2 * (2 * np.pi / self.grid.lambda_c) \
             / self.signal_mode_area[self.grid.sim_idx]
@@ -270,7 +270,8 @@ class fibre_base(ABC):
             SPM_XPM_DFWM = field * (1. - self.fR) * (P + (2. / 3.) * P_r) \
                 + (1. - self.fR) * field_r**2 * conjfield_pm / 3.
             Raman_SPM_XPM = self.fR * field * self.grid.dt * utils.ifft(
-                (self.Raman[:, 0] + self.Raman[:, 1]) * P_fft + self.Raman[:, 0] * P_fft_r)
+                (self.Raman[:, 0] + self.Raman[:, 1]) * P_fft
+                + self.Raman[:, 0] * P_fft_r)
             Raman_DFWM = self.fR * field_r * self.grid.dt * \
                 utils.ifft(0.5 * self.Raman[:, 1] * utils.fft(
                     field * conjfield_r + field_r * conjfield_pm))
@@ -717,16 +718,6 @@ class active_fibre_base(ABC):
         self.signal_emission_cs \
             = utils.fftshift(self.signal_emission_cs)
 
-        # Sort wavelength limits from total grid OR cropped grid
-        # Used for plots.
-        #self.wl_lims = \
-        #    [self.grid.lambda_window_crop.min() if
-        #     self.grid.lambda_window_crop.min() > self.grid.lambda_window.min()
-        #     else self.grid.lambda_window.min(),
-        #     self.grid.lambda_window_crop.max() if
-        #     self.grid.lambda_window_crop.max() < self.grid.lambda_window.max()
-        #     else self.grid.lambda_window.max()]
-
         # Sort out pump(s) for appropriate geometry (determined by contents of
         # boundary_conditions).
         ASE_scaling = 1 - self.grid.t_range / seed_rep_rate
@@ -1065,11 +1056,6 @@ class active_fibre_base(ABC):
         overlaps[0:self.grid.sim_idx.min()] = _overlaps[0]
         overlaps[self.grid.sim_idx.max()::] = _overlaps[-1]
 
-        #import matplotlib.pyplot as plt
-        #fig = plt.figure()
-        #ax = fig.add_subplot(111)
-        #ax.plot(self.grid.lambda_window, overlaps)
-        #plt.show()
         return overlaps
 
     def _get_cladding_light_overlap_and_effective_area(self, lambda_c, points):
