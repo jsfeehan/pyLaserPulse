@@ -5,39 +5,65 @@ Retrieve the Taylor coefficients for optical fibres and compressors.
 
 A number of examples are shown in this script, including how different choices
 of parameters for the simulation grid and for the Taylor calculation grid can
-impact the outcome of the Taylor coefficient calculations and expansions, as
-as examples for how to retrieve Taylor coefficients for bulk components (where
-applicable) such as grating compressors.
+impact the outcome of the Taylor coefficient calculations and expansions.
+
+Taylor coefficients for bulk components or arrangements (such as compressors)
+can be retrieved in the same way as long as they have a beta_2 attribute (numpy
+array containing a dispersion curve from which the dispersion Taylor
+coefficients can be calculated).
 
 Care must be taken when Taylor coefficients are calculated. An inappropriate
 choice of domain range, or even altering grid parameters can change the
 accuracy of the calculation (this is not avoidable, as far as I know).
-Parameters which produce good Taylor coefficients for one component may
-produce less good coefficients for a different component. It is recommended
-that the Taylor coefficients are always checked against the input data before
-being trusted.
+Parameters which produce good Taylor coefficients for one component or grid may
+produce less good coefficients for a different component or grid. It is
+recommended that the Taylor coefficients are always checked against the input
+data before being trusted for furthre calculations or component definitions.
 
 Taylor coefficients are NOT used for dispersion calculations in the code
 unless input by the user through the component class (or others) for, e.g.,
 cFBG definitions (see examples\\fibre_amplifiers\\Yb_fibre_CPA_system.py).
 Taylor coefficient retrieval has been added to pyLaserPulse because it can be
 a useful thing to have when specifying components such as chirped mirrors, or
-getting an idea of the magnitude of dispersion in, for example, a parabolic
-amplifier.
+predicting the contribution to pulse chirp from dispersion in nonlinear fibre
+systems, such as parabolic amplifiers and in supercontinuum generation.
 
 The differentiation required to obtain the coefficients is done using a
 Savitzky-Golay filter, embedded in the function utils.Maclaurin_coefficients
-(Taylor expansion is always done from y=y_0 and still applies to any relevant
-grid without error if this is taken into account externally). This filtering
-method means that high-order gradients can be calculated without amplifying
-noise and without additional constraints (e.g., function tending to zero at
-window edges, or function periodicity, both of which need to be considered for
-Fourier differentiation, for example). Additional parameters controlling the
-Savitzky-Golay window size, the domain limits, and the polynomial order must be
-set for this method, and this is best done by trial and error to minimize the
-fit error (qualitative assesssment is usually good enough here, which can be
-done by overlaying plots of the expanded dispersion curves and the calculated
-ones).
+(Taylor expansion is always done from y=y_0 in pyLaserPulse, and the calculated
+coefficients still apply to any relevant grid without error if this is taken
+into account externally, or by using utils.Taylor_expansion). The Savitzky-Golay
+method for differentiation means that high-order gradients can be calculated
+without amplifying noise and without additional constraints (e.g., function
+tending to zero at window edges, or function periodicity, both of which need to
+be considered for Fourier differentiation, for example). Additional parameters
+controlling the Savitzky-Golay window size, the domain limits, and the
+polynomial order must be set for this method, and this is best done iteratively
+with the aim of minimizing the fit error (qualitative assesssment is usually
+good enough here, which can be done by overlaying plots of the expanded
+dispersion curves and the calculated ones).
+
+A few other methods for retrieving Taylor coefficients were tested while
+developing the method adopted in pyLaserPulse. These methods were:
+
+1) Applying some optimization algorithm to the Taylor expansion to retrieve
+   appropriate coefficients (e.g., Nelder-Mead to find coefficients beta_2 to
+   beta_13 by minimizing the integrated absolute difference between the ground
+   truth dispersion curve and the one obtained through Taylor expansion).
+       - This method was very stable and accurate, but SLOW.
+2) Utilizing a polynomial fit from, e.g., numpy.polyfit. This method is used in
+   some other nonlinear fibre optics simulation toolboxes available on github.
+       - Provided low-accuracy results and generally found to be unstable,
+         yielding big changes to Taylor coefficients with just small adjustments
+         to grid parameters. No underlying cause was found for this.
+3) Using the Fourier identity for differentiation:
+                     FT[df(k)/dk] -> 1j*k * FT[f(k)])
+   Very fast, and does not amplify noise. However, requires f(k) and its
+   gradients to tend to zero at the domain edges so that anomalous high
+   frequency components aren't generated by the Fourier transform. Dispersion
+   curves rarely satisfy this requirement.
+
+The Savitzky-Golay differentiation method was found to be the most appropriate.
 """
 
 from pyLaserPulse import grid
@@ -92,7 +118,7 @@ beta_2_expansion = ut.Taylor_expansion(betas, g.omega_crop).real
 
 stat_str = ("\n\nbeta_2 to beta_%d for PM980 XP when the coefficient "
             "calculation domain is set to g.omega_crop:" % (N_coeffs + 2))
-underliner = '-'*len(stat_str)
+underliner = '-' * len(stat_str)
 print(stat_str)
 print(underliner)
 
@@ -125,7 +151,7 @@ beta_2_expansion = ut.Taylor_expansion(betas, g.omega_crop).real
 
 stat_str = ("\n\nbeta_2 to beta_%d for PM980 XP when the coefficient "
             "calculation domain is set to g.omega_crop:" % (N_coeffs + 2))
-underliner = '-'*len(stat_str)
+underliner = '-' * len(stat_str)
 print(stat_str)
 print(underliner)
 
@@ -136,7 +162,7 @@ for i, beta in enumerate(betas):
 D_expansion = -2*np.pi*const.c * beta_2_expansion / g.lambda_window_crop**2
 plot_comparison(1e9*g.lambda_window_crop, 1e6*smf.D, 1e6*D_expansion,
                 'Wavelength, nm', 'D, ps/(nm km)',
-                'Worse fit, fewer coeffs, large domain')
+                'Worse fit, same grid, fewer coeffs, large domain')
 plt.show()
 
 
@@ -162,7 +188,7 @@ beta_2_expansion = ut.Taylor_expansion(
 
 stat_str = ("\n\nbeta_2 to beta_%d for PM980 XP when the coefficient "
             "calculation domain is made much smaller:" % (N_coeffs + 2))
-underliner = '-'*len(stat_str)
+underliner = '-' * len(stat_str)
 print(stat_str)
 print(underliner)
 
@@ -175,5 +201,5 @@ D_expansion = -2*np.pi*const.c * beta_2_expansion \
 plot_comparison(1e9*g.lambda_window_crop[min_idx:max_idx],
                 1e6*smf.D[min_idx:max_idx], 1e6*D_expansion,
                 'Wavelength, nm', 'D, ps/(nm km)',
-                'Ok fit, fewer coeffs, smaller domain')
+                'Excellent fit, same grid, fewer coeffs, smaller domain')
 plt.show()
