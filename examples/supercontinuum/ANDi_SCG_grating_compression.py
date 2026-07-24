@@ -34,7 +34,7 @@ shape = 'Gauss'        # Can also take 'sech'
 
 # ANDi photonic crystal fibre parameters
 L_beat = 1e-2  # polarization beat length (m)
-L = .08        # length, m
+L = .15        # length, m
 
 # # grating compressor parameters
 loss = 0.04            # percent loss per grating reflection
