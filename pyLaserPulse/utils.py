@@ -24,6 +24,9 @@ fftshift = np.fft.fftshift
 ifftshift = np.fft.ifftshift
 
 
+arbsmall = 1e-100  # Arbitrarily small value to stop python raising warnings.
+
+
 def check_dict_keys(key_list, d, param_name):
     """
     Check that all items in key_list are keys in dict d.
@@ -298,8 +301,8 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
 
     # Data with a fine wavelength grid and high dynamic range can result in
     # bad values after interpolation. Fix these.
-    absorption[absorption < 0] = 0
-    emission[emission < 0] = 0
+    absorption[absorption <= 0] = arbsmall
+    emission[emission <= 0] = arbsmall
 
     # exponential fall off either side of the data
     # Get log data
@@ -321,10 +324,10 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
     # Get indices of final non-zero values in emission and absorption at the
     # left and right
     indices = np.linspace(0, len(axis)-1, len(axis))
-    log_abs_y_l = int(np.amin(indices[absorption > 0]))
-    log_abs_y_r = int(np.amax(indices[absorption > 0]))
-    log_ems_y_l = int(np.amin(indices[emission > 0]))
-    log_ems_y_r = int(np.amax(indices[emission > 0]))
+    log_abs_y_l = int(np.amin(indices[absorption > arbsmall]))
+    log_abs_y_r = int(np.amax(indices[absorption > arbsmall]))
+    log_ems_y_l = int(np.amin(indices[emission > arbsmall]))
+    log_ems_y_r = int(np.amax(indices[emission > arbsmall]))
 
     # Define linear function (log scale)
     log_line_abs_l = dlog_raw_abs_l * axis

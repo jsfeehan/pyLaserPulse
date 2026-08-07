@@ -294,6 +294,9 @@ class _pulse_base(ABC):
         hrfs = np.asarray(self.high_res_field_samples)
         spectra = utils.fftshift(utils.fft(hrfs, axis=-1), axes=-1)
         spectra *= grid.dt / np.sqrt(2 * np.pi)
+
+        # Suppress runtime warning about div 0 in numpy.log10, etc.
+        spectra[np.abs(spectra)**2 <= 0] = utils.arbsmall
         self.high_res_ESD_samples = np.abs(spectra)**2 * 2 * np.pi * const.c \
             / grid.lambda_window**2
         self.high_res_ESD_samples = np.sum(self.high_res_ESD_samples, axis=1)
