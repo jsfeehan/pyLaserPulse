@@ -49,7 +49,6 @@ bounds = {'co_pump_power': 1,            # co-pump power, W
 ##############################################################
 
 # Time-frequency grid defined using the grid module
-# g = grid.grid(points, central_wl, max_wl)
 g = grid.grid(central_wl, wl_lims, time_window_size, verbose=True)
 
 # pulse defined using the pulse module
