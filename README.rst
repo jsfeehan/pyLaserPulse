@@ -70,7 +70,8 @@ pyLaserPulse isn't on PyPI (yet), but it is easy to set up using the following s
 ===========================
 What's changed in v. 0.1.0?
 ===========================
-**Grids**
+**Grids:**
+
 The biggest change is to the way that the numerical grid is defined and instantiated. Previously, the grids were instantiated as follows:
 
 ``g = grid.grid(num_points, central_wavelength, max_wavelength)``
@@ -95,11 +96,13 @@ There are also the following member variables which can be helpful for selecting
 
 ``g.crop_points``, ``g.sim_idx_mask``.
 
+.. class:: center
 *THIS IS A BREAKING CHANGE*. Compatibility with old pyLaserPulse versions is lost until the new grid instantiation is used.
 
 The ``pyLaserPulse.grid`` module contains ``_legacy_grid`` and ``_legacy_grid_from_pyLaserPulse_simulation``, which are equivalent to ``grid`` and ``grid_from_pyLaserPulse_simulation`` except that they require the older grid information and have the same restrictions as the older grid definition. These are only kept for the sake of plotting old data, and cannot be used for new simulations. It is not much work to interpolate data from an old simulation onto a new grid, however, if you would like to use older data for new calculations.
 
-**Taylor coefficients**
+**Taylor coefficients:**
+
 An efficient way of calculating Taylor coefficients has now been added. This is based on gradients retrieved from Savitzky-Golay filtering. And example script is included in ../pyLaserPulse/examples/retrieving_dispersion_Taylor_coefficients.py.
 
 This has been enabled by the addition of three new functions in ``utils.py``:
