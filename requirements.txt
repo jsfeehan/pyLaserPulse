@@ -1,7 +1,7 @@
 matplotlib==3.7.1
-numpy==1.25.0
-psutil==5.9.5
-PyQt5==5.15.9
-PyQt5_sip==12.12.1
-scipy==1.11.0
-setuptools==75.1.0
+numpy==1.26.4
+psutil
+PyQt5
+PyQt5_sip
+scipy
+setuptools==83.0.0

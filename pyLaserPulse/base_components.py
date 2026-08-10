@@ -70,9 +70,12 @@ class step_index_passive_fibre(bases.fibre_base):
             verbose=verbose)
         self.core_diam = core_diam
         self.NA = NA
-        self.cladding_ref_index = utils.Sellmeier(
-            self.grid.lambda_window, Sellmeier_file)
-        self.signal_ref_index = (NA**2 + self.cladding_ref_index**2)**0.5
+        self.cladding_ref_index = np.zeros((g.points))
+        self.cladding_ref_index[g.sim_idx] = utils.Sellmeier(
+            self.grid.lambda_window_crop, Sellmeier_file)
+        self.signal_ref_index = np.zeros((g.points))
+        self.signal_ref_index[g.sim_idx] = \
+            (NA**2 + self.cladding_ref_index[g.sim_idx]**2)**0.5
         self.delta_n = self.signal_ref_index[g.midpoint] \
             - self.cladding_ref_index[g.midpoint]
         self.get_propagation_parameters()
@@ -87,44 +90,53 @@ class step_index_passive_fibre(bases.fibre_base):
         D. Gloge, "Weakly guiding fibres", Applied Optics 10(10),
         pp 2252--2258 (1971)
         """
-        k = 2 * np.pi / self.grid.lambda_window
-        self.NA = np.sqrt(self.signal_ref_index**2
-                          - self.cladding_ref_index**2)
+        self.beta_2 = np.zeros((self.grid.points))
+        k = 2 * np.pi / self.grid.lambda_window_crop
+        self.NA = np.sqrt(self.signal_ref_index[self.grid.sim_idx]**2
+                          - self.cladding_ref_index[self.grid.sim_idx]**2)
         self.V = k * self.core_diam * self.NA / 2
 
-        delta = (self.signal_ref_index - self.cladding_ref_index) \
-            / self.cladding_ref_index
+        delta = (self.signal_ref_index[self.grid.sim_idx]
+                 - self.cladding_ref_index[self.grid.sim_idx]) \
+            / self.cladding_ref_index[self.grid.sim_idx]
         u = (1 + np.sqrt(2)) * self.V / (1 + (4 + self.V**4)**0.25)
         beta = k * (1 + delta - delta * (u**2 / self.V**2))
-        b = ((beta / (k / self.cladding_ref_index)) -
-             self.cladding_ref_index) / (self.delta_n)
+        b = ((beta / (k / self.cladding_ref_index[self.grid.sim_idx])) -
+             self.cladding_ref_index[self.grid.sim_idx]) / (self.delta_n)
 
         decimate = 1
-        k_vac = k / self.signal_ref_index
+        k_vac = k / self.signal_ref_index[self.grid.sim_idx]
         if self.grid.points > 1024:  # i.e., grid size is > 1024
             # Required because very fine grids can result in noisy gradient
             # calculations
-            decimate = int(self.grid.points / 1024)
+            step = int(np.floor(self.grid.crop_points / 1024))
+            print("STEP: ", step)
+            if step > 1:
+                decimate = step
 
         part_1 = np.gradient(k[::decimate], k_vac[::decimate], edge_order=2)
         part_2 = np.gradient(
             self.V[::decimate] * b[::decimate], self.V[::decimate],
             edge_order=2)
-        part_2 *= self.cladding_ref_index[::decimate] * delta[::decimate]
+        part_2 *= self.cladding_ref_index[self.grid.sim_idx][::decimate] \
+            * delta[::decimate]
 
         beta_1 = (part_1 + part_2) / const.c
-        self.beta_2 = np.gradient(beta_1, self.grid.omega_window[::decimate],
-                                  edge_order=2)
+        beta_2 = np.gradient(
+                beta_1, self.grid.omega_window_crop[::decimate], edge_order=2)
 
         if decimate > 1:  # Interpolate D and beta_2 onto original grid
             # Some noise still present for *really* fine grids, so do some
             # smoothing as well
-            self.beta_2 = savgol_filter(self.beta_2, 4, 1)
-            f = interp1d(self.grid.lambda_window[::decimate], self.beta_2,
+            beta_2 = savgol_filter(beta_2, 4, 1)
+            f = interp1d(self.grid.lambda_window_crop[::decimate], beta_2,
                          kind='linear', fill_value='extrapolate')
-            self.beta_2 = f(self.grid.lambda_window)
+            self.beta_2[self.grid.sim_idx] = f(self.grid.lambda_window_crop)
+        else:
+            self.beta_2[self.grid.sim_idx] = beta_2
 
-        self.D = -2 * np.pi * const.c * self.beta_2 / self.grid.lambda_window**2
+        self.D = -2 * np.pi * const.c * self.beta_2[self.grid.sim_idx] / \
+            self.grid.lambda_window_crop**2
 
 
 class photonic_crystal_passive_fibre(bases.fibre_base):
@@ -192,8 +204,9 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
             self.core_diam = 2 * self.hole_pitch / np.sqrt(3)
         self.core_radius = self.core_diam / 2
         self.Sellmeier_file = Sellmeier_file
-        self.material_ref_index = utils.Sellmeier(
-            g.lambda_window, self.Sellmeier_file)
+        self.material_ref_index = np.zeros((g.points))
+        self.material_ref_index[g.sim_idx] = utils.Sellmeier(
+            g.lambda_window_crop, self.Sellmeier_file)
 
         # Matrices required for propagation parameter calculations
         self.a = np.array((
@@ -216,22 +229,23 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
             (10, 24.8, 15, 6)))
 
         self.get_propagation_parameters(
-            g.lambda_window, g.midpoint, g.omega_window)
+            g.lambda_window_crop, g.sim_idx_midpoint, g.omega_window_crop)
         self.get_GNLSE_and_birefringence_parameters()
 
     def get_propagation_parameters(
-            self, lambda_window, grid_midpoint, omega_window):
+            self, lambda_window_crop, sim_idx_midpoint, omega_window):
         """
         Calculate signal_ref_index, D, beta_2, effective_MFD,
         signal_mode_area, gamma
 
         Parameters
         ----------
-        lambda_window : numpy array
+        lambda_window_crop : numpy array
             Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window
-        grid_midpoint : int
-            Middle index of the time-frequency grid.
-            See pyLaserPulse.grid.grid.midpoint
+        sim_idx_midpoint : int
+            Index of the time frequency grid corrsesponding to the central
+            wavelength in the range set by grid.lambda_lims.
+            See pyLaserPulse.grid.grid.sim_idx_midpoint
         omega_window : numpy array
             Angular frequency grid in rad Hz.
             See pyLaserPulse.grid.grid.omega_window
@@ -247,10 +261,13 @@ class photonic_crystal_passive_fibre(bases.fibre_base):
         numpy array
             Fibre dispersion in s^2 / m
         """
-        self.V, self.signal_ref_index, self.D, self.beta_2 = \
-            utils.PCF_propagation_parameters_K_Saitoh(
-                lambda_window, grid_midpoint, omega_window, self.a, self.b,
-                self.c, self.d, self.hole_pitch, self.hole_diam,
+        self.signal_ref_index = np.zeros((self.grid.points))
+        self.beta_2 = np.zeros((self.grid.points))
+        self.V, self.signal_ref_index[self.grid.sim_idx], self.D, \
+            self.beta_2[self.grid.sim_idx] \
+            = utils.PCF_propagation_parameters_K_Saitoh(
+                lambda_window_crop, sim_idx_midpoint, omega_window, self.a,
+                self.b, self.c, self.d, self.hole_pitch, self.hole_diam,
                 self.core_radius, self.Sellmeier_file)
 
 
@@ -418,8 +435,8 @@ class step_index_active_fibre(
                     self.core_ASE_ref_index, self.core_ASE_cladding_ref_index,
                     self.core_diam)
             self.core_ASE_overlaps = \
-                self.get_overlaps_core_light(
-                    self.co_core_ASE.points, self.co_core_ASE.lambda_window,
+                self.get_overlaps_pump_core_light(
+                    self.co_core_ASE.lambda_window,
                     self.core_ASE_effective_MFD)
 
     @staticmethod
@@ -647,8 +664,8 @@ class photonic_crystal_active_fibre(
             # self.co_core_ASE.lambda_window, self.core_ASE_ref_index,
             # self.core_ASE_cladding_ref_index, self.core_diam)
             self.core_ASE_overlaps = \
-                self.get_overlaps_core_light(
-                    self.co_core_ASE.points, self.co_core_ASE.lambda_window,
+                self.get_overlaps_pump_core_light(
+                    self.co_core_ASE.lambda_window,
                     self.core_ASE_effective_MFD)
 
     @staticmethod
@@ -680,7 +697,7 @@ class photonic_crystal_active_fibre(
             self.pump_ref_index = \
                 self.pump_cladding_ref_index + self.pump_delta_n
         else:
-            V, self.pump_ref_index, _, _= \
+            V, self.pump_ref_index, _, _ = \
                 utils.PCF_propagation_parameters_K_Saitoh(
                     self.pump.lambda_window, self.pump.midpoint,
                     self.pump.omega_window, self.a, self.b, self.c, self.d,
@@ -1050,7 +1067,8 @@ class pulse_picker(bases.component_base):
         -------
         pyLaserPulse.pulse.pulse object
         """
-        pulse.repetition_rate = pulse.repetition_rate / self.rate_reduction_factor
+        pulse.repetition_rate = pulse.repetition_rate \
+            / self.rate_reduction_factor
         pulse.field = self.apply_temporal_transmission_window(pulse.field)
         return pulse
 
@@ -1333,6 +1351,9 @@ class grating_compressor(component):
         self.run_optimization = optimize
         self.verbose = verbose
 
+        # Get the grid relevant to the Taylor expansion.
+        # Only use frequencies within the transmission window.
+
         # Get Taylor coefficients for user-defined angle and separation
         # These will be updated later if self.run_optimization == True
         self.get_Taylors()
@@ -1404,56 +1425,26 @@ class grating_compressor(component):
 
     def get_Taylors(self):
         """
-        Calculate the second order dispersion of the compressor.
+        Calculate the 2nd order dispersion as a function of frequency.
         """
-        # Note: Better results obtained with the manual Taylor coeff calculation
-        # using the formulae given in Fork & Shank and F. Kienle's PhD thesis,
-        # rather than the utils.get_Taylor_coeffs_from_beta2 function.
-        factor_1 = -8 * np.pi**2 * const.c / (self.grid.omega_window**3
+        self.beta_2 = np.zeros((self.grid.points))
+        factor_1 = -8 * np.pi**2 * const.c / (self.grid.omega_window_crop**3
                                               * self.groove_spacing**2)
         factor_2 = self.grating_separation / np.cos(self.diff_angle)
         factor_3 = 1
         factor_4 = 2 * np.pi * const.c
-        factor_5 = self.grid.omega_window * self.groove_spacing
+        factor_5 = self.grid.omega_window_crop * self.groove_spacing
         factor_6 = np.sin(self.input_angle)
-        self.beta_2 = factor_1 * factor_2 / (factor_3
-                                             - ((factor_4 / factor_5)
-                                                - factor_6)**2)
-
-        factor_1 = -(3 / self.grid.omega_window)
-        factor_2 = (1 + (2 * np.pi * const.c
-                         / (self.grid.omega_window * self.groove_spacing))
-                    * np.sin(self.input_angle)
-                    - np.sin(self.input_angle)**2)
-        factor_3 = 1 / (1 - (((2 * np.pi * const.c)
-                              / (self.grid.omega_window * self.groove_spacing))
-                             - np.sin(self.input_angle))**2)
-        self.beta_3 = factor_1 * factor_2 * factor_3 * self.beta_2
-
-        self.beta_4 = np.gradient(self.beta_3, self.grid.omega, edge_order=2)
-        self.beta_5 = np.gradient(self.beta_4, self.grid.omega, edge_order=2)
-
-        self.beta_2 = self.beta_2[self.grid.midpoint]
-        self.beta_3 = self.beta_3[self.grid.midpoint]
-        self.beta_4 = self.beta_4[self.grid.midpoint]
-        self.beta_5 = self.beta_5[self.grid.midpoint]
-
-        self.Taylors = np.array((0, 0, self.beta_2, self.beta_3, self.beta_4,
-                                 self.beta_5))
+        self.beta_2[self.grid.sim_idx] = factor_1 * factor_2 \
+            / (factor_3 - ((factor_4 / factor_5) - factor_6)**2)
 
     def make_phase(self):
         """
         Turn beta2 into a phase
         """
-        self.phase_argument = np.zeros_like(self.grid.omega,
-                                            dtype=np.complex128)
-        for idx, val in enumerate(self.Taylors):
-            self.phase_argument += -1j * val * self.grid.omega**idx \
-                / np.math.factorial(idx)
-
-        self.phase = np.exp(self.phase_argument)
+        self.phase = utils.fftshift(
+            np.exp(-1j * self.beta_2 * self.grid.omega**2))
         self.phase = self.phase[None, :].repeat(2, axis=0)
-        self.phase = utils.fftshift(self.phase)
 
     def propagate(self, pulse):
         """

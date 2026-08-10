@@ -20,9 +20,9 @@ directory = None
 ############################################################
 
 # Time-frequency grid parameters
-points = 2**11        # Number of grid points
-central_wl = 1055e-9  # Central wavelength, m
-max_wl = 1200e-9      # Maximum wavelength, m
+central_wl = 1055e-9         # Grid central wavelength, m
+wl_lims = [900e-9, 1300e-9]  # Wavelength limits used for plots, m
+t_span = 25e-12              # Minimum time window duration, s
 
 # Laser pulse parameters
 tau = 300e-15         # Pulse duration, s
@@ -34,9 +34,9 @@ shape = 'sech'        # Can also take 'Gauss'
 L_pmf = .3            # length, m
 
 # Yb-fibre parameters
-L_ydf = 8                            # length, m
-ase_points = 2**8                    # number of points in pump & ASE grid
-ase_wl_lims = [900e-9, max_wl]       # wavelength limits for ASE grid
+L_ydf = 8                   # length, m
+ase_points = 2**10          # number of points in pump & ASE grid
+ase_wl_lims = wl_lims       # wavelength limits for ASE grid
 bounds = {'counter_pump_power': 15,           # counter-pump power, W
           'counter_pump_wavelength': 916e-9,  # counter-pump wavelength, m
           'counter_pump_bandwidth': 1e-9}     # counter-pump bandwidth, m
@@ -46,7 +46,7 @@ bounds = {'counter_pump_power': 15,           # counter-pump power, W
 ##############################################################
 
 # Time-frequency grid defined using the grid module
-g = grid.grid(points, central_wl, max_wl)
+g = grid.grid(central_wl, wl_lims, t_span)
 
 # pulse defined using the pulse module
 p = pulse.pulse(tau, P_peak, shape, f_rep, g, high_res_sampling=True)

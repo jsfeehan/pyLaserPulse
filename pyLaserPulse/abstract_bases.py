@@ -10,7 +10,6 @@ Module of abstract base classes for optical components.
 
 
 from abc import ABC, abstractmethod
-import math
 import numpy as np
 import scipy.interpolate as interp
 import scipy.constants as const
@@ -21,6 +20,8 @@ import pyLaserPulse.pulse as pls
 import pyLaserPulse.pump as pmp
 import pyLaserPulse.exceptions as exc
 # import pyLaserPulse.sys_info as si
+
+from math import factorial
 
 
 class fibre_base(ABC):
@@ -73,6 +74,7 @@ class fibre_base(ABC):
             loss_file, self.grid.lambda_window, 1e-6, 1e-3,
             interp_kind='linear', fill_value='extrapolate', input_log=False,
             return_log=True)
+        self.loss[~self.grid.sim_idx_mask] = 0
         self.Raman = utils.load_Raman(Raman_file, g.time_window, g.dt)
         self.verbose = verbose
 
@@ -125,9 +127,8 @@ class fibre_base(ABC):
         """
         Define self.linear_operator.
         """
-        self.Taylors, beta = utils.get_Taylor_coeffs_from_beta2(
-            self.beta_2, self.grid)
-        self.linear_operator = 0.5 * self.loss + 1j * beta
+        self.linear_operator = 0.5 * self.loss \
+            + 1j * self.beta_2 * self.grid.omega**2 / 2
         self._linear_operator_definition()
 
     def _linear_operator_definition(self):
@@ -136,14 +137,6 @@ class fibre_base(ABC):
                 self.linear_operator[None, :].repeat(2, axis=0)
         self.linear_operator[0, :] += -1j * self.beta_1 * self.grid.omega / 2
         self.linear_operator[1, :] += 1j * self.beta_1 * self.grid.omega / 2
-
-        # Create new arrays holding dispersion data used for the propagation
-        self.beta_2_Taylors = np.gradient(
-            self.linear_operator.imag, self.grid.omega, edge_order=2, axis=1)
-        self.beta_2_Taylors = np.gradient(
-            self.beta_2_Taylors, self.grid.omega, edge_order=2, axis=1)
-        self.D_Taylors = -2 * np.pi * const.c * self.beta_2_Taylors \
-            / self.grid.lambda_window**2
         self.linear_operator = utils.fftshift(self.linear_operator, axes=-1)
 
     def override_dispersion_using_Taylor_coefficients(
@@ -182,9 +175,11 @@ class fibre_base(ABC):
         """
         Defined self.beta_1, the polarization group velocity mismatch.
         """
-        vg_x = const.c / self.signal_ref_index
-        vg_y = const.c / (self.signal_ref_index - self.birefringence)
-        self.beta_1 = (1 / vg_y) - (1 / vg_x)
+        self.beta_1 = np.zeros((self.grid.points))
+        vg_x = const.c / self.signal_ref_index[self.grid.sim_idx]
+        vg_y = const.c / (self.signal_ref_index[self.grid.sim_idx]
+                          - self.birefringence[self.grid.sim_idx])
+        self.beta_1[self.grid.sim_idx] = (1 / vg_y) - (1 / vg_x)
 
     def _make_self_steepening_term(self):
         """
@@ -205,11 +200,16 @@ class fibre_base(ABC):
         Can only be called after get_signal_propagation_parameters.
         """
         p_II = self.Petermann_II(self.V)
-        self.effective_MFD = self.core_diam * p_II
+        self.effective_MFD = np.zeros((self.grid.points))
+        self.effective_MFD[self.grid.sim_idx] = self.core_diam * p_II
+        self.effective_MFD[0:self.grid.sim_idx.min()] =\
+            self.effective_MFD[self.grid.sim_idx.min()]
+        self.effective_MFD[self.grid.sim_idx.max()::] =\
+            self.effective_MFD[self.grid.sim_idx.max()]
         self.signal_mode_area = np.pi * (self.effective_MFD / 2)**2
         self.gamma = self.n2 * (2 * np.pi / self.grid.lambda_c) \
-            / self.signal_mode_area
-        self.gamma = self.gamma[self.grid.midpoint]
+            / self.signal_mode_area[self.grid.sim_idx]
+        self.gamma = self.gamma[self.grid.sim_idx_midpoint]
         self._get_birefringence()
         self._get_polarization_group_velocity_mismatch()
         self._make_linear_operator()
@@ -270,7 +270,8 @@ class fibre_base(ABC):
             SPM_XPM_DFWM = field * (1. - self.fR) * (P + (2. / 3.) * P_r) \
                 + (1. - self.fR) * field_r**2 * conjfield_pm / 3.
             Raman_SPM_XPM = self.fR * field * self.grid.dt * utils.ifft(
-                (self.Raman[:, 0] + self.Raman[:, 1]) * P_fft + self.Raman[:, 0] * P_fft_r)
+                (self.Raman[:, 0] + self.Raman[:, 1]) * P_fft
+                + self.Raman[:, 0] * P_fft_r)
             Raman_DFWM = self.fR * field_r * self.grid.dt * \
                 utils.ifft(0.5 * self.Raman[:, 1] * utils.fft(
                     field * conjfield_r + field_r * conjfield_pm))
@@ -500,6 +501,7 @@ class fibre_base(ABC):
             else:
                 dz, propagated_distance, ufft = self._CQEM(
                     error, dz, propagated_distance, aux_ufft, ufft)
+                ufft *= self.grid.gobbler
             if np.any(np.isnan(ufft)):
                 if sampling:
                     return (np.ones_like(ufft) * np.nan, dz_updated,
@@ -716,14 +718,6 @@ class active_fibre_base(ABC):
         self.signal_emission_cs \
             = utils.fftshift(self.signal_emission_cs)
 
-        # Sort wavelength limits from grid OR cross-section file.
-        # Used for plots.
-        self.wl_lims = \
-            [wl_lims[0] if wl_lims[0] > self.grid.lambda_window.min()
-             else self.grid.lambda_window.min(),
-             wl_lims[1] if wl_lims[1] < self.grid.lambda_window.max()
-             else self.grid.lambda_window.max()]
-
         # Sort out pump(s) for appropriate geometry (determined by contents of
         # boundary_conditions).
         ASE_scaling = 1 - self.grid.t_range / seed_rep_rate
@@ -768,11 +762,11 @@ class active_fibre_base(ABC):
 
         # Overridden by optical assemblies, but still required if the optical
         # assemblies module is not used.
-        self.verbose = verbose 
+        self.verbose = verbose
 
         # Determine signal overlaps
-        self.signal_overlaps = self.get_overlaps_core_light(
-            self.grid.points, self.grid.lambda_window, self.effective_MFD)
+        self.signal_overlaps = self.get_overlaps_signal_core_light(
+            self.grid.lambda_window_crop, self.effective_MFD)
         self.signal_overlaps = utils.fftshift(self.signal_overlaps)
 
         # Determine pump overlaps
@@ -797,9 +791,8 @@ class active_fibre_base(ABC):
                 self.core_ASE_ref_index = self.core_ASE_cladding_ref_index \
                     + self.delta_n
         else:
-            self.pump_overlaps = self.get_overlaps_core_light(
-                self.pump.points, self.pump.lambda_window,
-                self.pump_effective_MFD)
+            self.pump_overlaps = self.get_overlaps_pump_core_light(
+                self.pump.lambda_window, self.pump_effective_MFD)
 
         self._precalculate_propagation_values()
 
@@ -950,15 +943,13 @@ class active_fibre_base(ABC):
         """
         raise NotImplementedError()
 
-    def get_overlaps_core_light(self, points, lambda_window, MFD):
+    def get_overlaps_pump_core_light(self, lambda_window, MFD):
         """
-        Calculate the overlap integrals for pump, ASE, or signal with the doped
-        core. Assumes infinite rotational symmetry.
+        Calculate the overlap integrals for pump or ASE with the doped core.
+        Assumes infinite rotational symmetry.
 
         Parameters
         ----------
-        points : int
-            Number of grid points.
         lambda_window : numpy array
             Wavelength window in m. Recommend using grid.lambda_window.
         MFD : numpy array
@@ -977,11 +968,11 @@ class active_fibre_base(ABC):
         x_points = 512  # number of spatial grid points
         w_points = None  # number of frequency grid points
         decimate = False
-        if points > 128:
-            w_points = 128
+        if len(lambda_window) > 2048:
+            w_points = 2048
             decimate = True
         else:
-            w_points = points
+            w_points = len(lambda_window)  # points
         dx = 2 * self.pump_core_diam / x_points
 
         x_axis = dx * np.linspace(0, x_points - 1, x_points)
@@ -994,7 +985,7 @@ class active_fibre_base(ABC):
         overlaps = None
         if decimate:  # Calculate MFD with low resolution and interpolate.
             indices = np.linspace(0, w_points - 1, w_points, dtype=int) \
-                * int(points / w_points)
+                * int(len(lambda_window) / w_points)  # points / w_points)
             decimated_lambda_window = lambda_window[indices]
             decimated_MFD = MFD[indices][None, :].repeat(x_points, axis=0)
             decimated_overlaps = np.zeros((x_points, w_points))
@@ -1012,6 +1003,59 @@ class active_fibre_base(ABC):
             mode_profile = np.exp(-1 * x_axis**2 / (tiled_MFD / 2)**2)
             mode_profile /= np.sum(mode_profile, axis=0)
             overlaps = np.sum(mode_profile * fibre_profile, axis=0)
+        return overlaps
+
+    def get_overlaps_signal_core_light(self, lambda_window_crop, MFD):
+        """
+        Calculate the overlap integrals for signal with the doped core.
+        Assumes infinite rotational symmetry.
+
+        Parameters
+        ----------
+        points : int
+            Number of grid points.
+        lambda_window_crop : numpy array
+            Wavelength window relevant to the simulation in m.
+            Recommend using grid.lambda_window_crop.
+        MFD : numpy array
+            Mode field diameter as a function of lambda_window
+
+        Returns
+        -------
+        numpy array
+            Overlap integral as a function of lambda_window.
+        """
+        # Limit the size of the MFD calculation by decimating if the number of
+        # grid points is >= 512. This is necessary because the mode profile
+        # needs to be calculated for all wavelengths, which is resource heavy
+        # for large grid sizes. Interpolation is accurate because the MFD is
+        # a slowly-varying function of wavelength.
+        x_points = 512  # number of spatial grid points
+        w_points = len(self.grid.sim_idx)  # number of frequency grid points
+        dx = 2 * self.pump_core_diam / x_points
+
+        x_axis = dx * np.linspace(0, x_points - 1, x_points)
+        x_axis = x_axis[:, None].repeat(w_points, axis=1)
+        dx = np.gradient(x_axis, axis=0)
+        fibre_profile = np.zeros((x_points, w_points))
+        fibre_profile[np.abs(x_axis) < (self.core_diam / 2)] = 1
+
+        _MFD = MFD[self.grid.sim_idx][None, :].repeat(x_points, axis=0)
+        _overlaps = np.zeros((x_points, w_points))
+
+        # Field; no factor of 2log(2) required for spatial distribution
+        mode_profile = np.exp(-1 * x_axis**2 / (_MFD / 2)**2)
+        mode_profile /= np.sum(mode_profile, axis=0)
+        _overlaps = np.sum(mode_profile * fibre_profile, axis=0)
+        _overlaps = interp.interp1d(
+                self.grid.lambda_window_crop, _overlaps,
+                fill_value='extrapolate', kind='quadratic')
+        _overlaps = _overlaps(self.grid.lambda_window_crop)
+        overlaps = np.zeros((self.grid.points))
+        overlaps[self.grid.sim_idx] = _overlaps
+        overlaps[0:self.grid.sim_idx.min()] = _overlaps[0]
+        overlaps[self.grid.sim_idx.max()::] = _overlaps[-1]
+
         return overlaps
 
     def _get_cladding_light_overlap_and_effective_area(self, lambda_c, points):
@@ -2718,7 +2762,7 @@ class component_base(loss_spectrum_base, ABC):
             self.beta_list.insert(0, 0)  # GDM included elsewhere
             for i, b in enumerate(self.beta_list):
                 self.dispersion += \
-                    1j * b * self.grid.omega**i / np.math.factorial(i)
+                    1j * b * self.grid.omega**i / factorial(i)
         self.dispersion = utils.fftshift(self.dispersion)
         self.dispersion = self.dispersion[None, :].repeat(2, axis=0)
 

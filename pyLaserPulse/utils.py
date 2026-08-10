@@ -13,12 +13,18 @@ import numpy as np
 import math
 from scipy.interpolate import interp1d
 import scipy.constants as const
+from scipy.signal import savgol_filter
+
+import pyLaserPulse.exceptions as exceptions
 
 
 fft = np.fft.fft
 ifft = np.fft.ifft
 fftshift = np.fft.fftshift
 ifftshift = np.fft.ifftshift
+
+
+arbsmall = 1e-100  # Arbitrarily small value to stop python raising warnings.
 
 
 def check_dict_keys(key_list, d, param_name):
@@ -273,6 +279,10 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
 
     Notes
     -----
+    If the emission and absorption data is not zero at the edges of the
+    simulation window, then extrapolation to the edges is exponential with a
+    gradient given by the gradient at the edges of the raw data.
+
     Expects three-column text file of data formatted as follows:
         Wavelength delimiter Emission delimiter Absorption
     """
@@ -283,16 +293,68 @@ def load_cross_sections(filename, delimiter, axis, axis_scale,
     min_wl = data[:, 0].min()
     max_wl = data[:, 0].max()
     absorption_func = interp1d(data[:, 0], data[:, 2], kind=interp_kind,
-                               fill_value='extrapolate')
+                               fill_value=0, bounds_error=False)
     emission_func = interp1d(data[:, 0], data[:, 1], kind=interp_kind,
-                             fill_value='extrapolate')
+                             fill_value=0, bounds_error=False)
     absorption = absorption_func(axis)
     emission = emission_func(axis)
 
     # Data with a fine wavelength grid and high dynamic range can result in
     # bad values after interpolation. Fix these.
-    absorption[absorption < 0] = 0
-    emission[emission < 0] = 0
+    absorption[absorption <= 0] = arbsmall
+    emission[emission <= 0] = arbsmall
+
+    # exponential fall off either side of the data
+    # Get log data
+    log_abs = np.log(absorption)
+    log_ems = np.log(emission)
+
+    # Get log raw data
+    log_raw_abs = np.log(data[:, 2])
+    log_raw_ems = np.log(data[:, 1])
+
+    # Get gradient at the extremes (as average over 5 points)
+    # right and left are swapped because the grid is defined for frequency
+    # and not wavelength (i.e., wavelength axis is in reverse).
+    dlog_raw_abs_r = np.average(np.gradient(log_raw_abs, data[:, 0])[0:19])
+    dlog_raw_abs_l = np.average(np.gradient(log_raw_abs, data[:, 0])[-21:-1])
+    dlog_raw_ems_r = np.average(np.gradient(log_raw_ems, data[:, 0])[0:19])
+    dlog_raw_ems_l = np.average(np.gradient(log_raw_ems, data[:, 0])[-21:-1])
+
+    # Get indices of final non-zero values in emission and absorption at the
+    # left and right
+    indices = np.linspace(0, len(axis)-1, len(axis))
+    log_abs_y_l = int(np.amin(indices[absorption > arbsmall]))
+    log_abs_y_r = int(np.amax(indices[absorption > arbsmall]))
+    log_ems_y_l = int(np.amin(indices[emission > arbsmall]))
+    log_ems_y_r = int(np.amax(indices[emission > arbsmall]))
+
+    # Define linear function (log scale)
+    log_line_abs_l = dlog_raw_abs_l * axis
+    log_line_abs_r = dlog_raw_abs_r * axis
+    log_line_ems_l = dlog_raw_ems_l * axis
+    log_line_ems_r = dlog_raw_ems_r * axis
+
+    # Get the linear function to match the interpolated data at the wings
+    # log scale.
+    log_line_abs_l -= log_line_abs_l[log_abs_y_l] - log_abs[log_abs_y_l]
+    log_line_abs_r -= log_line_abs_r[log_abs_y_r] - log_abs[log_abs_y_r]
+    log_line_ems_l -= log_line_ems_l[log_ems_y_l] - log_ems[log_ems_y_l]
+    log_line_ems_r -= log_line_ems_r[log_ems_y_r] - log_ems[log_ems_y_r]
+
+    # Include the linear function in the interpolated (log scale) data.
+    log_abs[0:log_abs_y_l] = log_line_abs_l[0:log_abs_y_l]
+    log_abs[log_abs_y_r::] = log_line_abs_r[log_abs_y_r::]
+    log_ems[0:log_ems_y_l] = log_line_ems_l[0:log_ems_y_l]
+    log_ems[log_ems_y_r::] = log_line_ems_r[log_ems_y_r::]
+
+    # Convert back to linear units and neglect exploding data for lambda < 0
+    # (occurs with very large frequency grids or, equivalently, fine temporal
+    # grids).
+    absorption[axis > 0] = np.exp(log_abs[axis > 0])
+    emission[axis > 0] = np.exp(log_ems[axis > 0])
+    absorption[axis < 0] = 0
+    emission[axis < 0] = 0
     return absorption, emission, [min_wl, max_wl]
 
 
@@ -373,14 +435,14 @@ def get_ESD_and_PSD(lambda_window, spectrum, repetition_rate):
     return energy_spectral_density, power_spectral_density
 
 
-def Sellmeier(lambda_window, f):
+def Sellmeier(lambda_window_crop, f):
     """
     Calculate the refractive index as a function of wavelength for fused silica
 
     Parameters
     ----------
-    lambda_window : numpy array
-        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window
+    lambda_window_crop : numpy array
+        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window_crop
     f : string
         Absolute path to file containing Sellmeier coefficients.
 
@@ -389,7 +451,7 @@ def Sellmeier(lambda_window, f):
     numpy array
         Refractive index as a function of wavelength.
     """
-    lw = 1e6 * lambda_window
+    lw = 1e6 * lambda_window_crop
     coeffs = np.loadtxt(f, skiprows=1)
     n_sq = 1
     for B, C in iter(coeffs):
@@ -422,18 +484,18 @@ def fft_convolve(arr1, arr2):
 
 
 def PCF_propagation_parameters_K_Saitoh(
-        lambda_window, grid_midpoint, omega_window, a, b, c, d, hole_pitch,
-        hole_diam_over_pitch, core_radius, Sellmeier_file):
+        lambda_window_crop, grid_midpoint_crop, omega_window, a, b, c, d,
+        hole_pitch, hole_diam_over_pitch, core_radius, Sellmeier_file):
     """
     Calculate V, mode_ref_index, D, beta_2 for hexagonal-lattice PCF.
 
     Parameters
     ----------
-    lambda_window : numpy array
-        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window
-    grid_midpoint : int
-        Middle index of the time-frequency grid.
-        See pyLaserPulse.grid.grid.midpoint
+    lambda_window_crop : numpy array
+        Wavelength grid in m. See pyLaserPulse.grid.grid.lambda_window_crop
+    grid_midpoint_crop : int
+        Index of the cropped frequency grid corresponding to the central
+        wavelength. See pyLaserPulse.grid.sim_idx_midpoint
     omega_window : numpy array
         Angular frequency grid in rad Hz.
         See pyLaserPulse.grid.grid.omega_window
@@ -473,8 +535,8 @@ def PCF_propagation_parameters_K_Saitoh(
     photonic crystal fibres",Opt. Express 13(1), 267--274 (2005).
     """
     material_ref_index = Sellmeier(
-        lambda_window, Sellmeier_file)
-    n_central = material_ref_index[grid_midpoint]
+        lambda_window_crop, Sellmeier_file)
+    n_central = material_ref_index[grid_midpoint_crop]
 
     A = np.zeros((4), dtype=float)
     B = np.zeros((4), dtype=float)
@@ -490,47 +552,167 @@ def PCF_propagation_parameters_K_Saitoh(
 
     V = A[0] + A[1] / (
         1 + A[2] * np.exp(
-            A[3] * lambda_window / hole_pitch))
+            A[3] * lambda_window_crop / hole_pitch))
     W = B[0] + B[1] / (
         1 + B[2] * np.exp(
-            B[3] * lambda_window / hole_pitch))
+            B[3] * lambda_window_crop / hole_pitch))
 
     n_FSM = np.sqrt(n_central**2
-                    - (lambda_window * V
+                    - (lambda_window_crop * V
                         / (2 * np.pi * core_radius))**2)
-    ref_index = np.sqrt((lambda_window * W
+    ref_index = np.sqrt((lambda_window_crop * W
                          / (2 * np.pi * core_radius))**2 + n_FSM**2)
 
-    k = 2 * np.pi * material_ref_index / lambda_window
+    k = 2 * np.pi * material_ref_index / lambda_window_crop
     v_group = np.gradient(omega_window, k, edge_order=2)
     beta = 1 / v_group
     beta2_MAT = np.gradient(beta, omega_window, edge_order=2)
-    D_MAT = -2 * np.pi * const.c * beta2_MAT / lambda_window**2
+    D_MAT = -2 * np.pi * const.c * beta2_MAT / lambda_window_crop**2
 
     decimate = 1
     max_points = 512
-    if grid_midpoint > max_points:  # i.e., grid size is > 1024
+    if grid_midpoint_crop > max_points:  # i.e., grid size is > 1024
         # Required because very fine grids can result in noisy gradient
         # calculations
-        decimate = int(grid_midpoint / max_points)
+        decimate = int(grid_midpoint_crop / max_points)
 
-    tmp = np.gradient(ref_index[::decimate], lambda_window[::decimate],
+    tmp = np.gradient(ref_index[::decimate], lambda_window_crop[::decimate],
                       edge_order=2)
-    tmp = np.gradient(tmp, lambda_window[::decimate], edge_order=2)
-    D_WG = -1 * (lambda_window[::decimate] / const.c) * tmp
+    tmp = np.gradient(tmp, lambda_window_crop[::decimate], edge_order=2)
+    D_WG = -1 * (lambda_window_crop[::decimate] / const.c) * tmp
     D = D_WG + D_MAT[::decimate]
-    beta_2 = -1 * lambda_window[::decimate]**2 * D / (2 * np.pi * const.c)
+    beta_2 = -1 * lambda_window_crop[::decimate]**2 * D / (2 * np.pi * const.c)
 
     if decimate > 1:  # Interpolate D and beta_2 onto original grid
         # kind='linear' produces artefacts. No difference seen between
         # kind='quadratic' and kind='cubic'.
-        f = interp1d(lambda_window[::decimate], D, kind='quadratic',
+        f = interp1d(lambda_window_crop[::decimate], D, kind='quadratic',
                      fill_value='extrapolate')
-        D = f(lambda_window)
-        f = interp1d(lambda_window[::decimate], beta_2, kind='quadratic',
+        D = f(lambda_window_crop)
+        f = interp1d(lambda_window_crop[::decimate], beta_2, kind='quadratic',
                      fill_value='extrapolate')
-        beta_2 = f(lambda_window)
+        beta_2 = f(lambda_window_crop)
     return V, ref_index, D, beta_2
+
+
+def savgol_gradient(y, dx, window_length, polyorder):
+    """
+    Use a savgol_filter to obtain a gradient without noise amplification.
+
+    Parameters
+    ----------
+    y : numpy array
+        Dependent variable
+    dx : float
+        Step size for the independent variable (i.e., x[1] - x[0]).
+    window_length : int
+        Number of points in the savgol filter window.
+    polyorder : int
+        Polynomial fit order.
+
+    Returns
+    -------
+    numpy array
+        Gradient dy / dx
+
+    Notes
+    -----
+    window_length = int(grid.points / 8) seems to work well for calculating
+    Taylor coefficients of dispersion curves.
+
+    Specifying derivative as a kwarg here does not help for gradients of
+    higher order than ~3, which are often just returned as zero by the
+    savgol_filter function. Set to 1 instead, and higher-order gradients
+    should be calculated in a loop to avoid this (at the penalty of speed).
+    """
+    dy_dx = savgol_filter(y, window_length=window_length, polyorder=polyorder,
+                          deriv=1, delta=dx)
+    return dy_dx
+
+
+def Maclaurin_coefficients(
+        y, x, dx, g, N, x_lims, window_length, polyorder=2):
+    """
+    Retrieve the first N Taylor coefficients of curve y calculated at x = x0
+    (this can be a grid midpoint).
+
+    Simpler to implement than Taylor series, and serves the same purpose for
+    the dispersion calculations which are by far the largest use case for a
+    function like this in pyLaserPulse.
+
+    Parameters:
+    -----------
+    y : numpy array
+        Dependent variable
+    x : numpy array
+        Independent variable. Must be evenly spaced and in ascending order.
+    dx : float
+        Step size for the independent variable (i.e., x[1] - x[0]).
+        This should be centred at zero (i.e., grid.omega,
+        or grid.omega_window - grid.omega_c, not grid.omega_window by itself).
+    g : pyLaserPulse.grid object
+    N : int
+        Number of coefficients to retrieve.
+    x_lims : list or tuple
+        Range over x for which the coefficients should be calculated.
+        (x_min, x_max), or [x_min, x_max], for example.
+        Must contain the midpoint.
+        If the domain size (x_max - x_min) is larger than that given by the
+        grid crop windows, then the domain given by the grid crop window is
+        used instead (grid.omega_crop, for dispersion calculations, for
+        example).
+    window_length : int
+        Number of points in the savgol filter window.
+        int(grid.points / 8) seems to work well.
+    polyorder : int
+        Polynomial fit order.
+
+    Returns
+    -------
+    numpy array
+        Series coefficients of the data in input array y.
+
+    Notes
+    -----
+    Differentiation is done using a Savitzky-Golay filter to prevent noise
+    amplification seen with diff or gradient methods. Fourier differentiation
+    is not used because input data can in general be non-periodic and non-zero
+    at the grid edges, adding false high-frequency content after the FFT which
+    ruins the gradient calculation.
+
+    Always check that the series coefficients are a good fit before trusting
+    them. This needs to be done whenever different grid parameters or fibre
+    types are used. Checking can be done by doing the expansion and plotting
+    the resulting curve overlaid with the input y data.
+
+    window_length = int(grid.points / 8) and polyorder = 2 seems to work well
+    for Taylor coefficients of dispersion curves, but some experimentation is
+    needed for different grid parameters even for the same fibre type.
+    """
+    idx_min, _ = find_nearest(x_lims[0], x)
+    idx_max, _ = find_nearest(x_lims[1], x)
+    indices = None
+    midpoint = None
+    if (idx_max - idx_min) < (g.sim_idx.max() - g.sim_idx.min()):
+        indices = np.arange(idx_min, idx_max + 1, 1)
+        if g.midpoint not in indices:
+            raise exceptions.GridCentreNotInMaclaurinSeriesDomain(
+                "The specified domain for the Maclaurin series does not "
+                "contain the grid central value. Please adjust the domain.")
+        midpoint = np.argmin(np.abs(indices - g.midpoint))
+    else:
+        indices = g.sim_idx
+        midpoint = g.sim_idx_midpoint
+
+    betas = []
+    betas.append(y[g.midpoint])  # 0th
+    b = savgol_gradient(y[indices], dx, window_length, polyorder)
+    for i in range(N):
+        betas.append(b[midpoint])
+        if i < N-1:
+            b = savgol_gradient(b, dx, window_length, polyorder)
+
+    return betas
 
 
 def Taylor_expansion(coeffs, axis, axis_centre=0):
@@ -545,8 +727,8 @@ def Taylor_expansion(coeffs, axis, axis_centre=0):
     axis : numpy array
         Axis over which the Taylor expansion is the be calculated.
     axis_centre : float
-        Centre of axis. Default is zero. The Taylor expansion will be calculated
-        over axis - axis_centre.
+        Centre of axis. Default is zero. The Taylor expansion will be
+        calculated over axis - axis_centre.
 
     Notes
     -----
@@ -557,51 +739,3 @@ def Taylor_expansion(coeffs, axis, axis_centre=0):
     for i, tc in enumerate(coeffs):
         TE += tc * (axis - axis_centre)**i / math.factorial(i)
     return TE
-
-
-def get_Taylor_coeffs_from_beta2(beta_2, grid):
-    """
-    Calculate the Taylor coefficients which describe the propagation constant
-    calculated using, e.g., Gloge, Saitoh (depending on what is being
-    simulated).
-
-    Parameters
-    ----------
-    beta_2 : numpy array
-        Dispersion curve in s^2 / m
-    grid : pyLaserPulse.grid.grid object
-
-    Returns
-    -------
-    beta : numpy array
-        Complex part of the propagation constant.
-
-    Notes
-    -----
-    Second-order gradient of beta with respect to omega will give the dispersion
-    curve to within the accuracy of the Taylor expansion.
-
-    This function could be used for retrieving the Taylor coefficients for,
-    e.g., grating compressors, but analytic formulae should be used instead
-    where available.
-    """
-    idx_max = grid.points - 1
-    idx_min = 0
-    lim = 2 * grid.lambda_c
-    if grid.lambda_max > lim:
-        # Get min and max indices for Taylor coefficient calculations.
-        # Only required for very large frequency grid spans.
-        # From testing, seems that 2x central wavelength is a good upper limit.
-        # Recall indexing for grid.lambda_window is reversed.
-        idx_min = find_nearest(lim, grid.lambda_window)[0]
-        idx_max = find_nearest(-1 * grid.omega[idx_min], grid.omega)[0]
-
-    # Truncate to 11th order. In testing, >11th order could't be found reliably.
-    tc = np.polyfit(
-        grid.omega[idx_min:idx_max], beta_2[idx_min:idx_max], 9)[::-1]
-    Taylors = np.zeros((len(tc) + 2))
-    Taylors[2::] = tc
-
-    beta = Taylor_expansion(Taylors, grid.omega)
-
-    return Taylors, beta

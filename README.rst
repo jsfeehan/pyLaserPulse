@@ -67,6 +67,50 @@ pyLaserPulse isn't on PyPI (yet), but it is easy to set up using the following s
 (Include the ``--user`` flag if you do not have admin or root privileges).
 
 
+===========================
+What's changed in v. 0.1.0?
+===========================
+**Grids:**
+
+The biggest change is to the way that the numerical grid is defined and instantiated. Previously, the grids were instantiated as follows:
+
+``g = grid.grid(num_points, central_wavelength, max_wavelength)``
+
+Now, they are instantiated using:
+
+``g = grid.grid(central_wavelength, (min_wavelength, max_wavelength), min_time_window_duration)``.
+
+This change enabled arbitrarily small time steps, which is a significant improvement. Now, grid resolutions are restricted by hardware limitations and acceptable runtimes, not by the way that the frequency grid is defined. The number of points is always a power of two, as before, but the optimal power is now determined based on the time and frequency window sizes that you define, and doesn't need to be determined beforehand.
+
+It has also allowed for minimum wavelengths below half the central wavelength of the grid, which is particularly useful for, e.g., supercontinuum generation simulations.
+
+It is rare that you will need to use the actual numerical grids directly. These can cumbersome and contain unusual values (e.g., ``g.lambda_window`` can now contain negative wavelengths). So, new members of the grid class have been introduced for plotting:
+
+``g.lambda_window_crop``, ``g.omega_crop``, ``g.omega_window_crop``, ``g.f_window_crop``, ``g.d_wl_crop``, ``energy_window_crop``, etc.
+
+See ``help(pyLaserPulse.grid.grid)`` for a full list in the docstrings.
+
+These are numpy arrays containing the sections of the wavelength and frequency grids spanned by the minimum and maximum wavelength values defined by the user at instantiation. ``g.time_window`` is unaffected.
+
+There are also the following member variables which can be helpful for selecting the data required for plots and other visuals:
+
+``g.crop_points``, ``g.sim_idx_mask``.
+
+*THIS IS A BREAKING CHANGE*. Compatibility with old pyLaserPulse versions is lost unless the new grid instantiation is used.
+
+The ``pyLaserPulse.grid`` module contains ``_legacy_grid`` and ``_legacy_grid_from_pyLaserPulse_simulation``, which are equivalent to ``grid`` and ``grid_from_pyLaserPulse_simulation`` except that they require the older grid information and have the same restrictions as the older grid definition. These are only kept for the sake of plotting old data, and cannot be used for new simulations. It is not much work to interpolate data from an old simulation onto a new grid, however, if you would like to use older data for new calculations.
+
+**Taylor coefficients:**
+
+An efficient way of calculating Taylor coefficients has now been added. This is based on gradients retrieved from Savitzky-Golay filtering. And example script is included in ../pyLaserPulse/examples/retrieving_dispersion_Taylor_coefficients.py.
+
+This has been enabled by the addition of three new functions in ``utils.py``:
+
+``pyLaserPulse.utils.savgol_gradient``
+``pyLaserPulse.utils.Maclaurin_coefficients``
+``pyLaserPulse.utils.Taylor_expansion``.
+
+
 ========
 The code
 ========
@@ -97,9 +141,10 @@ The example below shows how to model a simple Yb-doped fibre amplifier comprised
         ############################################################
 
         # Time-frequency grid parameters
-        points = 2**9         # Number of grid points
-        central_wl = 1030e-9  # Central wavelength, m
-        max_wl = 1200e-9      # Maximum wavelength, m
+        central_wl = 1030e-9         # Central wavelength, m
+        wl_lims = [900e-9, 1300e-9]  # Wavelength limits, m (for plots)
+        time_window_size = 5e-12     # Minimum width of the time window, s
+
 
         # Laser pulse parameters
         tau = 150e-15         # Pulse duration, s
@@ -112,9 +157,9 @@ The example below shows how to model a simple Yb-doped fibre amplifier comprised
         L_out = 0.2      # output fibre length, m
 
         # Yb-fibre parameters
-        L = 1                                # length, m
-        ase_points = 2**8                    # number of points in pump & ASE grid
-        ase_wl_lims = [900e-9, max_wl]       # wavelength limits for ASE grid
+        L = 1                                 # length, m
+        ase_points = 2**10                     # number of points in pump & ASE grid
+        ase_wl_lims = [800e-9, max(wl_lims)]  # wavelength limits for ASE grid
         bounds = {'co_pump_power': 1,            # co-pump power, W
                   'co_pump_wavelength': 916e-9,  # co-pump wavelength, m
                   'co_pump_bandwidth': 1e-9,     # co-pump bandwidth, m
@@ -125,7 +170,7 @@ The example below shows how to model a simple Yb-doped fibre amplifier comprised
         ##############################################################
 
         # Time-frequency grid defined using the grid module
-        g = grid.grid(points, central_wl, max_wl)
+        g = grid.grid(central_wl, wl_lims, time_window_size, verbose=True)
 
         # pulse defined using the pulse module
         p = pulse.pulse(tau, P_peak, shape, f_rep, g)
@@ -143,7 +188,7 @@ The example below shows how to model a simple Yb-doped fibre amplifier comprised
         ################################################################
         component_list = [iso_wdm, ydf]
         amp = optical_assemblies.sm_fibre_amplifier(
-            g, component_list, plot=True, name='amp 1', high_res_sampling=100,
+            g, component_list, plot=True, name='amp 1', high_res_sampling=200,
             data_directory=directory, verbose=True)
 
         ######################
@@ -166,9 +211,24 @@ The ``optical_assemblies`` module used in the example above provides an easy way
 .. image:: docs/videos/simulation_gallery.gif
     :align: center
 
-All components have a ``verbose`` keyword argument, but this is overridden by the same keyword argument used when instantiating classes in the ``optical_assemblies`` module. When ``True``, information about the progress of the simulation is printed to the terminal. The output for this example is given below. The amplifier name is printed, as well as the name of each component, the percentage propagation for the input and output fibres of each component, and the convergence of the boundary value solver for the active fibre.
+All components have a ``verbose`` keyword argument, but this is overridden by the same keyword argument used when instantiating classes in the ``optical_assemblies`` module. When ``True``, information about the progress of the simulation is printed to the terminal. The output for this example is given below. Useful grid parameters are printed (unless ``verbose=False`` is passed when the grid is instantiated), including the number of points, ``g.dt``, ``g.df``, and the frequency and wavelength array limits for the simulation and the visuals. The amplifier name is printed, as well as the name of each component, the percentage propagation for the input and output fibres of each component, and the convergence of the boundary value solver for the active fibre.
 
 .. code:: bash
+
+        Grid parameters:
+        -----------------
+                Grid points: 1024
+                Temporal resolution: 6.635 fs
+                Time range: 6.795 ps
+                Frequency resolution: 0.147 THz
+                Central frequency: 291.061 THz
+                Simulation
+                        Frequency limits: 215.708 THz to 366.266 THz
+                        Frequency range: 150.558 THz
+                        Wavelength limits: 818.511 nm to 1389.805 nm
+                Visuals
+                        Frequency limits: 230.610 THz to 366.413 THz
+                        Wavelength limits: 818.182 nm to 1300.000 nm
 
         Simulating    amp 1
         --------------------
@@ -183,18 +243,19 @@ All components have a ``verbose`` keyword argument, but this is overridden by th
 
         Nufern_PM_YSF_HI_HP
         Convergence error (spectral density only):
-                 55.38206546671114
-                 12.000573541512274
-                 3.46398001489616
-                 0.9014605622333454
-                 0.24244909411684906
-                 0.06411436939453781
+                 55.85137332005296
+                 12.127909733129046
+                 3.510051334784536
+                 0.9165626653734468
+                 0.2473008761464484
+                 0.06561545347744863
 
         Convergence error (full field):
-                 16.93329516050609
-                 0.9818041820463349
-                 0.19351727715062822
-                 0.07243049202738491
+                 17.368076805248087
+                 0.960664748248164
+                 0.2558753302454984
+                 0.058588043496741946
+
 
 
 
@@ -225,27 +286,27 @@ The code below models supercontinuum generation in PCF and compression of the sp
         ############################################################
 
         # Time-frequency grid parameters
-        points = 2**14        # Number of grid points
-        central_wl = 1050e-9  # Central wavelength, m
-        max_wl = 8000e-9      # Maximum wavelength, m
+        central_wl = 1040e-9         # Central wavelength, m
+        wl_lims = (400e-9, 2000e-9)  # Limits of the displat grid, m
+        t_range = 15e-12             # Time window span, s
 
         # Laser pulse parameters
-        tau = 100e-15         # Pulse duration, s
-        P_peak = [5000, 25]   # [P_x, P_y], W
-        f_rep = 40e6          # Repetition frequency, Hz
-        shape = 'Gauss'       # Can also take 'sech'
+        tau = 50e-15           # Pulse duration, s
+        P_peak = [25000, 250]  # [P_x, P_y], W
+        f_rep = 40e6           # Repetition frequency, Hz
+        shape = 'Gauss'        # Can also take 'sech'
 
         # ANDi photonic crystal fibre parameters
         L_beat = 1e-2  # polarization beat length (m)
-        L = 1          # length, m
+        L = .15        # length, m
 
-        # grating compressor parameters
+        # # grating compressor parameters
         loss = 0.04            # percent loss per grating reflection
-        transmission = 700e-9  # transmission bandwidth
+        transmission = 800e-9  # transmission bandwidth
         coating = data.paths.materials.reflectivities.gold
         epsilon = 1e-1         # Jones parameter for polarization mixing and phase
         theta = 0              # Jones parameter for angle subtended by x-axis
-        crosstalk = 1e-3       # polarization crosstalk
+        crosstalk = 0          # polarization crosstalk
         beamsplitting = 0      # Useful for output couplers, etc.
         l_mm = 600             # grating lines per mm
         sep_initial = 1e-2     # initial guess for grating separation
@@ -256,7 +317,7 @@ The code below models supercontinuum generation in PCF and compression of the sp
         ##############################################################
 
         # Time-frequency grid defined using the grid module
-        g = grid.grid(points, central_wl, max_wl)
+        g = grid.grid(central_wl, wl_lims, t_range)
 
         # pulse defined using the pulse module
         p = pulse.pulse(tau, P_peak, shape, f_rep, g)
@@ -266,7 +327,7 @@ The code below models supercontinuum generation in PCF and compression of the sp
             0.2, 250e-9, g.lambda_c, epsilon, theta, 0, g, crosstalk, order=5)
 
         # ANDi photonic crystal fibre - NKT NL-1050-NEG-1 - from catalogue_components
-        pcf = pf.NKT_NL_1050_NEG_1(g, L, 1e-6, L_beat)
+        pcf = pf.NKT_NL_1050_NEG_1(g, L, 1e-9, L_beat)
 
         # grating compressor defined using the base_components module
         gc = base_components.grating_compressor(
@@ -297,9 +358,9 @@ The code below models supercontinuum generation in PCF and compression of the sp
         ##########################################################
         # Use the matplotlib_gallery module to display the plots #
         ##########################################################
-        if scg.plot or compression.plot:
-            plot_dicts = [scg.plot_dict, compression.plot_dict]
-            single_plot_window.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
+        plot_dicts = [scg.plot_dict, compression.plot_dict]
+        single_plot_window.matplotlib_gallery.launch_plot(plot_dicts=plot_dicts)
+
 
 A few plots from this simulation are shown below. The development of the pulse and power spectral density over the length of ANDi PCF are shown in the top row (left and right, respectively), and the strongly-chirped pulse at the ANDi PCF output and the femtosecond pulse after the compressor are shown in the bottom row (left and right, respectively).
 
@@ -309,21 +370,26 @@ This information regarding the compressor optimization and the optimized compres
 
 .. code:: bash
 
-	Optimizing the compressor
-	-------------------------
-	Convergence reached:  True
-	Optimization info.:  ['requested number of basinhopping iterations completed successfully']
-	Number of optimization iterations:  10
+        Simulating    compressor
+        -------------------------
 
-	Pulse compression data
-	----------------------
-	Grating separation: 4.998 mm
-	Incident angle: 24.528 degrees.
+        grating_compressor
 
-	Pulse peak power with respect to peak power of transform limit:
- 	        Before compressor: .98 %
-	        After compressor: 39.64 %
+        Optimizing
 
+
+        Convergence reached:  True
+        Optimization info.:  ['requested number of basinhopping iterations completed successfully']
+        Number of optimization iterations:  10
+
+        Pulse compression data
+        ----------------------
+        Grating separation: 0.413 mm
+        Incident angle: 22.665 degrees.
+
+        Pulse peak power with respect to peak power of transform limit:
+                Before compressor: 1.40 %
+                After compressor: 34.27 %
 
 =============
 Documentation

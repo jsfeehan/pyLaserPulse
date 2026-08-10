@@ -20,23 +20,23 @@ directory = None
 # Instantiate the time-frequency grid, pulse, and components #
 ##############################################################
 # Time-frequency grid defined using the grid module
-points = 2**13    # Time-frequency grid points
-wl = 1040e-9      # Grid & pulse central wavelength
-max_wl = 2000e-9  # Max grid wavelength
-g = grid.grid(points, wl, max_wl)
+lambda_c = 1040e-9           # Central wavelength, m
+wl_lims = (300e-9, 1600e-9)  # Plot grid limits, m
+t_span = 25e-12              # Time window span, s
+g = grid.grid(lambda_c, wl_lims, t_span)
 
 # pulse defined using the pulse module
 duration = 80e-15  # pulse duration, s
-Pp = [15e3, 1.5]    # Peak power [slow axis, fast axis]
+Pp = [15e3, 1.5]   # Peak power [slow axis, fast axis]
 shape = 'sech'     # can accept 'Gauss'
 rr = 50e6          # repetition rate
 delay = -12e-12    # Initial delay from T = 0 s.
 p = pulse.pulse(duration, Pp, shape, rr, g, initial_delay=delay)
 
 # Photonic crystal fibre (NKT SC-5.0-1040-PM) from catalogue_components
-lenght = 1  # Fibre length in m
-err = 1e-8  # integration error (CQEM)
-pcf = pf.NKT_SC_5_1040_PM(g, lenght, err)
+length = 1  # Fibre length in m
+err = 1e-10  # integration error (CQEM)
+pcf = pf.NKT_SC_5_1040_PM(g, length, err)
 
 
 ################################################################

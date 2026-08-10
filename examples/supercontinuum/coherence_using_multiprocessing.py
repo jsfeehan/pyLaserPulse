@@ -68,10 +68,10 @@ def scg_sim(_g):
 
 if __name__ == "__main__":
     # grid
-    points = 2**13    # Time-frequency grid points
-    wl = 1040e-9      # Grid & pulse central wavelength
-    max_wl = 4000e-9  # Max grid wavelength
-    g = grid.grid(points, wl, max_wl)
+    lambda_c = 1040e-9           # Central wavelength, m
+    wl_lims = (300e-9, 2000e-9)  # Simulation wavelength limits, m
+    t_span = 10e-12              # time span, s
+    g = grid.grid(1040e-9, (300e-9, 2000e-9), 10e-12)
 
     num_processes = psutil.cpu_count(logical=False)  # only use physical cores
     num_simulations = 4 * num_processes  # no. of simulations in CFODC ensemble
@@ -110,8 +110,8 @@ if __name__ == "__main__":
     ax1.set_xlabel('Wavelength, nm')
     ax2.set_ylabel('Complex first-order degree of coherence')
     ax2.set_xlabel('Wavelength, nm')
-    ax1.set_xlim([1e9 * g.lambda_min, 1e9 * g.lambda_max])
-    ax2.set_xlim([1e9 * g.lambda_min, 1e9 * g.lambda_max])
+    ax1.set_xlim([1e9 * g.wl_lims[0], 1e9 * g.wl_lims[1]])
+    ax2.set_xlim([1e9 * g.wl_lims[0], 1e9 * g.wl_lims[1]])
     ax1.legend(legend1, ['$S_{x}(\\lambda)$', '$S_{y}(\\lambda)$'])
     ax2.legend(['$g_{x}(\\lambda)$', '$g_{y}(\\lambda)$'])
     fig.tight_layout()

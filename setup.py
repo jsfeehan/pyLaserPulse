@@ -1,7 +1,7 @@
 from setuptools import find_packages
 from setuptools import setup
 
-VERSION = '0.0.0'
+VERSION = '0.1.0'
 
 long_description = '''pyLaserPulse is a comprehensive simulation toolbox for 
     modelling polarization-resolved, on-axis laser pulse propagation through

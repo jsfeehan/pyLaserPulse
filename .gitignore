@@ -18,5 +18,5 @@ dist/
 pyLaserPulse.egg-info/
 
 # junk files
-test.py
 change_details.sh
+test.py

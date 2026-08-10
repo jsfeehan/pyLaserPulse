@@ -43,7 +43,7 @@ directory = os.path.dirname(os.path.abspath(__file__)) + '/amp 1/'
 g = grid.grid_from_pyLaserPulse_simulation(directory)
 
 # pulse defined using the pulse module
-p = pulse.pulse_from_pyLaserPulse_simulation(g, directory) 
+p = pulse.pulse_from_pyLaserPulse_simulation(g, directory)
 
 # amp 1 data
 amp_1 = np.load(directory + 'optical_assembly.npz')

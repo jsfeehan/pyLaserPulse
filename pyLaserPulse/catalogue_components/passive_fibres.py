@@ -588,6 +588,49 @@ class NKT_SC_5_1040_PM(bc.photonic_crystal_passive_fibre):
             verbose=verbose)
 
 
+class exail_IXF_SUP_5_125_1050_PM(bc.photonic_crystal_passive_fibre):
+    """
+    photonic_crystal_passive_fibre with default parameters which provide
+    fibre properties matching Exail IXF SUP 5/125 1050 PM
+
+    Parameters
+    ----------
+    grid : pyLaserPulse.grid.grid object
+    length : float
+        Fibre length.
+    tol : float
+        Tolerance for propagation integration error
+    n2 : float
+        Nonlinear index in m^2 / W. Default value is 2.19e-20 m^2/W,
+        which is the value for fused silica around 1060 nm.
+    verbose : bool
+        Print information to terminal if True
+
+    Notes
+    -----
+    Published specifications (accessed 5/6/2026):
+    Gamma: ~0.009 -- 0.011 1 / (W m)
+    ZDW: 1045 -- 1055 nm
+    effective area at ZDW: 14 -- 18 square microns
+
+    Returned model parameters:
+    Gamma:  9.643132514383034  1/(W km)
+    ZDW:  1051.138776445429 nm
+    effective area at ZDW:  13.917886321052936 square microns
+    """
+    def __init__(self, grid, length, tol, n2=2.19e-20, verbose=False):
+        hole_pitch = 3.76e-6
+        hole_diam_over_pitch = 0.585
+        fR = 0.18
+        beat_length = 4.565e-3  # dn = 2.3e-4 is given on spec. sheet. 1050 nm
+        super().__init__(
+            grid, length, paths.materials.loss_spectra.silica,
+            paths.materials.Raman_profiles.silica, hole_pitch,
+            hole_diam_over_pitch, beat_length, n2, fR, tol,
+            paths.materials.Sellmeier_coefficients.silica,
+            verbose=verbose)
+
+
 class NKT_NL_1050_NEG_1(bc.photonic_crystal_passive_fibre):
     """
     photonic_crystal_passive_fibre with default parameters which provide

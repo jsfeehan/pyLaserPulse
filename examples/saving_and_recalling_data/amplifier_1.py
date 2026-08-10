@@ -16,9 +16,9 @@ Inside this directory, the following files are created:
 These files can be loaded as a dictionary using the numpy.load method. The
 files have the following dictionary keys:
     grid.npz -- Contains all data required to recreate the pyLaserPulse grid:
-        points
         lambda_c
-        lambda_max
+        lambda_lims
+        t_range
     pulse.npz -- The sample fields are not present if sampling is off:
         field
         output
@@ -71,9 +71,9 @@ directory = os.path.dirname(os.path.abspath(__file__)) + '/'
 ############################################################
 
 # Time-frequency grid parameters
-points = 2**11        # Number of grid points
-central_wl = 1030e-9  # Central wavelength, m
-max_wl = 1200e-9      # Maximum wavelength, m
+lambda_c = 1030e-9
+lambda_lims = (900e-9, 1250e-9)
+time_span = 20e-12
 
 # Laser pulse parameters
 tau = 3e-12              # Pulse duration, s
@@ -88,7 +88,7 @@ L_out = 0.2      # output fibre length, m
 # Yb-fibre parameters
 L = 1                                # length, m
 ase_points = 2**8                    # number of points in pump & ASE grid
-ase_wl_lims = [900e-9, max_wl]       # wavelength limits for ASE grid
+ase_wl_lims = lambda_lims            # wavelength limits for ASE grid
 bounds = {'co_pump_power': .15,          # co-pump power, W
           'co_pump_wavelength': 976e-9,  # co-pump wavelength, m
           'co_pump_bandwidth': 1e-9,     # co-pump bandwidth, m
@@ -99,7 +99,7 @@ bounds = {'co_pump_power': .15,          # co-pump power, W
 ##############################################################
 
 # Time-frequency grid defined using the grid module
-g = grid.grid(points, central_wl, max_wl)
+g = grid.grid(lambda_c, lambda_lims, time_span)
 
 # pulse defined using the pulse module
 p = pulse.pulse(tau, P_peak, shape, f_rep, g)

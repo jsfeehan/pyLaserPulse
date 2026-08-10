@@ -231,7 +231,22 @@ class assembly(ABC):
                 infostring = '\nSimulating    %s' % self.name
                 infostring += '\n' + '-' * len(infostring)
                 print(infostring)
-            return func(self, pulse)
+
+            # 8/6/2026 -- interpolation onto new grid is now possible.
+            # If this is done, it breaks the old heatmap plots showing pulse
+            # samples vs propagated distance.
+            # New method:
+            # 1) Clear the pulse high-res sampling containers
+            # 2) Propagate
+            # 3) Copy the sampling containers to members of the optical assembly
+            pulse.reset_high_res_sampling()
+            pulse = func(self, pulse)
+            self.high_res_field_samples = pulse.high_res_field_samples
+            self.high_res_rep_rate_samples = pulse.high_res_rep_rate_samples
+            self.high_res_field_sample_points = pulse.high_res_field_sample_points
+            self.high_res_B_integral_samples = pulse.high_res_B_integral_samples
+            return pulse
+
         return wrapper
 
     def plot_pulse(self, pulse):
@@ -276,6 +291,8 @@ class assembly(ABC):
         ax.set_ylabel(r'$\lambda (T)$, nm')
         ax.set_xlim([1e12 * self.grid.time_window.min(),
                      1e12 * self.grid.time_window.max()])
+        ax.set_ylim([1e9 * self.grid.lambda_window_crop.min(),
+                     1e9 * self.grid.lambda_window_crop.max()])
         fmt = []
         self.plot_dict[self.name + ': pulse chirps'] = (ax, fmt)
 
@@ -362,6 +379,8 @@ class assembly(ABC):
         pulse.get_ESD_and_PSD_from_high_res_field_samples(self.grid)
 
         Y = np.cumsum(pulse.high_res_field_sample_points)
+
+        d = 1
         if self.grid.points >= 512:
             d = int(self.grid.points / 512)
 
@@ -369,10 +388,11 @@ class assembly(ABC):
         ax = fig.add_subplot(111)
         ax.set_title(r'$P(T)$ vs z up to the output of %s' % self.name)
         vmax = time_samples.max()
-        vmin = np.min(np.max(time_samples, axis=0))
+        vmin = 1e-6 * vmax  #np.min(np.max(time_samples, axis=0))
         p = ax.pcolormesh(
             1e12 * self.grid.time_window[::d], Y, time_samples[:, ::d],
-            cmap='cubehelix_r', norm=LogNorm(vmin=vmin, vmax=vmax))
+            cmap='cubehelix_r', norm=LogNorm(vmin=vmin, vmax=vmax),
+            shading='nearest')
         ax.set_xlabel(r'$T = t - z/v_{g}$, ps')
         ax.set_ylabel(r'Propagated distance, m')
 
@@ -381,19 +401,26 @@ class assembly(ABC):
         fmt = []
         self.plot_dict[self.name + ': Pulse vs z'] = (ax, fmt)
 
+        vmax = np.round(10 * np.log10(pulse.high_res_PSD_samples.max()),
+                        decimals=1)
+        norm = Normalize(vmin=vmax-60, vmax=vmax)
+
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('PSD vs ' + r'$z$' + ' up to the output of %s \n'
                      % self.name
                      + ' (neglects light outside of grid.time_window)')
-        vmax = pulse.high_res_PSD_samples.max()
-        vmin = np.min(np.max(pulse.high_res_PSD_samples, axis=0))
+        X = 1e9 * self.grid.lambda_window[::d]
+        idx_sort = np.argsort(X)
+        X = X[idx_sort]
+        C = 10 * np.log10(pulse.high_res_PSD_samples[:, ::d][:, idx_sort])
         p = ax.pcolormesh(
-            1e9 * self.grid.lambda_window[::d], Y,
-            pulse.high_res_PSD_samples[:, ::d], cmap='cubehelix_r',
-            norm=LogNorm(vmin=vmin, vmax=vmax))
+            X, Y, C, cmap='cubehelix_r',
+            norm=norm, shading='nearest')
         ax.set_xlabel(r'$\lambda$, nm')
         ax.set_ylabel(r'Propagated distance, m')
+        ax.set_xlim([self.grid.lambda_window_crop.min() * 1e9,
+                     self.grid.lambda_window_crop.max() * 1e9])
 
         ax.p = p  # MUST be used for pcolormesh
         ax.colorbar_label = 'PSD, dBm/nm'
@@ -428,8 +455,8 @@ class assembly(ABC):
         ax.set_ylabel('Power spectral density, mW/nm', fontsize=13)
         max_y = integrated_PSD.max()
         ax.set_ylim([min_y, 4 * max_y])
-        ax.set_xlim([1e9 * self.grid.lambda_window.min(),
-                     1e9 * self.grid.lambda_window.max()])
+        ax.set_xlim([1e9 * self.grid.wl_lims[0],
+                     1e9 * self.grid.wl_lims[1]])
 
         fmt = []
         self.plot_dict[self.name + ': gain fibre, net PSDs'] = (ax, fmt)
@@ -807,10 +834,6 @@ class sm_fibre_amplifier(assembly):
 
         Returns the pulse class.
         """
-        # infostring = '\nSimulating    %s' % self.name
-        # infostring += '\n' + '-'*len(infostring)
-        # print(infostring)
-
         pulse.get_ESD_and_PSD(self.grid, pulse.field)
         self.input_pulse_PSD = pulse.power_spectral_density
 
@@ -1010,7 +1033,7 @@ class sm_fibre_amplifier(assembly):
         # summed spectra -- gain fibre only
         min_y = 1e-6
         handles = []
-        fig = Figure()  # figsize=(6, 5))
+        fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Gain fibre: net PSDs')
         h1, = ax.semilogy(
@@ -1042,8 +1065,8 @@ class sm_fibre_amplifier(assembly):
             max_y = max(max_y, self.forwards_cladding_PSD.max(),
                         self.backwards_cladding_PSD.max())
         ax.set_ylim([min_y, 4 * max_y])
-        ax.set_xlim([1e9 * self.gain_fibre.wl_lims[0],
-                     1e9 * self.gain_fibre.wl_lims[1]])
+        ax.set_xlim([1e9 * self.grid.wl_lims[0],
+                     1e9 * self.grid.wl_lims[1]])
 
         fmt = []
         self.plot_dict[self.name + ': gain fibre, net PSDs'] = (ax, fmt)
@@ -1053,7 +1076,7 @@ class sm_fibre_amplifier(assembly):
         axis_str = [r'$x$', r'$y$']
         linestyles = ['-', '-.']  # for polarization axes
         alphas = [0.55, 1]
-        fig = Figure()  # figsize=(6, 5))
+        fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Gain fibre: individual PSDs')
         for i, ls in enumerate(linestyles):
@@ -1108,16 +1131,16 @@ class sm_fibre_amplifier(assembly):
             max_y = max(max_y, self.core_co_pump_PSD.max(),
                         self.core_counter_pump_PSD.max())
         ax.set_ylim([min_y, 2 * max_y])
-        xmin = min(self.gain_fibre.wl_lims[0],
+        xmin = min(self.grid.wl_lims[0],
                    self.gain_fibre.pump.lambda_lims[0])
-        xmax = max(self.gain_fibre.wl_lims[1],
+        xmax = max(self.grid.wl_lims[1],
                    self.gain_fibre.pump.lambda_lims[1])
         ax.set_xlim([1e9 * xmin, 1e9 * xmax])
         fmt = []
         self.plot_dict[self.name + ': gain fibre, individual PSDs'] = (ax, fmt)
 
         # Net amplifier output -- co-propagating only
-        fig = Figure()  # figsize=(6, 5))
+        fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Net amplifier output')
         for i, ls in enumerate(linestyles):
@@ -1142,9 +1165,9 @@ class sm_fibre_amplifier(assembly):
         ax.set_xlabel('Wavelength, nm', fontsize=13)
         ax.set_ylabel('Power spectral density, mW/nm', fontsize=13)
         ax.set_ylim([min_y, 2 * self.net_amplifier_output.max()])
-        xmin = min(self.gain_fibre.wl_lims[0],
+        xmin = min(self.grid.wl_lims[0],
                    self.gain_fibre.pump.lambda_lims[0])
-        xmax = max(self.gain_fibre.wl_lims[1],
+        xmax = max(self.grid.wl_lims[1],
                    self.gain_fibre.pump.lambda_lims[1])
         ax.set_xlim([1e9 * xmin, 1e9 * xmax])
         fmt = []
@@ -1222,9 +1245,9 @@ class sm_fibre_amplifier(assembly):
             + field_err_ax_max_str + "], 0, " + max_str
             + ", color='darkorange', alpha=0.2, edgecolor=None)",
             "self.fb1, = plotWidget.canvas.axes.fill(" +
-            "np.NaN, np.NaN, 'cornflowerblue', alpha=0.2, label='ESD')",
+            "np.nan, np.nan, 'cornflowerblue', alpha=0.2, label='ESD')",
             "self.fb2, = plotWidget.canvas.axes.fill(" +
-            "np.NaN, np.NaN, 'darkorange', alpha=0.2, label='Field')",
+            "np.nan, np.nan, 'darkorange', alpha=0.2, label='Field')",
             "axes.legend([(self.fb1, ax.get_legend_handles_labels()[0][0])," +
             "(self.fb2, ax.get_legend_handles_labels()[0][1])]," +
             " ['ESD', 'Field'])"]
@@ -1268,16 +1291,21 @@ class sm_fibre_amplifier(assembly):
                 max(self.net_co_PSD_samples.max(),
                     self.net_counter_PSD_samples.max())),
             decimals=1)
-        norm = Normalize(vmin=-40, vmax=vmax)
+        norm = Normalize(vmin=vmax-60, vmax=vmax)
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Co light, gain fibre')
+        X = 1e9 * self.grid.lambda_window[::d]
+        idx_sort = np.argsort(X)
+        X = X[idx_sort]
+        C = 10 * np.log10(self.net_co_PSD_samples[:, ::d][:, idx_sort])
         p = ax.pcolormesh(
-            1e9 * self.grid.lambda_window[::d], Y,
-            10 * np.log10(self.net_co_PSD_samples[:, ::d]),
-            cmap='cubehelix_r', norm=norm)
+            X, Y, C, cmap='cubehelix_r',
+            norm=norm, shading='nearest')
         ax.set_xlabel('Wavelength, nm')
         ax.set_ylabel('Position along the gain fibre, m')
+        ax.set_xlim([self.grid.lambda_window_crop.min() * 1e9,
+                     self.grid.lambda_window_crop.max() * 1e9])
 
         ax.p = p  # MUST be used for pcolormesh
         ax.colorbar_label = 'PSD, dBm/nm'
@@ -1289,12 +1317,17 @@ class sm_fibre_amplifier(assembly):
         fig = Figure()
         ax = fig.add_subplot(111)
         ax.set_title('Counter light, gain fibre')
+        X = 1e9 * self.grid.lambda_window[::d]
+        idx_sort = np.argsort(X)
+        X = X[idx_sort]
+        C = 10 * np.log10(self.net_counter_PSD_samples[:, ::d][:, idx_sort])
         p = ax.pcolormesh(
-            1e9 * self.grid.lambda_window[::d], Y[::-1],
-            10 * np.log10(self.net_counter_PSD_samples[::-1, ::d]),
-            cmap='cubehelix_r', norm=norm)
+            X, Y, C, cmap='cubehelix_r',
+            norm=norm, shading='nearest')
         ax.set_xlabel('Wavelength, nm')
         ax.set_ylabel('Position along the gain fibre, m')
+        ax.set_xlim([self.grid.lambda_window_crop.min() * 1e9,
+                     self.grid.lambda_window_crop.max() * 1e9])
 
         ax.p = p
         ax.colorbar_label = 'PSD, dBm/nm'
@@ -1412,8 +1445,6 @@ class sm_fibre_amplifier(assembly):
         if self.gain_fibre.cladding_pumping:
             savez_dict = {
                 'sample_points': z,
-                'net_co_PSD_samples': self.net_co_PSD_samples,
-                'net_counter_PSD_samples': self.net_counter_PSD_samples,
                 'boundary_value_solver_ESD_optimization_loss': self.gain_fibre.boundary_value_solver_ESD_optimization_loss,
                 'boundary_value_solver_field_optimization_loss': self.gain_fibre.boundary_value_solver_field_optimization_loss,
                 'inversion_vs_distance': self.gain_fibre.inversion_vs_distance,
@@ -1424,14 +1455,15 @@ class sm_fibre_amplifier(assembly):
                 'co_core_ASE_ESD_output': self.co_core_ASE_ESD_output,
                 'pump_points': self.gain_fibre.pump.points,
                 'pump_wl_lims': self.gain_fibre.pump.lambda_lims,
-                'pump_lambda_window': self.gain_fibre.pump.lambda_window,
-                'co_pump_PSD_samples': np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :],
-                'counter_pump_PSD_samples': np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]}
+                'pump_lambda_window': self.gain_fibre.pump.lambda_window}
+            if self.sampling:
+                savez_dict['net_co_PSD_samples'] = self.net_co_PSD_samples
+                savez_dict['net_counter_PSD_samples'] = self.net_counter_PSD_samples
+                savez_dict['co_pump_PSD_samples'] = np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :]
+                savez_dict['counter_pump_PSD_samples'] = np.sum(self.gain_fibre,counter_pump.high_res_samples, axis=1)[1::, :]
         else:
             savez_dict = {
                 'sample_points': z,
-                'net_co_PSD_samples': self.net_co_PSD_samples,
-                'net_counter_PSD_samples': self.net_counter_PSD_samples,
                 'boundary_value_solver_ESD_optimization_loss': self.gain_fibre.boundary_value_solver_ESD_optimization_loss,
                 'boundary_value_solver_field_optimization_loss': self.gain_fibre.boundary_value_solver_field_optimization_loss,
                 'inversion_vs_distance': self.gain_fibre.inversion_vs_distance,
@@ -1440,8 +1472,10 @@ class sm_fibre_amplifier(assembly):
                 'co_core_ASE_ESD_output': self.co_core_ASE_ESD_output,
                 'pump_points': self.gain_fibre.pump.points,
                 'pump_wl_lims': self.gain_fibre.pump.lambda_lims,
-                'pump_lambda_window': self.gain_fibre.pump.lambda_window,
-                'co_pump_PSD_samples': np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :],
-                'counter_pump_PSD_samples': np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]}
+                'pump_lambda_window': self.gain_fibre.pump.lambda_window}
+            if self.sampling:
+                savez_dict['net_co_PSD_samples'] = self.net_co_PSD_samples
+                savez_dict['net_counter_PSD_samples'] = self.net_counter_PSD_samples
+                savez_dict['co_pump_PSD_samples'] = np.sum(self.gain_fibre.pump.high_res_samples, axis=1)[1::, :]
+                savez_dict['counter_pump_PSD_samples'] = np.sum(self.gain_fibre.counter_pump.high_res_samples, axis=1)[1::, :]
         np.savez(self.directory + "optical_assembly.npz", **savez_dict)
- 
