@@ -102,7 +102,7 @@ The ``pyLaserPulse.grid`` module contains ``_legacy_grid`` and ``_legacy_grid_fr
 
 **Taylor coefficients:**
 
-An efficient way of calculating Taylor coefficients has now been added. This is based on gradients retrieved from Savitzky-Golay filtering. And example script is included in ../pyLaserPulse/examples/retrieving_dispersion_Taylor_coefficients.py.
+An efficient way of calculating Taylor coefficients has now been added. This is based on gradients retrieved from Savitzky-Golay filtering. An example script is included in ../pyLaserPulse/examples/retrieving_dispersion_Taylor_coefficients.py.
 
 This has been enabled by the addition of three new functions in ``utils.py``:
 
