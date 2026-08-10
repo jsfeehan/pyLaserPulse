@@ -110,7 +110,6 @@ class step_index_passive_fibre(bases.fibre_base):
             # Required because very fine grids can result in noisy gradient
             # calculations
             step = int(np.floor(self.grid.crop_points / 1024))
-            print("STEP: ", step)
             if step > 1:
                 decimate = step
 
