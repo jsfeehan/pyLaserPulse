@@ -96,7 +96,7 @@ There are also the following member variables which can be helpful for selecting
 
 ``g.crop_points``, ``g.sim_idx_mask``.
 
-*THIS IS A BREAKING CHANGE*. Compatibility with old pyLaserPulse versions is lost until the new grid instantiation is used.
+*THIS IS A BREAKING CHANGE*. Compatibility with old pyLaserPulse versions is lost unless the new grid instantiation is used.
 
 The ``pyLaserPulse.grid`` module contains ``_legacy_grid`` and ``_legacy_grid_from_pyLaserPulse_simulation``, which are equivalent to ``grid`` and ``grid_from_pyLaserPulse_simulation`` except that they require the older grid information and have the same restrictions as the older grid definition. These are only kept for the sake of plotting old data, and cannot be used for new simulations. It is not much work to interpolate data from an old simulation onto a new grid, however, if you would like to use older data for new calculations.
 
