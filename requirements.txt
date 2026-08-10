@@ -4,4 +4,4 @@ psutil
 PyQt5
 PyQt5_sip
 scipy
-setuptools==75.1.0
+setuptools==83.0.0
