@@ -369,6 +369,7 @@ A few plots from this simulation are shown below. The development of the pulse a
 This information regarding the compressor optimization and the optimized compressor setup is as follows:
 
 .. code:: bash
+
         Simulating    compressor
         -------------------------
 
