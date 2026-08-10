@@ -369,21 +369,26 @@ A few plots from this simulation are shown below. The development of the pulse a
 This information regarding the compressor optimization and the optimized compressor setup is as follows:
 
 .. code:: bash
+        Simulating    compressor
+        -------------------------
 
-	Optimizing the compressor
-	-------------------------
-	Convergence reached:  True
-	Optimization info.:  ['requested number of basinhopping iterations completed successfully']
-	Number of optimization iterations:  10
+        grating_compressor
 
-	Pulse compression data
-	----------------------
-	Grating separation: 4.998 mm
-	Incident angle: 24.528 degrees.
+        Optimizing
 
-	Pulse peak power with respect to peak power of transform limit:
- 	        Before compressor: .98 %
-	        After compressor: 39.64 %
+
+        Convergence reached:  True
+        Optimization info.:  ['requested number of basinhopping iterations completed successfully']
+        Number of optimization iterations:  10
+
+        Pulse compression data
+        ----------------------
+        Grating separation: 0.413 mm
+        Incident angle: 22.665 degrees.
+
+        Pulse peak power with respect to peak power of transform limit:
+                Before compressor: 1.40 %
+                After compressor: 34.27 %
 
 =============
 Documentation
