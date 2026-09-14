@@ -1597,6 +1597,7 @@ class active_fibre_base(ABC):
         for i in range(self.num_steps):
             if propagated + dz > self.L:
                 dz = self.L - propagated
+            # 0th
             N2[i] = self._get_inversion_two_level(
                 spectrum[:, indices], self.stacks.inversion_abs_coeff[indices],
                 self.stacks.inversion_em_coeff[indices], repetition_rate)
@@ -1605,9 +1606,54 @@ class active_fibre_base(ABC):
                                          self.stacks.abs_cs[indices])
             ase = self._ASE_energy_term_Giles_model(
                 self.stacks.ASE_coeff[indices], N2[i])
-            spectrum = spectrum[:, indices] * \
-                (1 + dz * self.stacks.directions[indices] * g) \
-                + self.stacks.directions[indices] * ase * dz
+
+            k1 = g * (spectrum[:, indices] + ase)
+            s1 = spectrum[:, indices] + dz * k1
+
+            # 1st
+            _N2 = self._get_inversion_two_level(
+                s1, self.stacks.inversion_abs_coeff[indices],
+                self.stacks.inversion_em_coeff[indices], repetition_rate)
+            g = self._get_gain_two_level(_N2, self.stacks.overlaps[indices],
+                                         self.stacks.em_cs[indices],
+                                         self.stacks.abs_cs[indices])
+            ase = self._ASE_energy_term_Giles_model(
+                    self.stacks.ASE_coeff[indices], _N2)
+
+            k2 = g * (s1 + ase)
+            s2 = spectrum[:, indices] + dz * k2 / 2
+
+            # 2nd
+            _N2 = self._get_inversion_two_level(
+                s2, self.stacks.inversion_abs_coeff[indices],
+                self.stacks.inversion_em_coeff[indices], repetition_rate)
+            g = self._get_gain_two_level(_N2, self.stacks.overlaps[indices],
+                                         self.stacks.em_cs[indices],
+                                         self.stacks.abs_cs[indices])
+            ase = self._ASE_energy_term_Giles_model(
+                    self.stacks.ASE_coeff[indices], _N2)
+
+            k3 = g * (s2 + ase)
+            s3 = spectrum[:, indices] + dz * k3/2
+
+            # 3rd
+            _N2 = self._get_inversion_two_level(
+                s3, self.stacks.inversion_abs_coeff[indices],
+                self.stacks.inversion_em_coeff[indices], repetition_rate)
+            g = self._get_gain_two_level(_N2, self.stacks.overlaps[indices],
+                                         self.stacks.em_cs[indices],
+                                         self.stacks.abs_cs[indices])
+            ase = self._ASE_energy_term_Giles_model(
+                    self.stacks.ASE_coeff[indices], _N2)
+
+            k4 = g * (s3 + ase)
+            s4 = spectrum[:, indices] + dz * k4
+
+            spectrum[:, indices] += (dz/6) * (s1 + 2*s2 + 2*s3 + s4)
+
+            #spectrum = spectrum[:, indices] * \
+            #    (1 + dz * self.stacks.directions[indices] * g) \
+            #    + self.stacks.directions[indices] * ase * dz
             propagated += dz
             if sample:
                 samples[i + 1, :, :] = spectrum[:, indices]
@@ -1666,17 +1712,71 @@ class active_fibre_base(ABC):
             spectrum[:, static_idx] = static_samples[i, :, static_idx]
             if propagated + dz > self.L:
                 dz = self.L - propagated
+            # 0th
             N2[i] = self._get_inversion_two_level(
                 spectrum, self.stacks.inversion_abs_coeff,
                 self.stacks.inversion_em_coeff, repetition_rate)
-            g = self._get_gain_two_level(
-                N2[i], self.stacks.overlaps[update_idx],
-                self.stacks.em_cs[update_idx], self.stacks.abs_cs[update_idx])
+            g = self._get_gain_two_level(N2[i], self.stacks.overlaps[update_idx],
+                                         self.stacks.em_cs[update_idx],
+                                         self.stacks.abs_cs[update_idx])
             ase = self._ASE_energy_term_Giles_model(
                 self.stacks.ASE_coeff[update_idx], N2[i])
-            spectrum[:, update_idx] = spectrum[:, update_idx] * \
-                (1 + dz * self.stacks.directions[update_idx] * g) \
-                + self.stacks.directions[update_idx] * ase * dz
+
+            k1 = g * (spectrum[:, update_idx] + ase)
+            s1 = spectrum[:, update_idx] + dz * k1
+
+            # 1st
+            _N2 = self._get_inversion_two_level(
+                s1, self.stacks.inversion_abs_coeff[update_idx],
+                self.stacks.inversion_em_coeff[update_idx], repetition_rate)
+            g = self._get_gain_two_level(_N2, self.stacks.overlaps[update_idx],
+                                         self.stacks.em_cs[update_idx],
+                                         self.stacks.abs_cs[update_idx])
+            ase = self._ASE_energy_term_Giles_model(
+                    self.stacks.ASE_coeff[update_idx], _N2)
+
+            k2 = g * (s1 + ase)
+            s2 = spectrum[:, update_idx] + dz * k2 / 2
+
+            # 2nd
+            _N2 = self._get_inversion_two_level(
+                s2, self.stacks.inversion_abs_coeff[update_idx],
+                self.stacks.inversion_em_coeff[update_idx], repetition_rate)
+            g = self._get_gain_two_level(_N2, self.stacks.overlaps[update_idx],
+                                         self.stacks.em_cs[update_idx],
+                                         self.stacks.abs_cs[update_idx])
+            ase = self._ASE_energy_term_Giles_model(
+                    self.stacks.ASE_coeff[update_idx], _N2)
+
+            k3 = g * (s2 + ase)
+            s3 = spectrum[:, update_idx] + dz * k3/2
+
+            # 3rd
+            _N2 = self._get_inversion_two_level(
+                s3, self.stacks.inversion_abs_coeff[update_idx],
+                self.stacks.inversion_em_coeff[update_idx], repetition_rate)
+            g = self._get_gain_two_level(_N2, self.stacks.overlaps[update_idx],
+                                         self.stacks.em_cs[update_idx],
+                                         self.stacks.abs_cs[update_idx])
+            ase = self._ASE_energy_term_Giles_model(
+                    self.stacks.ASE_coeff[update_idx], _N2)
+
+            k4 = g * (s3 + ase)
+            s4 = spectrum[:, update_idx] + dz * k4
+
+            spectrum[:, update_idx] += (dz/6) * (s1 + 2*s2 + 2*s3 + s4)
+
+            #N2[i] = self._get_inversion_two_level(
+            #    spectrum, self.stacks.inversion_abs_coeff,
+            #    self.stacks.inversion_em_coeff, repetition_rate)
+            #g = self._get_gain_two_level(
+            #    N2[i], self.stacks.overlaps[update_idx],
+            #    self.stacks.em_cs[update_idx], self.stacks.abs_cs[update_idx])
+            #ase = self._ASE_energy_term_Giles_model(
+            #    self.stacks.ASE_coeff[update_idx], N2[i])
+            #spectrum[:, update_idx] = spectrum[:, update_idx] * \
+            #    (1 + dz * self.stacks.directions[update_idx] * g) \
+            #    + self.stacks.directions[update_idx] * ase * dz
             propagated += dz
             samples[i + 1, :, update_idx] = spectrum[:, update_idx]
         return samples, N2
