@@ -1552,7 +1552,7 @@ class active_fibre_base(ABC):
         Parameters
         ----------
         indices : slice object
-            Indices to of spectrum propagate over.
+            Indices of spectrum to use in the calculation.
         spectrum : numpy array.
             Energy spectral density (ESD).
         repetition_rate : float.
@@ -1593,67 +1593,42 @@ class active_fibre_base(ABC):
                 self.num_steps + 1, spectrum.shape[0], num_points))
             samples[0, :, :] = spectrum[:, indices]
 
+        g = np.zeros_like(spectrum[:, indices])
+        ase = np.zeros_like(spectrum[:, indices])
+        k = np.zeros_like(spectrum[:, indices])
+        s = np.zeros_like(spectrum[:, indices])
+        coeffs = [1, 2, 2, 1]  # RK4 coeffs
+
         propagated = 0
         for i in range(self.num_steps):
             if propagated + dz > self.L:
                 dz = self.L - propagated
-            # 0th
-            N2[i] = self._get_inversion_two_level(
-                spectrum[:, indices], self.stacks.inversion_abs_coeff[indices],
-                self.stacks.inversion_em_coeff[indices], repetition_rate)
-            g = self._get_gain_two_level(N2[i], self.stacks.overlaps[indices],
-                                         self.stacks.em_cs[indices],
-                                         self.stacks.abs_cs[indices])
-            ase = self._ASE_energy_term_Giles_model(
-                self.stacks.ASE_coeff[indices], N2[i])
 
-            k1 = g * (spectrum[:, indices] + ase)
-            s1 = spectrum[:, indices] + dz * k1
+            # RK4 loop
+            s = spectrum[:, indices].copy()
+            sol = np.zeros_like(spectrum[:, indices])
+            for j in range(4):
+                _N2 = self._get_inversion_two_level(
+                        spectrum[:, indices],
+                        self.stacks.inversion_abs_coeff[indices],
+                        self.stacks.inversion_em_coeff[indices],
+                        repetition_rate)
+                if j == 0:
+                    N2[i] = _N2
+                g = self._get_gain_two_level(
+                        _N2, self.stacks.overlaps[indices],
+                        self.stacks.em_cs[indices],
+                        self.stacks.abs_cs[indices])
+                ase = self._ASE_energy_term_Giles_model(
+                        self.stacks.ASE_coeff[indices], _N2)
+                k = g[indices] * (s[:, indices] + ase[indices])
+                print(self.stacks.directions[indices].shape, self.stacks.directions.shape)
+                s = spectrum[:, indices] + self.stacks.directions[indices] * dz * k
 
-            # 1st
-            _N2 = self._get_inversion_two_level(
-                s1, self.stacks.inversion_abs_coeff[indices],
-                self.stacks.inversion_em_coeff[indices], repetition_rate)
-            g = self._get_gain_two_level(_N2, self.stacks.overlaps[indices],
-                                         self.stacks.em_cs[indices],
-                                         self.stacks.abs_cs[indices])
-            ase = self._ASE_energy_term_Giles_model(
-                    self.stacks.ASE_coeff[indices], _N2)
+                # RK4 step -- sum, then add to spectrum outside of the RK4 loop
+                sol += coeffs[j] * s * dz / 6
+            spectrum[:, indices] += sol
 
-            k2 = g * (s1 + ase)
-            s2 = spectrum[:, indices] + dz * k2 / 2
-
-            # 2nd
-            _N2 = self._get_inversion_two_level(
-                s2, self.stacks.inversion_abs_coeff[indices],
-                self.stacks.inversion_em_coeff[indices], repetition_rate)
-            g = self._get_gain_two_level(_N2, self.stacks.overlaps[indices],
-                                         self.stacks.em_cs[indices],
-                                         self.stacks.abs_cs[indices])
-            ase = self._ASE_energy_term_Giles_model(
-                    self.stacks.ASE_coeff[indices], _N2)
-
-            k3 = g * (s2 + ase)
-            s3 = spectrum[:, indices] + dz * k3/2
-
-            # 3rd
-            _N2 = self._get_inversion_two_level(
-                s3, self.stacks.inversion_abs_coeff[indices],
-                self.stacks.inversion_em_coeff[indices], repetition_rate)
-            g = self._get_gain_two_level(_N2, self.stacks.overlaps[indices],
-                                         self.stacks.em_cs[indices],
-                                         self.stacks.abs_cs[indices])
-            ase = self._ASE_energy_term_Giles_model(
-                    self.stacks.ASE_coeff[indices], _N2)
-
-            k4 = g * (s3 + ase)
-            s4 = spectrum[:, indices] + dz * k4
-
-            spectrum[:, indices] += (dz/6) * (s1 + 2*s2 + 2*s3 + s4)
-
-            #spectrum = spectrum[:, indices] * \
-            #    (1 + dz * self.stacks.directions[indices] * g) \
-            #    + self.stacks.directions[indices] * ase * dz
             propagated += dz
             if sample:
                 samples[i + 1, :, :] = spectrum[:, indices]
@@ -1707,64 +1682,48 @@ class active_fibre_base(ABC):
             self.num_steps + 1, spectrum.shape[0], spectrum.shape[1]))
         samples[0, :, :] = spectrum
 
+        g = np.zeros_like(spectrum)
+        ase = np.zeros_like(spectrum)
+        k = np.zeros_like(spectrum)
+        s = np.zeros_like(spectrum)
+        coeffs = [1, 2, 2, 1]  # RK4 coeffs
+
         propagated = 0
         for i in range(self.num_steps):
             spectrum[:, static_idx] = static_samples[i, :, static_idx]
             if propagated + dz > self.L:
                 dz = self.L - propagated
-            # 0th
-            N2[i] = self._get_inversion_two_level(
-                spectrum, self.stacks.inversion_abs_coeff,
-                self.stacks.inversion_em_coeff, repetition_rate)
-            g = self._get_gain_two_level(N2[i], self.stacks.overlaps[update_idx],
-                                         self.stacks.em_cs[update_idx],
-                                         self.stacks.abs_cs[update_idx])
-            ase = self._ASE_energy_term_Giles_model(
-                self.stacks.ASE_coeff[update_idx], N2[i])
 
-            k1 = g * (spectrum[:, update_idx] + ase)
-            s1 = spectrum[:, update_idx] + dz * k1
+            # RK4 loop
+            s = spectrum.copy()
+            sol = np.zeros_like(spectrum[:, update_idx])
+            for j in range(4):
+                _N2 = self._get_inversion_two_level(
+                        s, self.stacks.inversion_abs_coeff,
+                        self.stacks.inversion_em_coeff, repetition_rate)
+                if j == 0:
+                    N2[i] = _N2
+                g = self._get_gain_two_level(
+                        _N2, self.stacks.overlaps[update_idx], self.stacks.em_cs[update_idx],
+                        self.stacks.abs_cs[update_idx])
+                ase = self._ASE_energy_term_Giles_model(
+                        self.stacks.ASE_coeff[update_idx], _N2)
+                k[:, update_idx] = g * (
+                        s[:, update_idx])  # + ase)
 
-            # 1st
-            _N2 = self._get_inversion_two_level(
-                s1, self.stacks.inversion_abs_coeff[update_idx],
-                self.stacks.inversion_em_coeff[update_idx], repetition_rate)
-            g = self._get_gain_two_level(_N2, self.stacks.overlaps[update_idx],
-                                         self.stacks.em_cs[update_idx],
-                                         self.stacks.abs_cs[update_idx])
-            ase = self._ASE_energy_term_Giles_model(
-                    self.stacks.ASE_coeff[update_idx], _N2)
+                # import matplotlib.pyplot as plt
+                # fig = plt.figure()
+                # ax = fig.add_subplot(111)
+                # ax.plot(g)
+                # plt.show()
 
-            k2 = g * (s1 + ase)
-            s2 = spectrum[:, update_idx] + dz * k2 / 2
+                # Static values -- static_idx -- are here and requried for the
+                # inversion calculations.
+                s[:, update_idx] = spectrum[:, update_idx] + self.stacks.directions[update_idx] * dz * k[:, update_idx] / coeffs[j]
 
-            # 2nd
-            _N2 = self._get_inversion_two_level(
-                s2, self.stacks.inversion_abs_coeff[update_idx],
-                self.stacks.inversion_em_coeff[update_idx], repetition_rate)
-            g = self._get_gain_two_level(_N2, self.stacks.overlaps[update_idx],
-                                         self.stacks.em_cs[update_idx],
-                                         self.stacks.abs_cs[update_idx])
-            ase = self._ASE_energy_term_Giles_model(
-                    self.stacks.ASE_coeff[update_idx], _N2)
-
-            k3 = g * (s2 + ase)
-            s3 = spectrum[:, update_idx] + dz * k3/2
-
-            # 3rd
-            _N2 = self._get_inversion_two_level(
-                s3, self.stacks.inversion_abs_coeff[update_idx],
-                self.stacks.inversion_em_coeff[update_idx], repetition_rate)
-            g = self._get_gain_two_level(_N2, self.stacks.overlaps[update_idx],
-                                         self.stacks.em_cs[update_idx],
-                                         self.stacks.abs_cs[update_idx])
-            ase = self._ASE_energy_term_Giles_model(
-                    self.stacks.ASE_coeff[update_idx], _N2)
-
-            k4 = g * (s3 + ase)
-            s4 = spectrum[:, update_idx] + dz * k4
-
-            spectrum[:, update_idx] += (dz/6) * (s1 + 2*s2 + 2*s3 + s4)
+                # RK4 step -- sum, then add to spectrum outside of the RK4 loop
+                sol += coeffs[j] * s[:, update_idx] * dz / 6
+            spectrum[:, update_idx] += sol
 
             #N2[i] = self._get_inversion_two_level(
             #    spectrum, self.stacks.inversion_abs_coeff,
@@ -1919,6 +1878,11 @@ class active_fibre_base(ABC):
                     raise exc.PropagationMethodNotConvergingError(msg)
                 else:
                     prev_N2 = N2
+            import matplotlib.pyplot as plt
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.plot(N2)
+            plt.show()
         return np.append(co_at_output, counter_at_input, axis=1), samples, \
             N2, err
 
