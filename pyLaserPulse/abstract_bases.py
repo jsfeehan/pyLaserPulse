@@ -1746,6 +1746,101 @@ class active_fibre_base(ABC):
             counter-propagating signals are NOT updated.
         4) Steps 2 and 3 are repeated until convergence is reached.
         """
+        def run(spec, samps, prv_N2, split_idx):
+            # Begin solution-finding loop
+            # Even iterations are backwards propagation with:
+            #   static co-propagating signals
+            #   updated counter-propagating signals
+            # Odd iterations are forwards propagation with:
+            #   updated co-propagating signals
+            #   static counter-propagating signals
+            err = []
+            div_2 = False
+
+            if self.verbose:
+                print('Convergence error (spectral density only):')
+            for i in range(self.num_iters):
+                if (i % 2) == 0:  # co signals static, counter signals updated
+                    static = split_idx[0]
+                    update = split_idx[1]
+                else:             # counter signals static, co signals updated
+                    static = split_idx[1]
+                    update = split_idx[0]
+                self.forward_propagation = not self.forward_propagation
+
+                # Direction needs reversing and sampled spectra need to be flipped;
+                # Signals are static if they are being propagated backwards
+                self.stacks.directions *= -1
+                samps = samps[::-1, :, :]
+
+                # Get updates and replace update indices in spectra array
+                samps, N2 = self._get_propagation_samples_boundary_value_solver(
+                    repetition_rate, spec, static, update, samps)
+
+                # Enforce boundary conditions for static indices, assess error
+                # odd (forward) iteration, and terminate if err < tol or if no
+                # convergence is detected.
+                if (i % 2) == 0:
+                    spec[:, static] = co_light
+                    samps[-1, :, static] = co_light
+                    if i > 0:
+                        counter_at_input = 0.95 * samps[-1, :, update] + 0.05 * counter_at_input
+                    else:
+                        counter_at_input = samps[-1, :, update]
+                else:
+                    spec[:, static] = counter_light
+                    samps[-1, :, static] = counter_light
+                    if i > 1:
+                        co_at_output = 0.95 * samps[-1, :, update] + 0.05 * co_at_output
+                    else:
+                        co_at_output = samps[-1, :, update]
+                    err.append(np.sum(np.abs(prv_N2 - N2) / N2))
+                    if self.verbose:
+                        print('\t', err[-1])
+                    if len(err) > 10:  # Dodge RuntimeWarning: Mean of empty slice
+                        diff_err = np.diff(err[-10::])
+                        mean_diff_err = np.mean(diff_err)
+                    if err[-1] < self.convergence_tol:
+                        #if self.cut_count > 0:
+                            #self.L /= 0.99  # 2  # **.5
+                            #self.cut_count -= 1
+                        if self.L < self.L_start:
+                            self.L *= 1.05
+                            if self.L - self.L_start > 0:
+                                self.L = self.L_start
+                            print("x2!", self.L, self.cut_count)
+                            op, samps, N2, err = run(spec, samps, N2, split_idx)
+                            # co_at_output = op[0, :]
+                            # counter_at_input = op[1, :]
+                        break
+                    if i >= 50 and mean_diff_err >= 0:
+                        # div_2 = True
+                        print("div_2!")
+                        self.L *= 0.5
+                        print(self.L)
+                        self.cut_count += 1
+                        # self.stacks.directions *= -1
+                        # samps = samps[::-1, :, :]
+                        op, samps, prv_N2, err = run(spec, samps, prv_N2, split_idx)
+                        # co_at_output = op[0, :]
+                        # counter_at_input = op[1, :]
+                        #                        msg = (
+                        #                            "\n\nThe propagation method isn't converging after %d "
+                        #                            "iterations.\nPlease revise the pump, fibre, or "
+                        #                            "signal parameters." % i)
+                        #                        raise exc.PropagationMethodNotConvergingError(msg)
+                    else:
+                        #   import matplotlib.pyplot as plt
+                        #   fig = plt.figure()
+                        #   ax = fig.add_subplot(111)
+                        #   ax.plot(prv_N2, c='k', lw=2)
+                        #   ax.plot(N2, c='seagreen', ls='--')
+                        #   plt.show()
+                        prv_N2 = N2
+            bounds = np.array((co_at_output, counter_at_input))
+            return bounds, samps, N2, err # np.append(co_at_output, counter_at_input, axis=1), samps, \
+                    # N2, err
+
         # Indices for conveniently splitting stacks into co- and counter-
         # propagating signals
         size = spectrum.shape[1]
@@ -1757,70 +1852,18 @@ class active_fibre_base(ABC):
         co_light = spectrum[:, half_1].copy()
         counter_light = spectrum[:, half_2].copy()
 
+
+        self.cut_count = 0
+        self.L_start = self.L  # .copy()
+
         # Co-propagating signals only at first -- STEP 1 ABOVE
         samples, prev_N2 = \
             self._propagate_energy_spectra_boundary_value_solver(
                 half_1, spectrum, repetition_rate, sample=True)
         spectrum[:, half_1] = samples[-1, :, :]
+        op, samples, N2, err = run(spectrum, samples, prev_N2, split_idx)
+        return op, samples, N2, err
 
-        # Begin solution-finding loop
-        # Even iterations are backwards propagation with:
-        #   static co-propagating signals
-        #   updated counter-propagating signals
-        # Odd iterations are forwards propagation with:
-        #   updated co-propagating signals
-        #   static counter-propagating signals
-        err = []
-
-        if self.verbose:
-            print('Convergence error (spectral density only):')
-        for i in range(self.num_iters):
-            if (i % 2) == 0:  # co signals static, counter signals updated
-                static = split_idx[0]
-                update = split_idx[1]
-            else:             # counter signals static, co signals updated
-                static = split_idx[1]
-                update = split_idx[0]
-            self.forward_propagation = not self.forward_propagation
-
-            # Direction needs reversing and sampled spectra need to be flipped;
-            # Signals are static if they are being propagated backwards
-            self.stacks.directions *= -1
-            samples = samples[::-1, :, :]
-
-            # Get updates and replace update indices in spectra array
-            samples, N2 = self._get_propagation_samples_boundary_value_solver(
-                repetition_rate, spectrum, static, update, samples)
-
-            # Enforce boundary conditions for static indices, assess error
-            # odd (forward) iteration, and terminate if err < tol or if no
-            # convergence is detected.
-            if (i % 2) == 0:
-                spectrum[:, static] = co_light
-                samples[-1, :, static] = co_light
-                counter_at_input = samples[-1, :, update]
-            else:
-                spectrum[:, static] = counter_light
-                samples[-1, :, static] = counter_light
-                co_at_output = samples[-1, :, update]
-                err.append(np.sum(np.abs(prev_N2 - N2) / N2))
-                if self.verbose:
-                    print('\t', err[-1])
-                if len(err) > 10:  # Dodge RuntimeWarning: Mean of empty slice
-                    diff_err = np.diff(err[-10::])
-                    mean_diff_err = np.mean(diff_err)
-                if err[-1] < self.convergence_tol:
-                    break
-                if i >= 50 and mean_diff_err >= 0:
-                    msg = (
-                        "\n\nThe propagation method isn't converging after %d "
-                        "iterations.\nPlease revise the pump, fibre, or "
-                        "signal parameters." % i)
-                    raise exc.PropagationMethodNotConvergingError(msg)
-                else:
-                    prev_N2 = N2
-        return np.append(co_at_output, counter_at_input, axis=1), samples, \
-            N2, err
 
     @staticmethod
     def _Euler_frequency_domain_gain_field(spec_field, dz, g, direction=1):
